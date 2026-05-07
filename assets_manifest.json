@@ -4,30 +4,20 @@
   "default_tag": "assets-v1",
   "bundles": [
     {
-      "name": "sim-assets",
-      "archive_name": "dexjoco-sim-assets.tar.gz",
-      "sha256": "35f9eb961766926c998550f49b181e03b48938788aadc2dcb7e58de266bcc7d1",
-      "size_bytes": 45225711,
+      "name": "sim-xmls",
+      "archive_name": "dexjoco-sim-xmls.tar.gz",
+      "sha256": "ad491151cb0371577d61ebaa7824a9f573964e8efb3612758c4bc20568780926",
+      "size_bytes": 139202094,
       "extract_to": ".",
-      "description": "Large MuJoCo simulation meshes and textures required by dexjoco_sim tasks.",
+      "description": "The full dexjoco_sim xmls tree, including XML files, meshes, textures, and task assets.",
       "optional": false,
+      "required_paths": [
+        "dexjoco_sim/envs/xmls/arena_arm_hand_plant.xml",
+        "dexjoco_sim/envs/xmls/ipad.xml",
+        "dexjoco_sim/envs/xmls/franka_emika_panda/assets/link1.obj"
+      ],
       "members": [
-        "dexjoco_sim/envs/xmls/ipad/Material.png",
-        "dexjoco_sim/envs/xmls/ipad/ipad_thin_2.obj",
-        "dexjoco_sim/envs/xmls/table_arena/textures/desktop_random_textures/walnut_wood_grain.png",
-        "dexjoco_sim/envs/xmls/table_arena/textures/desktop_random_textures/warm_wood_grain_2.png",
-        "dexjoco_sim/envs/xmls/table_arena/textures/desktop_random_textures/gray_wood_planks.png",
-        "dexjoco_sim/envs/xmls/table_arena/textures/desktop_random_textures/bamboo.png",
-        "dexjoco_sim/envs/xmls/table_arena/textures/desktop_random_textures/dark_wood_planks_2.png",
-        "dexjoco_sim/envs/xmls/industreal/mesh/industreal_gears/industreal_gear_large.obj",
-        "dexjoco_sim/envs/xmls/industreal/mesh/industreal_franka_table/industreal_franka_finger_rubber_viz.obj",
-        "dexjoco_sim/envs/xmls/rethink_mount/pedestal.obj",
-        "dexjoco_sim/envs/xmls/franka_emika_panda/assets/link0_8.obj",
-        "dexjoco_sim/envs/xmls/franka_emika_panda/assets/link1.obj",
-        "dexjoco_sim/envs/xmls/franka_emika_panda/assets/link2.obj",
-        "dexjoco_sim/envs/xmls/franka_emika_panda/assets/link4_1.obj",
-        "dexjoco_sim/envs/xmls/franka_emika_panda/assets/link5_2.obj",
-        "dexjoco_sim/envs/xmls/franka_emika_panda/assets/link6_16.obj"
+        "dexjoco_sim/envs/xmls/"
       ]
     },
     {
@@ -36,7 +26,7 @@
       "sha256": "011970893c18846d7be2f251d3df26b926884e91a34b7e483f594594475ed872",
       "size_bytes": 6982371,
       "extract_to": ".",
-      "description": "GeoRT checkpoints and MediaPipe hand landmark model used by Dexjoco teleoperation.",
+      "description": "Dexjoco's default GeoRT checkpoints and optional MediaPipe hand landmark model.",
       "optional": true,
       "members": [
         "teleoperation/GeoRT/checkpoint/fk_model_allegro_left.pth",
@@ -44,50 +34,6 @@
         "teleoperation/GeoRT/checkpoint/allegro_left_2026-01-27_16-55-53_dexjoco_left_default/last.pth",
         "teleoperation/GeoRT/checkpoint/allegro_right_2025-12-16_13-22-14_dexjoco_right_default/last.pth",
         "teleoperation/GeoRT/hand_landmarker.task"
-      ]
-    },
-    {
-      "name": "geort-training-data",
-      "archive_name": "geort-training-data.tar.gz",
-      "sha256": "f1de62bd4846c2beae0890743ac3b568188b3a528c302ae24964a6d4b457c69d",
-      "size_bytes": 42528890,
-      "extract_to": ".",
-      "description": "Sample GeoRT training and evaluation datasets kept outside Git.",
-      "optional": true,
-      "members": [
-        "teleoperation/GeoRT/data/allegro_left.npz",
-        "teleoperation/GeoRT/data/allegro_right.npz",
-        "teleoperation/GeoRT/data/human.npy",
-        "teleoperation/GeoRT/data/human_alex.npy",
-        "teleoperation/GeoRT/data/whw_1.npy",
-        "teleoperation/GeoRT/data/whw_left_0.npy",
-        "teleoperation/GeoRT/data/whw_left_1.npy",
-        "teleoperation/GeoRT/data/wxy_1.npy",
-        "teleoperation/GeoRT/data/wxy_2.npy",
-        "teleoperation/GeoRT/data/wxy_left_1.npy",
-        "teleoperation/GeoRT/data/wxy_left_2.npy",
-        "teleoperation/GeoRT/data/zby_1.npy",
-        "teleoperation/GeoRT/data/zby_2.npy"
-      ]
-    },
-    {
-      "name": "geort-manus-libs",
-      "archive_name": "geort-manus-libs.tar.gz",
-      "sha256": "6c676b7447a4db3463e66c7a11e58867fca0df6225ebc04628b0403a03f71239",
-      "size_bytes": 11172754,
-      "extract_to": ".",
-      "description": "Optional prebuilt Manus client shared libraries for GeoRT.",
-      "optional": true,
-      "members": [
-        "teleoperation/GeoRT/geort/mocap/manus_client/lib/libManusSDK.so",
-        "teleoperation/GeoRT/geort/mocap/manus_client/lib/libprotobuf.so.22",
-        "teleoperation/GeoRT/geort/mocap/manus_client/lib/libcrypto.so.1.1",
-        "teleoperation/GeoRT/geort/mocap/manus_client/lib/libgrpc.so.9",
-        "teleoperation/GeoRT/geort/mocap/manus_client/lib/libgrpc++.so.1",
-        "teleoperation/GeoRT/geort/mocap/manus_client/lib/libssl.so.1.1",
-        "teleoperation/GeoRT/geort/mocap/manus_client/lib/libgpr.so.9",
-        "teleoperation/GeoRT/geort/mocap/manus_client/lib/libupb.so.9",
-        "teleoperation/GeoRT/geort/mocap/manus_client/lib/libaddress_sorting.so.9"
       ]
     }
   ]

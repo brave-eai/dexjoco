@@ -7,25 +7,12 @@ __pycache__/
 /checkpoints
 /datasets
 
-dexjoco_sim/envs/xmls/ipad/Material.png
-dexjoco_sim/envs/xmls/ipad/ipad_thin_2.obj
-dexjoco_sim/envs/xmls/table_arena/textures/desktop_random_textures/walnut_wood_grain.png
-dexjoco_sim/envs/xmls/table_arena/textures/desktop_random_textures/warm_wood_grain_2.png
-dexjoco_sim/envs/xmls/table_arena/textures/desktop_random_textures/gray_wood_planks.png
-dexjoco_sim/envs/xmls/table_arena/textures/desktop_random_textures/bamboo.png
-dexjoco_sim/envs/xmls/table_arena/textures/desktop_random_textures/dark_wood_planks_2.png
-dexjoco_sim/envs/xmls/industreal/mesh/industreal_gears/industreal_gear_large.obj
-dexjoco_sim/envs/xmls/industreal/mesh/industreal_franka_table/industreal_franka_finger_rubber_viz.obj
-dexjoco_sim/envs/xmls/rethink_mount/pedestal.obj
-dexjoco_sim/envs/xmls/franka_emika_panda/assets/link0_8.obj
-dexjoco_sim/envs/xmls/franka_emika_panda/assets/link1.obj
-dexjoco_sim/envs/xmls/franka_emika_panda/assets/link2.obj
-dexjoco_sim/envs/xmls/franka_emika_panda/assets/link4_1.obj
-dexjoco_sim/envs/xmls/franka_emika_panda/assets/link5_2.obj
-dexjoco_sim/envs/xmls/franka_emika_panda/assets/link6_16.obj
+dexjoco_sim/envs/xmls/**
+!dexjoco_sim/envs/xmls/
+!dexjoco_sim/envs/xmls/README.md
 
 teleoperation/GeoRT/checkpoint/**/*.pth
-teleoperation/GeoRT/data/*.npy
-teleoperation/GeoRT/data/*.npz
+teleoperation/GeoRT/data/*
+!teleoperation/GeoRT/data/
+!teleoperation/GeoRT/data/README.md
 teleoperation/GeoRT/hand_landmarker.task
-teleoperation/GeoRT/geort/mocap/manus_client/lib/*.so*

@@ -48,8 +48,8 @@ flags.DEFINE_float("data_fps", 30, "Sampling frequency of recorded low-dim data 
 flags.DEFINE_enum(
     "render_mode",
     "human",
-    ["human", "rgb_array", "none"],
-    "MuJoCo render mode for the task environment; use none for no-OpenGL logic debugging",
+    ["human", "rgb_array"],
+    "MuJoCo render mode for the task environment",
 )
 flags.DEFINE_bool("randomize", False, "Enable environment randomization when the selected task supports it")
 
@@ -465,7 +465,7 @@ def main(_argv):
             obs, info = env.reset()
 
         if FLAGS.max_steps > 0 and total_steps >= FLAGS.max_steps:
-            print(f"Reached max_steps={FLAGS.max_steps}; stopping debug run.")
+            print(f"Reached max_steps={FLAGS.max_steps}; stopping run.")
             break
 
     print(f"Collected {success_count} successful demos. Individual demo directories:")

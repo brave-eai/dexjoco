@@ -12,12 +12,10 @@ pip install trimesh open3d sapien zmq
 pip install -e .
 ```
 
-Large checkpoints, sample datasets, the MediaPipe hand landmark model, and optional Manus shared libraries are distributed separately from Git. From the Dexjoco repository root, restore the pieces you need with:
+Large checkpoints and the MediaPipe hand landmark model are distributed separately from Git. From the Dexjoco repository root, restore the pieces you need with:
 
 ```
 python scripts/download_assets.py --bundle geort-runtime-assets
-python scripts/download_assets.py --bundle geort-training-data
-python scripts/download_assets.py --bundle geort-manus-libs
 ```
 
 Otherwise, we recommend using a virtual environment to install the required packages. To install the required packages, run the following command:
@@ -30,7 +28,7 @@ pip install -e .
 Upon completion, you will be able to train GeoRT and deploy the checkpoint in a clean and straightforward way. 
 ### Training (1-2min):
 ```
-python ./geort/trainer.py -hand allegro_right -human_data human_alex -ckpt_tag geort_1
+python ./geort/trainer.py -hand allegro_right -human_data YOUR_DATASET_NAME -ckpt_tag geort_1
 ```
 ### Deploy in code
 ```
@@ -138,12 +136,7 @@ Let it train for about 30–50 epochs (approximately 1–2 minutes). You can pre
 If this is the first time you’re training for a new hand, an additional 5 minutes will be needed to train the neural FK model — this only happens once.
 In the command above, 
 
-For demo purpose, we have put ``human_alex.npy`` data in the ``data`` folder. For adapting it to a right Allegro hand, just run
-
-```
-python ./geort/trainer.py -hand allegro_right -human_data human_alex -ckpt_tag geort_1
-```
-This will generate a checkpoint named ``geort_1``. Later you can call ``model = geort.load_model('geort_1')`` to use it in your code.
+In this Dexjoco release, the ``data`` folder is intentionally kept empty. Place your own recorded hand data there and reference it by name when training.
 
 ### Step 4: Deploy!
 Ok, now we are all set. Use the following code to import and deploy the trained model. 
@@ -163,13 +156,13 @@ while True:
     robot.command(qpos)               # execute!
 
 ```
-We provide some examples in ``geort/mocap/mediapipe_evaluation.py`` and ``geort/mocap/replay_evaluation``. If you have manus glove, you can also refer to ``geort/mocap/manus_evaluation.py``. We recommend (insist) you use a glove-based mocap system instead of MediaPipe, as for vision-based mocap there is significant input distribution shift during deployment!
+We provide some examples in ``geort/mocap/mediapipe_evaluation.py`` and ``geort/mocap/replay_evaluation.py``. We recommend (insist) you use a glove-based or tracker-based mocap system instead of MediaPipe, as for vision-based mocap there is significant input distribution shift during deployment.
 
 The simplest way for testing is to use the replay evaluation as below. This will show the retargeted trajectory in the viewer. 
 ```
 python ./geort/mocap/replay_evaluation.py -hand allegro_right -ckpt_tag YOUR_CKPT -data YOUR_TRAINING_DATA
 ```
-For instance, if we have ``human.npy`` in the ``data`` folder
+For instance, if you have ``human.npy`` in the ``data`` folder
 ```
 python ./geort/mocap/replay_evaluation.py -hand allegro_right -ckpt_tag YOUR_CKPT -data human
 ```
@@ -190,4 +183,3 @@ For any inquiries, please open an issue or contact the authors via email at ``zh
 
 ## License
 CC-by-NC license
-

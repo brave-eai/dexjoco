@@ -1,7 +1,3 @@
-Large GeoRT sample datasets are distributed as release assets instead of staying in Git.
+This directory is intentionally empty in the Dexjoco release.
 
-From the repository root, restore them with:
-
-```bash
-python scripts/download_assets.py --bundle geort-training-data
-```
+Place your own recorded training data here when you train GeoRT models for Rokoko retargeting.

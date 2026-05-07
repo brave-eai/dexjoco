@@ -80,7 +80,8 @@ def compute_sha256(path: Path):
 
 
 def bundle_complete(bundle):
-    return all((REPO_ROOT / member).exists() for member in bundle["members"])
+    required_paths = bundle.get("required_paths", bundle.get("members", []))
+    return all((REPO_ROOT / member).exists() for member in required_paths)
 
 
 def resolve_base_url(args, manifest):
@@ -129,7 +130,8 @@ def download_bundle(bundle, base_url, force=False, dry_run=False):
         with tarfile.open(archive_path, "r:gz") as tar:
             safe_extract(tar, target_root)
 
-    print(f"[ok] {bundle['name']}: restored {len(bundle['members'])} files")
+        restored_count = len(bundle.get("members", []))
+        print(f"[ok] {bundle['name']}: restored {restored_count} path entries")
 
 
 def main():

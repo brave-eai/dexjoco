@@ -31,10 +31,10 @@ The simulator itself only depends on the UDP packets described in
 
 ## Quick Start
 
-Dexjoco keeps large runtime assets out of Git. Before running simulation tasks, restore the simulation asset bundle:
+Dexjoco keeps large runtime assets out of Git. Before running simulation tasks, restore the simulation XML and asset bundle:
 
 ```bash
-python scripts/download_assets.py --bundle sim-assets
+python scripts/download_assets.py --bundle sim-xmls
 ```
 
 If you plan to use GeoRT-based teleoperation, also restore the GeoRT runtime assets:
@@ -51,30 +51,6 @@ python scripts/record_demos_zarr.py \
   --successes_needed 1 \
   --show_sim_cameras False
 ```
-
-For headless machines with a working MuJoCo OpenGL backend, use:
-
-```bash
-python scripts/record_demos_zarr.py \
-  --exp_name water_plant \
-  --successes_needed 1 \
-  --show_sim_cameras False \
-  --render_mode rgb_array
-```
-
-Headless rendering still requires a working MuJoCo OpenGL backend such as EGL, OSMesa, or a virtual/displayed X server.
-
-To debug reset/step logic on a machine with no display and no OpenGL backend, use:
-
-```bash
-python scripts/record_demos_zarr.py \
-  --exp_name water_plant \
-  --successes_needed 1 \
-  --show_sim_cameras False \
-  --render_mode none
-```
-
-This disables camera observations and video writing for the run.
 
 ## Demo Format
 
