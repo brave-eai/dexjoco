@@ -42,7 +42,7 @@ python scripts/download_assets.py --base-url https://github.com/brave-eai/dexjoc
 - `sim-xmls`:
   The full `dexjoco_sim/envs/xmls` tree, including XML files, meshes, and textures.
 - `geort-runtime-assets`:
-  Dexjoco's default GeoRT checkpoints plus the MediaPipe hand landmark model.
+  Dexjoco's default GeoRT retarget checkpoints for Rokoko deployment.
 
 ## Maintainer Notes
 

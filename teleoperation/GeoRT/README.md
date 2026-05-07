@@ -12,7 +12,7 @@ pip install trimesh open3d sapien zmq
 pip install -e .
 ```
 
-Large checkpoints and the MediaPipe hand landmark model are distributed separately from Git. From the Dexjoco repository root, restore the pieces you need with:
+Default retarget checkpoints are distributed separately from Git. From the Dexjoco repository root, restore the pieces you need with:
 
 ```
 python scripts/download_assets.py --bundle geort-runtime-assets
@@ -115,14 +115,7 @@ Use ``geort.save_human_data`` API -- this can simplify your effort in specifying
 
 During the data collection process, try to 1. fully stretch each finger and explore its fingertip moving range and 2. perform pinch grasps. Ensure that your fingers feel natural and comfortable—since during teleoperation deployment, you will use these recorded gestures to control the robot! Please avoid any unnatural or strained movements.
 
-We understand that most users likely have their own mocap systems. However, for demonstration purposes, we provide a simple mocap solution based on MediaPipe. Please note, this is intended only for demo use and not for deployment; we will explain this in more detail later.
-
-```
-python ./geort/mocap/mediapipe_mocap.py --name human
-```
-to generate a dataset named ``human``. Refered to the file for instructions. When you see the pop-up window, press ``s`` to start recording and ``q`` to finish. 
-
-**Note:** Please ensure that the hand frame orientation is consistent between your motion capture system and the hand URDF (but fortunately the origin does not require any alignment and you can just set it to palm center). In our provided mocap example, we support the **right** hand using the following convention:+Y axis: from the palm center to the thumb. +Z axis: from the palm center to the middle fingertip. +X axis: palm normal (pointing out of the palm). 
+Please ensure that the hand frame orientation is consistent between your motion capture system and the hand URDF (but fortunately the origin does not require any alignment and you can just set it to palm center). In our provided Rokoko path, we support the **right** hand using the following convention:+Y axis: from the palm center to the thumb. +Z axis: from the palm center to the middle fingertip. +X axis: palm normal (pointing out of the palm). 
 
 ### Step 3: Train the Model
 Assuming you have placed ``your_robot_name.json`` in the ``geort/config`` folder as described in Step 1, and set ``data_output_name`` to ``human`` in Step 2, run the following command. TAG is the checkpoint id to use in later deployment.
@@ -156,7 +149,7 @@ while True:
     robot.command(qpos)               # execute!
 
 ```
-We provide some examples in ``geort/mocap/mediapipe_evaluation.py`` and ``geort/mocap/replay_evaluation.py``. We recommend (insist) you use a glove-based or tracker-based mocap system instead of MediaPipe, as for vision-based mocap there is significant input distribution shift during deployment.
+We provide examples in ``geort/mocap/replay_evaluation.py`` and Rokoko-facing retarget senders under ``geort/mocap/``.
 
 The simplest way for testing is to use the replay evaluation as below. This will show the retargeted trajectory in the viewer. 
 ```

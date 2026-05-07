@@ -23,17 +23,14 @@
     {
       "name": "geort-runtime-assets",
       "archive_name": "geort-runtime-assets.tar.gz",
-      "sha256": "011970893c18846d7be2f251d3df26b926884e91a34b7e483f594594475ed872",
-      "size_bytes": 6982371,
+      "sha256": "9e15235555a444685e1ee18d6d54ff38afeb83968a10a86ef8e659f477e6ec7d",
+      "size_bytes": 559232,
       "extract_to": ".",
-      "description": "Dexjoco's default GeoRT checkpoints and optional MediaPipe hand landmark model.",
+      "description": "Dexjoco's default GeoRT retarget checkpoints for Rokoko deployment.",
       "optional": true,
       "members": [
-        "teleoperation/GeoRT/checkpoint/fk_model_allegro_left.pth",
-        "teleoperation/GeoRT/checkpoint/fk_model_allegro_right.pth",
         "teleoperation/GeoRT/checkpoint/allegro_left_2026-01-27_16-55-53_dexjoco_left_default/last.pth",
-        "teleoperation/GeoRT/checkpoint/allegro_right_2025-12-16_13-22-14_dexjoco_right_default/last.pth",
-        "teleoperation/GeoRT/hand_landmarker.task"
+        "teleoperation/GeoRT/checkpoint/allegro_right_2025-12-16_13-22-14_dexjoco_right_default/last.pth"
       ]
     }
   ]
