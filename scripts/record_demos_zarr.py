@@ -199,36 +199,63 @@ class WristCameraViewer:
 
 def convert_action_quat_to_rotvec(action: np.ndarray) -> np.ndarray:
     """
-    Convert a 23-d action:
-      [dx, dy, dz, qw, qx, qy, qz, 16 joints]
-    to a 22-d action:
-      [dx, dy, dz, rx, ry, rz, 16 joints]
+    Convert action quaternions from wxyz to rotation vectors.
+
+    Supported layouts:
+      - single-arm 23-d: [pos3, quat4, 16 joints] -> 22-d
+      - bimanual 46-d: [right23, left23] -> 44-d
 
     If quaternion has zero norm, treat it as identity rotation.
     """
     action = np.asarray(action)
-    if action.ndim != 1 or action.shape[0] != 23:
+    if action.ndim != 1:
         return None
 
-    pos = action[0:3]
-    quat = action[3:7]
-    hand_joints = action[7:23]
+    def _convert_single_arm(single_arm_action: np.ndarray) -> np.ndarray:
+        pos = single_arm_action[0:3]
+        quat = single_arm_action[3:7]
+        hand_joints = single_arm_action[7:23]
 
-    quat = quat.astype(np.float64)
-    norm = np.linalg.norm(quat)
+        quat = quat.astype(np.float64)
+        norm = np.linalg.norm(quat)
 
-    if norm < 1e-8:
-        # zero quaternion → identity rotation
-        rotvec = np.zeros(3, dtype=np.float64)
-    else:
-        quat = quat / norm
-        # scipy expects (x, y, z, w)
-        quat_xyzw = [quat[1], quat[2], quat[3], quat[0]]
-        rot = Rotation.from_quat(quat_xyzw)
-        rotvec = rot.as_rotvec()
+        if norm < 1e-8:
+            rotvec = np.zeros(3, dtype=np.float64)
+        else:
+            quat = quat / norm
+            quat_xyzw = [quat[1], quat[2], quat[3], quat[0]]
+            rot = Rotation.from_quat(quat_xyzw)
+            rotvec = rot.as_rotvec()
 
-    return np.concatenate([pos, rotvec, hand_joints])
+        return np.concatenate([pos, rotvec, hand_joints])
 
+    if action.shape[0] == 23:
+        return _convert_single_arm(action)
+
+    if action.shape[0] == 46:
+        return np.concatenate(
+            [
+                _convert_single_arm(action[:23]),
+                _convert_single_arm(action[23:46]),
+            ],
+            axis=0,
+        )
+
+    return None
+
+
+def _flatten_action_for_storage(action) -> np.ndarray:
+    if isinstance(action, dict):
+        if "right" not in action or "left" not in action:
+            raise ValueError(f"Dict action must contain right and left keys, got {sorted(action)}.")
+        return np.concatenate(
+            [
+                np.asarray(action["right"], dtype=np.float64).reshape(-1),
+                np.asarray(action["left"], dtype=np.float64).reshape(-1),
+            ],
+            axis=0,
+        )
+    return np.asarray(action, dtype=np.float64).reshape(-1)
 
 
 def _write_demo_zarr_and_videos(trajectory, exp_name: str, success_index: int, base_out: Path, video_fps: int):
@@ -241,7 +268,7 @@ def _write_demo_zarr_and_videos(trajectory, exp_name: str, success_index: int, b
 
     The episode store will contain arrays for:
       - action: (T, N)
-      - action_rotvec: (T,22) if convertible
+      - action_rotvec: (T,22) for single-arm or (T,44) for bimanual if convertible
       - state: (T, ... ) if present under observations['state']
       - timestamp: (T,) in seconds
       - any small consistent low-dim fields
@@ -434,6 +461,7 @@ def main(_argv):
         if "intervene_action" in info:
             actions = info["intervene_action"]
 
+        actions = _flatten_action_for_storage(actions)
         transition = copy.deepcopy(dict(observations=obs, actions=actions, dones=done, infos=info))
         trajectory.append(transition)
 

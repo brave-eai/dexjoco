@@ -10,6 +10,8 @@ import gymnasium as gym
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
+INTERVENTION_START_DELAY_SECONDS = 2.0
+
 
 @dataclass(frozen=True)
 class SingleArmTeleopConfig:
@@ -155,6 +157,11 @@ class SingleArmViveHandTeleopWrapper(gym.ActionWrapper):
         if action == glfw.PRESS and key == glfw.KEY_SEMICOLON:
             self.intervened = not self.intervened
             if self.intervened:
+                print(
+                    f"Teleoperation will be enabled in "
+                    f"{INTERVENTION_START_DELAY_SECONDS:.1f}s..."
+                )
+                time.sleep(INTERVENTION_START_DELAY_SECONDS)
                 with self._tracker_lock:
                     self.tracker_start_world = self.latest_tracker.copy()
                 try:
@@ -370,6 +377,11 @@ class DualArmViveHandTeleopWrapper(gym.ActionWrapper):
         if action == glfw.PRESS and key == glfw.KEY_SEMICOLON:
             self.intervened = not self.intervened
             if self.intervened:
+                print(
+                    f"Teleoperation will be enabled in "
+                    f"{INTERVENTION_START_DELAY_SECONDS:.1f}s..."
+                )
+                time.sleep(INTERVENTION_START_DELAY_SECONDS)
                 with self._tracker_lock:
                     self.tracker_start_world = {
                         "right": self.latest_tracker_right.copy(),
