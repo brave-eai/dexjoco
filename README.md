@@ -1,4 +1,4 @@
-## dexjoco
+## DexJoCo
 
 DexJoCo is a MuJoCo-based simulation benchmark for dexterous hands
 
