@@ -1,10 +1,12 @@
+from typing import Literal
+
+from ...sim.envs.panda_water_plant_env import PandaWaterPlantGymEnv
 from ..config import TaskConfigBase
+from ..obs_adapters import DexjocoObsAdapter
 from ..sim_teleop import (
     SingleArmTeleopConfig,
     SingleArmViveHandTeleopWrapper,
 )
-from ...sim.envs.panda_water_plant_env import PandaWaterPlantGymEnv
-from ..obs_adapters import DexjocoObsAdapter
 
 
 class TaskConfig(TaskConfigBase):
@@ -22,7 +24,7 @@ class TaskConfig(TaskConfigBase):
     def get_environment(
         self,
         fake_env: bool = False,
-        render_mode: str = "human",
+        render_mode: Literal["rgb_array", "human"] = "human",
         randomize: bool = False,
         **kwargs,
     ):

@@ -1,0 +1,17 @@
+name: dexjoco
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - av
+  - glfw
+  - gymnasium=1.0.0
+  - mujoco=3.4.0
+  - numcodecs
+  - numpy
+  - scipy
+  - "zarr<3"
+  - pip:
+      - -e ./dexjoco
