@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["dexjoco"]
+
+[project]
+name = "dexjoco"
+version = "0.0.1"
+description = "A Unified Benchmark and Toolkit for Task-Oriented Dexterous Manipulation on MuJoCo"
+readme = "README.md"
+requires-python = ">=3.10, <3.12"
+license = "MIT"
+authors = [
+    { name = "Hanwen Wang", email = "hanwen.wang@nlpr.ia.ac.cn" },
+    { name = "Xiangyu Wang", email = "todo" },
+    { name = "Weizhi Zhao", email = "zhaoweizhi2025@ia.ac.cn" },
+]
+keywords = ["embodied AI", "benchmark", "toolkit"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "av",
+    "dm-robotics-transformations",
+    "glfw",
+    "gymnasium==1.0.0",
+    "mujoco==3.4.0",
+    "numcodecs",
+    "numpy",
+    "scipy",
+    "zarr<3",
+]
+
+[project.urls]
+# todo
+# Homepage = "https://github.com/example/example-project"
+# Documentation = "https://example-project.readthedocs.io"
+# Repository = "https://github.com/example/example-project.git"
+# Issues = "https://github.com/example/example-project/issues"
