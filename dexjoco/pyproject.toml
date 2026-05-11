@@ -24,15 +24,19 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
+    "absl-py",
     "av",
     "dm-robotics-transformations",
     "glfw",
     "gymnasium==1.0.0",
     "mujoco==3.4.0",
     "numcodecs",
-    "numpy",
+    "numpy==1.26.4",
     "scipy",
     "zarr<3",
+    "opencv-python",
+    "tqdm",
+    "imageio[ffmpeg]"
 ]
 
 [project.urls]

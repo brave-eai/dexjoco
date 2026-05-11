@@ -1,27 +1,25 @@
 # Simulation Demo Collection Walkthrough
-
-This repository is now trimmed around simulated teleoperation data collection.
 Optional UDP teleoperation providers are documented in
 [`teleop_udp_protocol.md`](teleop_udp_protocol.md).
-The main supported workflow is:
+The main workflow is:
 
-1. choose one of the kept simulation tasks
+1. choose a simulation task
 2. run `scripts/record_demos_zarr.py`
 3. teleoperate in MuJoCo and save successful episodes as Zarr demos
 
-The kept tasks are:
+Task names:
 
-- `Water Plant` (`water_plant`)
-- `Fold Glasses` (`fold_glasses`)
-- `Click Mouse` (`click_mouse`)
-- `Pinch Tongs` (`pinch_tongs`)
-- `Pick Bucket` (`pick_bucket`)
-- `Hammer Nail` (`hammer_nail`)
-- `Bimanual Microwave Cook` (`bimanual_microwave_cook`)
-- `Bimanual Unlock iPad` (`bimanual_unlock_ipad`)
-- `Bimanual Hanoi` (`bimanual_hanoi`)
-- `Bimanual Assembly` (`bimanual_assembly`)
-- `Bimanual Photograph` (`bimanual_photograph`)
+- `bimanual_assembly`
+- `bimanual_hanoi`
+- `bimanual_microwave_cook`
+- `bimanual_photograph`
+- `bimanual_unlock_ipad`
+- `click_mouse`
+- `fold_glasses`
+- `hammer_nail`
+- `pick_bucket`
+- `pinch_tongs`
+- `water_plant`
 
 ## Environment
 
@@ -52,7 +50,7 @@ conda run -n dexjoco python scripts/record_demos_zarr.py \
 
 Useful flags:
 
-- `--exp_name`: one of the kept task names above
+- `--exp_name`: one of the task names above
 - `--successes_needed`: stop automatically after this many successful demos
 - `--randomize=True`: keep simulation domain randomization enabled during collection
 - `--render_mode=human`: open the MuJoCo viewer for teleoperation
@@ -76,6 +74,5 @@ Each successful demo is written to its own directory:
 
 ## Notes
 
-- The task configs under `tasks/*/config.py` are intentionally minimal and centered on simulated teleoperation capture.
+- The task configs under `dexjoco.tasks.*.config` are centered on simulated teleoperation capture.
 - Domain randomization is preserved through the `randomize` argument in each task environment.
-- Legacy reward-classifier training, policy-training launch scripts, and real-robot deployment helpers have been removed from this trimmed setup.

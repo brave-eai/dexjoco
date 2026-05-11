@@ -1,15 +1,14 @@
-# dexjoco_sim
+# dexjoco
 
-This package contains the MuJoCo simulation environments used by Dexjoco.
+This package contains DexJoCo's MuJoCo simulation environments, task
+configuration layer, and demo storage utilities.
 
 ## Installation
 
 From the repository root:
 
 ```bash
-cd dexjoco_sim
-pip install -e .
-pip install -r requirements.txt
+pip install -e ./dexjoco
 ```
 
 ## Explore the Environments
@@ -17,14 +16,19 @@ pip install -r requirements.txt
 Use the top-level demo collection tool to run the maintained tasks:
 
 ```bash
-cd ..
 python scripts/record_demos_zarr.py --exp_name water_plant
 ```
 
 ## Credits
 
 - This simulation stack was originally built on top of work by [Kevin Zakka](https://kzakka.com/).
-- The current Dexjoco environments adapt and extend that Gymnasium-based foundation.
+- DexJoCo environments adapt and extend that Gymnasium-based foundation.
+
+## License
+
+DexJoCo-owned code in this package is released under the MIT License. Bundled
+third-party robot and hand assets under `dexjoco/sim/envs/xmls` retain their
+own license terms.
 
 ## Notes
 

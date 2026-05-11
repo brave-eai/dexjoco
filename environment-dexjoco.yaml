@@ -10,7 +10,7 @@ dependencies:
   - gymnasium=1.0.0
   - mujoco=3.4.0
   - numcodecs
-  - numpy
+  - numpy=1.26.4
   - scipy
   - "zarr<3"
   - pip:

@@ -7,29 +7,27 @@ For each successful episode, the script writes:
 - `videos/<camera_key>.mp4` for every RGB camera stream present in the observations
 """
 
-import sys
 import copy
 import datetime
 from pathlib import Path
 
-from absl import app, flags
-from tqdm import tqdm
-import numpy as np
 import cv2
+import numpy as np
 import zarr
-from scipy.spatial.transform import Rotation
-
-from tasks.mappings import CONFIG_MAPPING, get_task_display_name, resolve_task_name
+from absl import app, flags
 
 # Project-specific utilities for replay storage and video writing.
-from dexjoco_data.episode_store import ZarrEpisodeStore
-from dexjoco_data.video_writer import Mp4VideoWriter
+from dexjoco.data.episode_store import ZarrEpisodeStore
+from dexjoco.data.video_writer import Mp4VideoWriter
+from dexjoco.tasks.mappings import CONFIG_MAPPING
+from scipy.spatial.transform import Rotation
+from tqdm import tqdm
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string(
     "exp_name",
     "water_plant",
-    "Task name. Supports internal ids such as water_plant and display names such as 'Water Plant'.",
+    "Task name, such as water_plant.",
 )
 flags.DEFINE_integer("successes_needed", 2, "Number of successful demos to collect.")
 flags.DEFINE_bool("show_sim_cameras", True, "Show simulation cameras")
@@ -420,12 +418,8 @@ def _has_displayable_wrist_images(obs) -> bool:
 
 
 def main(_argv):
-    try:
-        task_id = resolve_task_name(FLAGS.exp_name)
-    except KeyError:
-        raise ValueError(f"Unknown task name: {FLAGS.exp_name}")
+    task_id = FLAGS.exp_name
 
-    task_display_name = get_task_display_name(task_id)
     config = CONFIG_MAPPING[task_id]()
 
     env = config.get_environment(
@@ -435,7 +429,7 @@ def main(_argv):
     )
 
     obs, info = env.reset()
-    print(f"Environment reset complete for {task_display_name} ({task_id}).")
+    print(f"Environment reset complete for {task_id}.")
 
     base_out = _ensure_base_outdir(FLAGS.out_dir)
     saved_demo_dirs = []

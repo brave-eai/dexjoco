@@ -1,11 +1,12 @@
 ## DexJoCo
 
-DexJoCo is a MuJoCo-based simulation benchmark for dexterous hands
+DexJoCo is a MuJoCo-based simulation benchmark and toolkit for task-oriented
+dexterous manipulation.
 
 ## Installation
 
 ```bash
-conda env create -f environment-dexjoco.yml
+conda env create -f environment-dexjoco.yaml
 conda activate dexjoco
 ```
 
@@ -20,7 +21,7 @@ teleoperation helpers live under
 - [`teleoperation/rokoko`](teleoperation/rokoko): DexJoCo-maintained Rokoko
   Studio bridge for forwarding canonicalized raw hand keypoints from another PC
   to the GeoRT/DexJoCo stack
-- [`teleoperation/GeoRT`](teleoperation/GeoRT): third-party GeoRT code kept
+- [`teleoperation/GeoRT`](teleoperation/GeoRT): third-party GeoRT code included
   in-repo for non-commercial research use, including DexJoCo's Rokoko-to-UDP
   hand retargeting scripts for ports `5014` and `5016`
 
@@ -45,14 +46,19 @@ python scripts/record_demos_zarr.py \
   videos/<camera_key>.mp4
 ```
 
-The Zarr replay buffer and H.264 video writer live in the local
-`dexjoco_data` package used by the demo collection tools.
+The Zarr replay buffer and H.264 video writer live in `dexjoco.data`.
 
 ## License
 
 DexJoCo-owned code in this repository is released under the
 [`MIT License`](LICENSE).
 
-Bundled third-party components keep their separate license terms. In
-particular, [`teleoperation/GeoRT`](teleoperation/GeoRT) remains under its
-upstream non-commercial license and is not covered by the MIT License.
+Bundled third-party components and assets keep their separate license terms.
+In particular:
+
+- [`teleoperation/GeoRT`](teleoperation/GeoRT) remains under its upstream
+  non-commercial license and is not covered by the MIT License.
+- [`dexjoco/dexjoco/sim/envs/xmls/franka_emika_panda`](dexjoco/dexjoco/sim/envs/xmls/franka_emika_panda)
+  remains under Apache-2.0.
+- [`dexjoco/dexjoco/sim/envs/xmls/wonik_allegro`](dexjoco/dexjoco/sim/envs/xmls/wonik_allegro)
+  remains under BSD-2-Clause.
