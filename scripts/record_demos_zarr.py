@@ -31,11 +31,6 @@ flags.DEFINE_string(
 )
 flags.DEFINE_integer("successes_needed", 2, "Number of successful demos to collect.")
 flags.DEFINE_bool("show_sim_cameras", True, "Show simulation cameras")
-flags.DEFINE_bool(
-    "policy_mode",
-    False,
-    "Use policy action wrappers instead of teleoperation wrappers.",
-)
 flags.DEFINE_integer(
     "max_steps",
     0,
@@ -423,7 +418,6 @@ def main(_argv):
     config = CONFIG_MAPPING[task_id]()
 
     env = config.get_environment(
-        policy_mode=FLAGS.policy_mode,
         render_mode=FLAGS.render_mode,
         randomize=FLAGS.randomize,
     )

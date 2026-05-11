@@ -36,6 +36,23 @@ python scripts/record_demos_zarr.py \
   --successes_needed 1 
 ```
 
+## Headless Mode
+
+Set EGL for offscreen rendering:
+```bash
+export MUJOCO_GL=egl
+```
+
+Use `policy_mode=True` and `render_mode="rgb_array"` to construct headless environments:
+```python
+TaskConfig.get_environment(policy_mode=True, render_mode="rgb_array", ...)
+```
+`render_mode="rgb_array"` selects offscreen rendering.
+
+`policy_mode=True` disables the teleoperation wrapper and exposes the policy action interface.
+
+Teleoperation data collection (`policy_mode=False`) uses the interactive viewer, therefore does not require the headless configuration.
+
 ## Demo Format
 
 `scripts/record_demos_zarr.py` writes each successful demo as:

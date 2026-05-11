@@ -13,10 +13,26 @@ pip install -e ./dexjoco
 
 ## Explore the Environments
 
-Use the top-level demo collection tool to run the maintained tasks:
+Use the top-level demo collection tool for interactive teleoperation data
+collection:
 
 ```bash
 python scripts/record_demos_zarr.py --exp_name water_plant
+```
+
+## Headless Mode
+
+Set EGL for offscreen rendering:
+
+```bash
+export MUJOCO_GL=egl
+```
+
+Use `policy_mode=True` and `render_mode="rgb_array"` to construct headless
+environments:
+
+```python
+TaskConfig.get_environment(policy_mode=True, render_mode="rgb_array", ...)
 ```
 
 ## Credits
@@ -32,7 +48,7 @@ own license terms.
 
 ## Notes
 
-For CPU-only machines that need EGL:
+For machines that require EGL for offscreen rendering:
 
 ```bash
 export MUJOCO_GL=egl
