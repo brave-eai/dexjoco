@@ -3,6 +3,7 @@ from typing import Literal
 from ...sim.envs.panda_pinch_tongs_env import PandaPinchTongsGymEnv
 from ..config import TaskConfigBase
 from ..obs_adapters import DexjocoObsAdapter
+from ..policy_wrappers import SingleArmPolicyWrapper
 from ..sim_teleop import (
     SingleArmTeleopConfig,
     SingleArmViveHandTeleopWrapper,
@@ -15,7 +16,7 @@ class TaskConfig(TaskConfigBase):
 
     def get_environment(
         self,
-        fake_env=False,
+        policy_mode=False,
         render_mode: Literal["rgb_array", "human"] = "human",
         randomize=False,
         **kwargs,
@@ -23,7 +24,9 @@ class TaskConfig(TaskConfigBase):
         env = PandaPinchTongsGymEnv(
             render_mode=render_mode, randomize=randomize, hz=30, **kwargs
         )
-        if not fake_env:
+        if policy_mode:
+            env = SingleArmPolicyWrapper(env)
+        else:
             env = SingleArmViveHandTeleopWrapper(env, self.teleop)
         env = DexjocoObsAdapter(env, proprio_keys=self.proprio_keys)
         return env

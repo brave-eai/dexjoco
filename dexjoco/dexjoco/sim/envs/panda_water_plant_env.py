@@ -3,7 +3,7 @@
 import random
 import time
 from pathlib import Path
-from typing import Literal
+from typing import Any, Dict, Literal, Tuple
 
 import mujoco
 import numpy as np
@@ -392,7 +392,7 @@ class PandaWaterPlantGymEnv(MujocoGymEnv):
         self._model.cam_pos[self._front_camera_id] = cam_pos
         self._model.cam_quat[self._front_camera_id] = cam_quat_wxyz
 
-    def reset(self):
+    def reset(self, seed=None, **kwargs) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
         """Reset the environment."""
 
         mujoco.mj_resetData(self._model, self._data)  # type: ignore

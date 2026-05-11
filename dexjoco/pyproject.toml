@@ -13,7 +13,7 @@ readme = "README.md"
 requires-python = ">=3.10, <3.12"
 license = "MIT"
 authors = [
-    { name = "Hanwen Wang", email = "hanwen.wang@nlpr.ia.ac.cn" },
+    { name = "Hanwen Wang", email = "wanghanwen2025@ia.ac.cn" },
     { name = "Xiangyu Wang", email = "wangxiangyu2025@ia.ac.cn" },
     { name = "Weizhi Zhao", email = "zhaoweizhi2025@ia.ac.cn" },
 ]
