@@ -14,8 +14,8 @@ class TaskConfig(TaskConfigBase):
     proprio_keys = [
         "tcp_pose",
         "gripper_pose",
-        "boxed_food_ori_pose",
         "bucket_ori_pose",
+        "boxed_food_ori_pose",
         "table_delta_height",
     ]
     teleop = SingleArmTeleopConfig(pose_scale=2.0)
