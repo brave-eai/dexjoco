@@ -29,9 +29,9 @@ class DexjocoObsAdapter(gym.ObservationWrapper):
     def observation(self, obs):
         proprio_values = [np.asarray(obs["state"][key]).ravel() for key in self.proprio_keys]
         if proprio_values:
-            flat_state = np.concatenate(proprio_values, axis=0).astype(np.float32, copy=False)
+            flat_state = np.concatenate(proprio_values, axis=0).astype(np.float64, copy=False)
         else:
-            flat_state = np.zeros((0,), dtype=np.float32)
+            flat_state = np.zeros((0,), dtype=np.float64)
         return {"state": flat_state, **obs.get("images", {})}
 
     def reset(self, **kwargs):

@@ -611,7 +611,7 @@ class PandaWaterPlantGymEnv(MujocoGymEnv):
             "gripper_pose": allegro_qpos,
             "spray_ori_pose": self._spray_ori_pose,
             "plant_ori_pose": self._plant_ori_pose,
-            "table_delta_height": np.array([self.delta_h], dtype=np.float32),
+            "table_delta_height": np.asarray([self.delta_h], dtype=np.float64),
         }
 
         return obs
