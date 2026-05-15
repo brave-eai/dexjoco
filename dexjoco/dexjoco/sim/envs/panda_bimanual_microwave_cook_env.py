@@ -55,6 +55,10 @@ class PandaBimanualMicrowaveCookGymEnv(MujocoGymEnv):
             render_spec=render_spec,
         )
 
+        # Seed the RNGs used by environment randomization.
+        random.seed(seed)
+        np.random.seed(seed)
+
         self.metadata = {
             "render_modes": ["human", "rgb_array"],
             "render_fps": int(np.round(1.0 / self.control_dt)),
