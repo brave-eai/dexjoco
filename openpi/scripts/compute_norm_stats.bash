@@ -1,0 +1,23 @@
+python scripts/compute_norm_stats.py hammer_nail --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py click_mouse --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py pick_bucket --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py pinch_tongs --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py fold_glasses --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py water_plant --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py bimanual_unlock_ipad --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py bimanual_hanoi --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py bimanual_assembly --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py bimanual_microwave_cook --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py bimanual_photograph --batch-size=64 --num-workers=16
+
+python scripts/compute_norm_stats.py hammer_nail_rand_full --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py click_mouse_rand_full --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py pick_bucket_rand_full --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py pinch_tongs_rand_full --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py fold_glasses_rand_full --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py water_plant_rand_full --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py bimanual_unlock_ipad_rand_full --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py bimanual_hanoi_rand_full --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py bimanual_assembly_rand_full --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py bimanual_microwave_cook_rand_full --batch-size=64 --num-workers=16
+python scripts/compute_norm_stats.py bimanual_photograph_rand_full --batch-size=64 --num-workers=16

@@ -1,0 +1,10 @@
+name: openpi
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - git
+  - git-lfs
+  - pip
+  - ffmpeg=7

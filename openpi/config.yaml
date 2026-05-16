@@ -1,0 +1,12 @@
+pretrained_model_path: "../checkpoints/pi05_base/params" # path to the pretrained model weights
+pretrained_model_action_dim_44_path: "../checkpoints/pi05_base_action_dim_44/params" # path to the pretrained model weights (action head expanded to 44 for bimanual tasks)
+dataset_root: "../datasets/dexjoco_lerobot_datasets" # expected layout: <dataset_root>/<task_name>/, e.g. hammer_nail, click_mouse, ..., bimanual_photograph
+rand_full_dataset_root: "../datasets/dexjoco_lerobot_datasets_rand_full" # expected layout: <rand_full_dataset_root>/<task_name>/ with the same 11 task names
+ckpts_root: "../checkpoints/pi05_ckpts"
+rand_full_ckpts_root: "../checkpoints/pi05_rand_full_ckpts"
+wandb_enabled: true
+
+batch_size: 32
+# batch_size: 1 # for test
+single_arm_steps: 30000
+dual_arm_steps: 60000
