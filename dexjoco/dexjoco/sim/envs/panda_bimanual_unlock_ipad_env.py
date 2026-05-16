@@ -12,14 +12,16 @@ from ..controllers import opspace
 from ..mujoco_gym_env import GymRenderingSpec, MujocoGymEnv
 from ..rendering import MujocoRenderer
 
-
 _HERE = Path(__file__).parent
 _XML_PATH = _HERE / "xmls" / "arena_arm_hand_ipad.xml"
 _PANDA_HOME = np.asarray((0, -0.785, 0, -2.35, 0, 1.57, np.pi / 4))  # Origin
-_ALLEGRO_HOME = np.asarray((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.263, 0, 0, 0), dtype=np.float32)
+_ALLEGRO_HOME = np.asarray(
+    (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.263, 0, 0, 0), dtype=np.float32
+)
 _CARTESIAN_BOUNDS = np.asarray([[-0.8, -0.8, -0.8], [0.8, 0.8, 0.8]])
 _STAND_SAMPLING_BOUNDS = np.array([[-0.35, 0.05], [-0.30, 0.1]])
 _N_ALLEGRO = 16
+
 
 class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
     metadata = {"render_modes": ["rgb_array", "human"]}
@@ -38,6 +40,7 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         randomize_dynamics: bool = False,
         config=None,
         hz=30,
+        password: list[int] | None = None,
     ):
         self.hz = 30
         self._action_scale = action_scale
@@ -68,41 +71,101 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         self.intervened = False
 
         # Panda caches
-        self._panda_right_dof_ids = np.asarray([self._model.joint(f"joint{i}_right").id for i in range(1, 8)])
-        self._panda_right_ctrl_ids = np.asarray([self._model.actuator(f"actuator{i}_right").id for i in range(1, 8)])
+        self._panda_right_dof_ids = np.asarray(
+            [self._model.joint(f"joint{i}_right").id for i in range(1, 8)]
+        )
+        self._panda_right_ctrl_ids = np.asarray(
+            [self._model.actuator(f"actuator{i}_right").id for i in range(1, 8)]
+        )
         self._site_right_id = self._model.site("attachment_site_right").id
 
-        self._panda_left_dof_ids = np.asarray([self._model.joint(f"joint{i}_left").id for i in range(1, 8)])
-        self._panda_left_ctrl_ids = np.asarray([self._model.actuator(f"actuator{i}_left").id for i in range(1, 8)])
+        self._panda_left_dof_ids = np.asarray(
+            [self._model.joint(f"joint{i}_left").id for i in range(1, 8)]
+        )
+        self._panda_left_ctrl_ids = np.asarray(
+            [self._model.actuator(f"actuator{i}_left").id for i in range(1, 8)]
+        )
         self._site_left_id = self._model.site("attachment_site_left").id
 
-        self._panda_dof_ids = np.concatenate([self._panda_right_dof_ids, self._panda_left_dof_ids])
-        self._panda_ctrl_ids = np.concatenate([self._panda_right_ctrl_ids, self._panda_left_ctrl_ids])
+        self._panda_dof_ids = np.concatenate(
+            [self._panda_right_dof_ids, self._panda_left_dof_ids]
+        )
+        self._panda_ctrl_ids = np.concatenate(
+            [self._panda_right_ctrl_ids, self._panda_left_ctrl_ids]
+        )
 
         allegro_actuator_right_names = [
-            "ffa0_right", "ffa1_right", "ffa2_right", "ffa3_right",
-            "mfa0_right", "mfa1_right", "mfa2_right", "mfa3_right",
-            "rfa0_right", "rfa1_right", "rfa2_right", "rfa3_right",
-            "tha0_right", "tha1_right", "tha2_right", "tha3_right",
+            "ffa0_right",
+            "ffa1_right",
+            "ffa2_right",
+            "ffa3_right",
+            "mfa0_right",
+            "mfa1_right",
+            "mfa2_right",
+            "mfa3_right",
+            "rfa0_right",
+            "rfa1_right",
+            "rfa2_right",
+            "rfa3_right",
+            "tha0_right",
+            "tha1_right",
+            "tha2_right",
+            "tha3_right",
         ]
         allegro_actuator_left_names = [
-            "rfa0_left", "rfa1_left", "rfa2_left", "rfa3_left",
-            "mfa0_left", "mfa1_left", "mfa2_left", "mfa3_left",
-            "ffa0_left", "ffa1_left", "ffa2_left", "ffa3_left",
-            "tha0_left", "tha1_left", "tha2_left", "tha3_left",
+            "rfa0_left",
+            "rfa1_left",
+            "rfa2_left",
+            "rfa3_left",
+            "mfa0_left",
+            "mfa1_left",
+            "mfa2_left",
+            "mfa3_left",
+            "ffa0_left",
+            "ffa1_left",
+            "ffa2_left",
+            "ffa3_left",
+            "tha0_left",
+            "tha1_left",
+            "tha2_left",
+            "tha3_left",
         ]
 
         self._allegro_joint_right_names = [
-            "ffj0_right", "ffj1_right", "ffj2_right", "ffj3_right",
-            "mfj0_right", "mfj1_right", "mfj2_right", "mfj3_right",
-            "rfj0_right", "rfj1_right", "rfj2_right", "rfj3_right",
-            "thj0_right", "thj1_right", "thj2_right", "thj3_right",
+            "ffj0_right",
+            "ffj1_right",
+            "ffj2_right",
+            "ffj3_right",
+            "mfj0_right",
+            "mfj1_right",
+            "mfj2_right",
+            "mfj3_right",
+            "rfj0_right",
+            "rfj1_right",
+            "rfj2_right",
+            "rfj3_right",
+            "thj0_right",
+            "thj1_right",
+            "thj2_right",
+            "thj3_right",
         ]
         self._allegro_joint_left_names = [
-            "rfj0_left", "rfj1_left", "rfj2_left", "rfj3_left",
-            "mfj0_left", "mfj1_left", "mfj2_left", "mfj3_left",
-            "ffj0_left", "ffj1_left", "ffj2_left", "ffj3_left",
-            "thj0_left", "thj1_left", "thj2_left", "thj3_left",
+            "rfj0_left",
+            "rfj1_left",
+            "rfj2_left",
+            "rfj3_left",
+            "mfj0_left",
+            "mfj1_left",
+            "mfj2_left",
+            "mfj3_left",
+            "ffj0_left",
+            "ffj1_left",
+            "ffj2_left",
+            "ffj3_left",
+            "thj0_left",
+            "thj1_left",
+            "thj2_left",
+            "thj3_left",
         ]
         # Get actuator ids (fall back to mj_name2id if necessary)
         allegro_ids = []
@@ -119,12 +182,15 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         self._allegro_ctrl_ids = np.asarray(allegro_ids, dtype=int)
 
         self._allegro_dof_right_ids = np.asarray(
-            [int(self._model.joint(n).qposadr) for n in self._allegro_joint_right_names],
-            dtype=int
+            [
+                int(self._model.joint(n).qposadr)
+                for n in self._allegro_joint_right_names
+            ],
+            dtype=int,
         )
         self._allegro_dof_left_ids = np.asarray(
             [int(self._model.joint(n).qposadr) for n in self._allegro_joint_left_names],
-            dtype=int
+            dtype=int,
         )
 
         self._table_body_id = self._model.body("table").id
@@ -135,7 +201,8 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             and self._model.geom_type[gid] == mujoco.mjtGeom.mjGEOM_CYLINDER
         ]
         self._table_leg_half_len0 = {
-            gid: float(self._model.geom_size[gid, 1]) for gid in self._table_leg_geom_ids
+            gid: float(self._model.geom_size[gid, 1])
+            for gid in self._table_leg_geom_ids
         }
 
         self._front_camera_id = int(self._model.camera("back").id)
@@ -250,10 +317,16 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
                 # Track all button/digit visuals by material name
                 try:
                     matid = int(self._model.geom_matid[gid])
-                    mname = mujoco.mj_id2name(self._model, mujoco.mjtObj.mjOBJ_MATERIAL, matid)
-                    if mname in ("mat_digit",) or (mname and mname.startswith("mat_digit_")):
+                    mname = mujoco.mj_id2name(
+                        self._model, mujoco.mjtObj.mjOBJ_MATERIAL, matid
+                    )
+                    if mname in ("mat_digit",) or (
+                        mname and mname.startswith("mat_digit_")
+                    ):
                         self._button_visual_geom_ids.append(gid)
-                        self._button_visual_orig_rgba[gid] = self._model.geom_rgba[gid].copy()
+                        self._button_visual_orig_rgba[gid] = self._model.geom_rgba[
+                            gid
+                        ].copy()
                 except Exception:
                     pass
         except Exception:
@@ -268,16 +341,21 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             except Exception:
                 self._mat_digit_ids[d] = -1
             try:
-                self._mat_digit_light_ids[d] = int(self._model.material(f"mat_digit_{d}_light").id)
+                self._mat_digit_light_ids[d] = int(
+                    self._model.material(f"mat_digit_{d}_light").id
+                )
             except Exception:
                 self._mat_digit_light_ids[d] = -1
 
         # --- Screen unlock interaction ---
-        # self._unlock_sequence = [1, 2, 3, 4, 5, 6]
-        # self._unlock_sequence = [1, 2, 3]
+        if password is None:
+            self._unlock_sequence = [1, 2, 3]
+        else:
+            assert all(0 <= p and p <= 9 for p in password), "Password digits must be between 0 and 9."
+            self._unlock_sequence = list(password)
 
-        self._unlock_sequence = [2]
         self._unlock_index = 0
+        self._unlock_failed = False
         self._pressed_last = set()
         self._buttons_hidden = False
         self._screen_unlocked = False
@@ -293,7 +371,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         except Exception:
             pass
         try:
-            self._mat_screen_unlocked_id = int(self._model.material("mat_screen_unlocked").id)
+            self._mat_screen_unlocked_id = int(
+                self._model.material("mat_screen_unlocked").id
+            )
         except Exception:
             pass
 
@@ -311,12 +391,24 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         }
 
         self._unlock_action_template = np.zeros(7 + _N_ALLEGRO, dtype=np.float32)
-        self._unlock_action_template[7:7 + _N_ALLEGRO] = np.array(
+        self._unlock_action_template[7 : 7 + _N_ALLEGRO] = np.array(
             [
-                0.1, 0.1, 0.1, 0.0,   # ff (index extended)
-                1.2, 1.2, 1.2, 1.2,   # mf curled
-                1.2, 1.2, 1.2, 1.2,   # rf curled
-                1.0, 1.0, 1.0, 1.0,   # thumb curled
+                0.1,
+                0.1,
+                0.1,
+                0.0,  # ff (index extended)
+                1.2,
+                1.2,
+                1.2,
+                1.2,  # mf curled
+                1.2,
+                1.2,
+                1.2,
+                1.2,  # rf curled
+                1.0,
+                1.0,
+                1.0,
+                1.0,  # thumb curled
             ],
             dtype=np.float32,
         )
@@ -333,11 +425,11 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         self._stand_body_z0 = self._model.body("ipad_stand").pos[2].copy()
 
         self._finger_geom_ids = {
-        self._model.geom("fingertip_ff_right").id,
-        self._model.geom("fingertip_mf_right").id,
-        self._model.geom("fingertip_rf_right").id,
-        self._model.geom("thumbtip_right").id,
-    }
+            self._model.geom("fingertip_ff_right").id,
+            self._model.geom("fingertip_mf_right").id,
+            self._model.geom("fingertip_rf_right").id,
+            self._model.geom("thumbtip_right").id,
+        }
         self._ipad_body_id = self._model.body("ipad_body").id
         self._ipad_mass0 = float(self._model.body_mass[self._ipad_body_id])
         self._ipad_mass_mul = (0.75, 1.25)
@@ -349,7 +441,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             return int(cam.id)
         except Exception:
             try:
-                return int(mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_CAMERA, name))
+                return int(
+                    mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_CAMERA, name)
+                )
             except Exception:
                 return -1
 
@@ -383,8 +477,12 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
 
     def _prime_rgb_array_renderer(self):
         """Discard one offscreen frame per camera to avoid stale first-reset images."""
-        self._viewer.render(render_mode="rgb_array", camera_id=self._wrist_left_camera_id)
-        self._viewer.render(render_mode="rgb_array", camera_id=self._wrist_right_camera_id)
+        self._viewer.render(
+            render_mode="rgb_array", camera_id=self._wrist_left_camera_id
+        )
+        self._viewer.render(
+            render_mode="rgb_array", camera_id=self._wrist_right_camera_id
+        )
         self._viewer.render(render_mode="rgb_array", camera_id=self._front_camera_id)
 
     def _apply_random_camera_to_front(self, camera_idx):
@@ -421,7 +519,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         self._model.cam_quat[self._front_camera_id] = cam_quat_wxyz
 
     # --------------------------
-    def reset(self, seed=None, **kwargs) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(
+        self, seed=None, **kwargs
+    ) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
         """Reset the environment."""
         mujoco.mj_resetData(self._model, self._data)
 
@@ -463,8 +563,12 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
 
         stand_pos[:2] = stand_xy
         stand_pos[2] = self._stand_body_z0 + self.delta_h
-        self._ipad_ori_pose = np.array(list(ipad_pos) + list(ipad_quat), dtype=np.float64)
-        self._stand_ori_pose = np.array(list(stand_pos) + list(stand_quat), dtype=np.float64)
+        self._ipad_ori_pose = np.array(
+            list(ipad_pos) + list(ipad_quat), dtype=np.float64
+        )
+        self._stand_ori_pose = np.array(
+            list(stand_pos) + list(stand_quat), dtype=np.float64
+        )
 
         self._model.body_pos[stand_body_id] = self._stand_ori_pose[:3]
         self._data.jnt("ipad_freejoint").qpos[:3] = self._ipad_ori_pose[:3]
@@ -488,7 +592,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             self.randomize_desktop_texture()
 
         if self._randomize_dynamics:
-            mass = float(np.random.uniform(self._ipad_mass_mul[0], self._ipad_mass_mul[1]))
+            mass = float(
+                np.random.uniform(self._ipad_mass_mul[0], self._ipad_mass_mul[1])
+            )
             self._model.body_mass[self._ipad_body_id] = self._ipad_mass0 * mass
 
         # print(
@@ -503,6 +609,8 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         # Reset button visuals
         self._set_button_materials(set())
         self._unlock_index = 0
+        self._unlock_failed = False
+        self._success_trigger_count = 0
         self._pressed_last = set()
         self._buttons_hidden = False
         self._set_screen_locked()
@@ -513,7 +621,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         obs = self._compute_observation()
         return obs, {"succeed": False}
 
-    def step(self, action) -> Tuple[Dict[str, np.ndarray], float, bool, bool, Dict[str, Any]]:
+    def step(
+        self, action
+    ) -> Tuple[Dict[str, np.ndarray], float, bool, bool, Dict[str, Any]]:
         start_time = time.time()
         # Determine if action is a "zero op" (None / scalar 0 / size-1 array 0).
         is_zero_action = False
@@ -523,7 +633,11 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             try:
                 if np.isscalar(action) and action == 0:
                     is_zero_action = True
-                elif isinstance(action, np.ndarray) and action.size == 1 and action.item() == 0:
+                elif (
+                    isinstance(action, np.ndarray)
+                    and action.size == 1
+                    and action.item() == 0
+                ):
                     is_zero_action = True
             except Exception:
                 is_zero_action = False
@@ -540,8 +654,8 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             x_l, y_l, z_l, w_l, qx_l, qy_l, qz_l = left[0:7]
 
             # Parse allegro (each side _N_ALLEGRO)
-            allegro_r = np.asarray(right[7:7 + _N_ALLEGRO], dtype=np.float64)
-            allegro_l = np.asarray(left[7:7 + _N_ALLEGRO], dtype=np.float64)
+            allegro_r = np.asarray(right[7 : 7 + _N_ALLEGRO], dtype=np.float64)
+            allegro_l = np.asarray(left[7 : 7 + _N_ALLEGRO], dtype=np.float64)
             allegro_angles = np.concatenate([allegro_r, allegro_l], axis=0)
         else:
             # zero action -> do not change mocap nor allegro
@@ -562,7 +676,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         tquat_l = np.array([w_l, qx_l, qy_l, qz_l])
 
         # ----- apply mocap for right (keep original protection logic) -----
-        if not is_zero_action and not (np.allclose(tpos_r, 0.0) and np.allclose(tquat_r, 0.0)):
+        if not is_zero_action and not (
+            np.allclose(tpos_r, 0.0) and np.allclose(tquat_r, 0.0)
+        ):
             # print("Applying mocap action - Right TCP pos:", tpos_r, "quat:", tquat_r)
             self._data.mocap_pos[0] = tpos_r
             self._data.mocap_quat[0] = tquat_r
@@ -572,7 +688,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             self._data.mocap_quat[0] = r_quat
 
         # ----- apply mocap for left (preserve the current pose on zero action) -----
-        if not is_zero_action and not (np.allclose(tpos_l, 0.0) and np.allclose(tquat_l, 0.0)):
+        if not is_zero_action and not (
+            np.allclose(tpos_l, 0.0) and np.allclose(tquat_l, 0.0)
+        ):
             self._data.mocap_pos[1] = tpos_l
             self._data.mocap_quat[1] = tquat_l
         else:
@@ -622,7 +740,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
                 # Only update Allegro control when new joint targets are provided.
                 if allegro_angles is not None and np.any(valid_mask):
                     target_qpos = allegro_angles
-                    self._data.ctrl[ctrl_ids[valid_mask].astype(int)] = target_qpos[valid_mask]
+                    self._data.ctrl[ctrl_ids[valid_mask].astype(int)] = target_qpos[
+                        valid_mask
+                    ]
 
             except Exception:
                 pass
@@ -641,7 +761,7 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
 
         self.env_step += 1
         terminated = False
-        if self.env_step >= 1200:
+        if self.env_step >= 1200 or self._unlock_failed:
             terminated = True
 
         # ---- human rendering ----
@@ -659,7 +779,17 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         rew = 1.0 if success else 0.0
         terminated = terminated or success
 
-        return obs, rew, terminated, False, {"succeed": success, "grasp_penalty": 0.0, "pressed_digits": pressed_digits}
+        return (
+            obs,
+            rew,
+            terminated,
+            False,
+            {
+                "succeed": success,
+                "grasp_penalty": 0.0,
+                "pressed_digits": pressed_digits,
+            },
+        )
 
     def _set_button_materials(self, pressed_ids: set):
         """Set button materials based on pressed state."""
@@ -686,7 +816,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
                     if digit_gid is not None:
                         self._model.geom_matid[digit_gid] = mat_off
                 else:
-                    self._model.geom_rgba[gid] = self._button_geom_orig_rgba.get(gid, self._model.geom_rgba[gid])
+                    self._model.geom_rgba[gid] = self._button_geom_orig_rgba.get(
+                        gid, self._model.geom_rgba[gid]
+                    )
 
     def _update_button_visuals(self):
         """Detect contacts and toggle button color while pressed.
@@ -724,6 +856,7 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             return
         newly_pressed = pressed - self._pressed_last
         pressed_digits = []
+        # TODO: only consider the first newly pressed button
         for gid in sorted(newly_pressed):
             digit = self._button_geom_to_digit.get(gid)
             if digit is None:
@@ -737,10 +870,10 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
                     self._hide_buttons()
                     self._screen_unlocked = True
             else:
-
                 # print("----!!!wrong input!!!----")
                 # self.reset()
                 # reset on wrong digit
+                self._unlock_failed = True
                 self._unlock_index = 0
                 self._set_screen_locked()
                 self._screen_unlocked = False
@@ -771,9 +904,14 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         if not self._button_visual_geom_ids:
             return
         for gid in self._button_visual_geom_ids:
-            self._model.geom_rgba[gid] = self._button_visual_orig_rgba.get(gid, self._model.geom_rgba[gid])
+            self._model.geom_rgba[gid] = self._button_visual_orig_rgba.get(
+                gid, self._model.geom_rgba[gid]
+            )
 
     def _compute_success(self):
+        if self._unlock_failed:
+            return False
+        
         if self._screen_unlocked:
             self._success_trigger_count += 1
         else:
@@ -793,7 +931,11 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         return params
 
     def get_unlock_status(self) -> dict:
-        screen_mat = int(self._model.geom_matid[self._screen_geom_id]) if self._screen_geom_id >= 0 else -1
+        screen_mat = (
+            int(self._model.geom_matid[self._screen_geom_id])
+            if self._screen_geom_id >= 0
+            else -1
+        )
         return {
             "unlocked": bool(self._compute_success()),
             "unlock_index": int(self._unlock_index),
@@ -857,7 +999,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
     def render(self):
         rendered_frames = []
         for cam_id in self.camera_id:
-            rendered_frames.append(self._viewer.render(render_mode="rgb_array", camera_id=cam_id))
+            rendered_frames.append(
+                self._viewer.render(render_mode="rgb_array", camera_id=cam_id)
+            )
         return rendered_frames
 
     # Helper methods.
@@ -877,33 +1021,66 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
 
         # allegro_qpos = self._data.qpos[self._allegro_dof_ids].astype(np.float32)
         joint_names_right = [
-            "allegro_right/ffj0_pos", "allegro_right/ffj1_pos", "allegro_right/ffj2_pos", "allegro_right/ffj3_pos",
-            "allegro_right/mfj0_pos", "allegro_right/mfj1_pos", "allegro_right/mfj2_pos", "allegro_right/mfj3_pos",
-            "allegro_right/rfj0_pos", "allegro_right/rfj1_pos", "allegro_right/rfj2_pos", "allegro_right/rfj3_pos",
-            "allegro_right/thj0_pos", "allegro_right/thj1_pos", "allegro_right/thj2_pos", "allegro_right/thj3_pos"
+            "allegro_right/ffj0_pos",
+            "allegro_right/ffj1_pos",
+            "allegro_right/ffj2_pos",
+            "allegro_right/ffj3_pos",
+            "allegro_right/mfj0_pos",
+            "allegro_right/mfj1_pos",
+            "allegro_right/mfj2_pos",
+            "allegro_right/mfj3_pos",
+            "allegro_right/rfj0_pos",
+            "allegro_right/rfj1_pos",
+            "allegro_right/rfj2_pos",
+            "allegro_right/rfj3_pos",
+            "allegro_right/thj0_pos",
+            "allegro_right/thj1_pos",
+            "allegro_right/thj2_pos",
+            "allegro_right/thj3_pos",
         ]
-        allegro_right_qpos = np.array([self._data.sensor(name).data for name in joint_names_right], dtype=np.float32)
+        allegro_right_qpos = np.array(
+            [self._data.sensor(name).data for name in joint_names_right],
+            dtype=np.float32,
+        )
 
         joint_names_left = [
-            "allegro_left/rfj0_pos", "allegro_left/rfj1_pos", "allegro_left/rfj2_pos", "allegro_left/rfj3_pos",
-            "allegro_left/mfj0_pos", "allegro_left/mfj1_pos", "allegro_left/mfj2_pos", "allegro_left/mfj3_pos",
-            "allegro_left/ffj0_pos", "allegro_left/ffj1_pos", "allegro_left/ffj2_pos", "allegro_left/ffj3_pos",
-            "allegro_left/thj0_pos", "allegro_left/thj1_pos", "allegro_left/thj2_pos", "allegro_left/thj3_pos"
+            "allegro_left/rfj0_pos",
+            "allegro_left/rfj1_pos",
+            "allegro_left/rfj2_pos",
+            "allegro_left/rfj3_pos",
+            "allegro_left/mfj0_pos",
+            "allegro_left/mfj1_pos",
+            "allegro_left/mfj2_pos",
+            "allegro_left/mfj3_pos",
+            "allegro_left/ffj0_pos",
+            "allegro_left/ffj1_pos",
+            "allegro_left/ffj2_pos",
+            "allegro_left/ffj3_pos",
+            "allegro_left/thj0_pos",
+            "allegro_left/thj1_pos",
+            "allegro_left/thj2_pos",
+            "allegro_left/thj3_pos",
         ]
-        allegro_left_qpos = np.array([self._data.sensor(name).data for name in joint_names_left], dtype=np.float32)
+        allegro_left_qpos = np.array(
+            [self._data.sensor(name).data for name in joint_names_left],
+            dtype=np.float32,
+        )
         allegro_qpos = np.concatenate([allegro_right_qpos, allegro_left_qpos])
 
         if self.image_obs:
             obs["images"] = {}
-            obs["images"]["random_camera" if self.randomize else "ego"], obs["images"]["wrist_left"], obs["images"]["wrist_right"] = self.render()
+            (
+                obs["images"]["random_camera" if self.randomize else "ego"],
+                obs["images"]["wrist_left"],
+                obs["images"]["wrist_right"],
+            ) = self.render()
 
         obs["state"] = {
             "tcp_pose": tcp_pose,
             "gripper_pose": allegro_qpos,
             "stand_ori_pose": self._stand_ori_pose,
             "ipad_ori_pose": self._ipad_ori_pose,
-            "table_delta_height": self.delta_h
-
+            "table_delta_height": self.delta_h,
         }
 
         return obs
@@ -931,6 +1108,7 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         T_left[:3, 3] = pos_l
 
         return T_right, T_left
+
 
 if __name__ == "__main__":
     # quick manual test
