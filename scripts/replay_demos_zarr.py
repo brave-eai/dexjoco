@@ -69,8 +69,11 @@ flags.DEFINE_integer(
 )
 flags.DEFINE_integer(
     "extend_steps",
-    60,
-    "Extra steps to repeat the last action after the recorded trajectory ends",
+    0,
+    "Extra steps to repeat the last action after the recorded trajectory ends. "
+    "Default 0 is fine for demos recorded by record_demos_zarr.py (the saved "
+    "trajectory ends on the succeed step). Set >0 only when replaying older "
+    "data that was clipped before success.",
 )
 flags.DEFINE_bool(
     "save_failed",
