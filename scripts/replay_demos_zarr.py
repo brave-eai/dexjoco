@@ -29,6 +29,7 @@ from absl import app, flags
 from scipy.spatial.transform import Rotation
 from tqdm import tqdm
 
+from dexjoco.data.depth_capture import collect_depth_frames, write_depth_outputs
 from dexjoco.data.episode_store import ZarrEpisodeStore
 from dexjoco.data.video_writer import Mp4VideoWriter
 from dexjoco.tasks.mappings import CONFIG_MAPPING
@@ -80,6 +81,11 @@ flags.DEFINE_bool(
     "restore_state",
     True,
     "Restore the recorded initial scene state (table height + object poses) from state[0]",
+)
+flags.DEFINE_bool(
+    "save_depth",
+    False,
+    "Also render a depth_array per RGB camera and save <cam>_depth.npz + .mp4 alongside each video",
 )
 
 
@@ -252,6 +258,15 @@ def _write_demo_zarr_and_videos(
         video_writer.stop()
         print(f"[Saved video] {out_path}")
 
+    if FLAGS.save_depth:
+        depth_per_camera = {k: [] for k in camera_keys}
+        for step in trajectory:
+            for k, frame in step.get("depth", {}).items():
+                if k in depth_per_camera and frame is not None:
+                    depth_per_camera[k].append(frame)
+        for path in write_depth_outputs(depth_per_camera, videos_dir, video_fps):
+            print(f"[Saved depth]  {path}")
+
     return str(demo_dir)
 
 
@@ -283,12 +298,17 @@ def _replay_single_demo(
 
         for step_idx in tqdm(range(total_steps), desc=desc):
             action = actions[step_idx if step_idx < num_steps else -1]
-            next_obs, _rew, done, _trunc, info = _step_with_recorded_action(env, action)
-            trajectory.append(
-                copy.deepcopy(
-                    dict(observations=obs, actions=action, dones=done, infos=info)
-                )
+            # Capture depth BEFORE step so it lines up with `obs` (which
+            # is what gets stored alongside this transition's action).
+            depth_now = (
+                collect_depth_frames(env, _collect_camera_keys(obs))
+                if FLAGS.save_depth else None
             )
+            next_obs, _rew, done, _trunc, info = _step_with_recorded_action(env, action)
+            transition = dict(observations=obs, actions=action, dones=done, infos=info)
+            if depth_now is not None:
+                transition["depth"] = depth_now
+            trajectory.append(copy.deepcopy(transition))
             obs = next_obs
             if info.get("succeed", False):
                 succeed = True

@@ -17,6 +17,7 @@ import zarr
 from absl import app, flags
 
 # Project-specific utilities for replay storage and video writing.
+from dexjoco.data.depth_capture import collect_depth_frames, write_depth_outputs
 from dexjoco.data.episode_store import ZarrEpisodeStore
 from dexjoco.data.video_writer import Mp4VideoWriter
 from dexjoco.tasks.mappings import CONFIG_MAPPING
@@ -53,6 +54,11 @@ flags.DEFINE_bool(
     "randomize",
     False,
     "Enable environment randomization when the selected task supports it",
+)
+flags.DEFINE_bool(
+    "save_depth",
+    False,
+    "Also render a depth_array per RGB camera and save <cam>_depth.npz + .mp4 alongside each video",
 )
 
 
@@ -394,6 +400,15 @@ def _write_demo_zarr_and_videos(
         video_writer.stop()
         print(f"[Saved video] {out_path}")
 
+    if FLAGS.save_depth:
+        depth_per_camera = {k: [] for k in camera_keys}
+        for step in trajectory:
+            for k, frame in step.get("depth", {}).items():
+                if k in depth_per_camera and frame is not None:
+                    depth_per_camera[k].append(frame)
+        for path in write_depth_outputs(depth_per_camera, videos_dir, video_fps):
+            print(f"[Saved depth]  {path}")
+
     return str(demo_dir)
 
 
@@ -445,6 +460,17 @@ def main(_argv):
     while success_count < success_needed:
         actions = np.zeros(env.action_space.sample().shape)
 
+        # Capture depth now (env state currently matches `obs`); it'll be
+        # stored alongside `obs` below for parity with the RGB cameras.
+        depth_now = None
+        if FLAGS.save_depth and isinstance(obs, dict):
+            obs_image_keys = [
+                k for k, v in obs.items()
+                if k not in ("state", "low_dim")
+                and isinstance(v, np.ndarray) and v.ndim >= 3 and v.shape[-1] == 3
+            ]
+            depth_now = collect_depth_frames(env, obs_image_keys)
+
         if (
             FLAGS.show_sim_cameras
             and wrist_cam_viewer is None
@@ -472,6 +498,8 @@ def main(_argv):
         transition = copy.deepcopy(
             dict(observations=obs, actions=actions, dones=done, infos=info)
         )
+        if depth_now is not None:
+            transition["depth"] = depth_now
         trajectory.append(transition)
 
         pbar.set_description(f"Return: {returns}")
