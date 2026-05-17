@@ -1,0 +1,7 @@
+env_name: bimanual_photograph
+camera_mapping:  # pi0.5 image name -- env image name
+  base: ego
+  wrist_left: wrist_left
+  wrist_right: wrist_right
+prompt: "Grasp the camera with the left hand, align it with the logo, and press the shutter button with the right hand."
+robot_type: dual_arm

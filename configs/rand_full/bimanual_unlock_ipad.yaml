@@ -1,0 +1,7 @@
+env_name: bimanual_unlock_ipad
+camera_mapping:  # pi0.5 image name -- env image name
+  base: random_camera
+  wrist_left: wrist_left
+  wrist_right: wrist_right
+prompt: "Grasp the iPad and enter the password 123 to unlock the device."
+robot_type: dual_arm

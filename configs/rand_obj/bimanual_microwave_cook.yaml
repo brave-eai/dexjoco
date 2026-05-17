@@ -1,0 +1,7 @@
+env_name: bimanual_microwave_cook
+camera_mapping:  # pi0.5 image name -- env image name
+  base: ego
+  wrist_left: wrist_left
+  wrist_right: wrist_right
+prompt: "Open the microwave door, place the food inside the microwave, close the door, and press the start button."
+robot_type: dual_arm

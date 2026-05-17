@@ -1,0 +1,6 @@
+env_name: hammer_nail
+camera_mapping:  # pi0.5 image name -- env image name
+  base: front
+  wrist: wrist
+prompt: "Use the hammer to drive the nail into the wooden board."
+robot_type: single_arm

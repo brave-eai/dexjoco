@@ -1,0 +1,6 @@
+env_name: fold_glasses
+camera_mapping:  # pi0.5 image name -- env image name
+  base: front
+  wrist: wrist
+prompt: "Fold the glasses and place them into the case."
+robot_type: single_arm

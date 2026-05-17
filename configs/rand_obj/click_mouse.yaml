@@ -1,0 +1,6 @@
+env_name: click_mouse
+camera_mapping:  # pi0.5 image name -- env image name
+  base: ego_right
+  wrist: wrist
+prompt: "Move the mouse to the purple mouse pad and click the left mouse button."
+robot_type: single_arm

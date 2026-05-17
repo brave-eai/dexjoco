@@ -1,0 +1,6 @@
+env_name: pinch_tongs
+camera_mapping:  # pi0.5 image name -- env image name
+  base: random_camera
+  wrist: wrist
+prompt: "Grasp the tongs and perform three consecutive open-close motions."
+robot_type: single_arm

@@ -1,0 +1,6 @@
+env_name: water_plant
+camera_mapping:  # pi0.5 image name -- env image name
+  base: random_camera
+  wrist: wrist
+prompt: "Grasp the watering can and apply water to the plant."
+robot_type: single_arm

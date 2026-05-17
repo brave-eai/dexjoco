@@ -3,7 +3,7 @@ __pycache__/
 *$py.class
 .DS_Store
 
-/outputs/
+/outputs
 /checkpoints
 /datasets
 

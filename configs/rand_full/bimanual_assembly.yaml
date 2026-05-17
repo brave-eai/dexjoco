@@ -1,0 +1,7 @@
+env_name: bimanual_assembly
+camera_mapping:  # pi0.5 image name -- env image name
+  base: random_camera
+  wrist_left: wrist_left
+  wrist_right: wrist_right
+prompt: "Grasp the tray with the left hand and the peg with the right hand, then insert the peg into the hole."
+robot_type: dual_arm
