@@ -94,79 +94,33 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             [self._panda_right_ctrl_ids, self._panda_left_ctrl_ids]
         )
 
+        # fmt: off
         allegro_actuator_right_names = [
-            "ffa0_right",
-            "ffa1_right",
-            "ffa2_right",
-            "ffa3_right",
-            "mfa0_right",
-            "mfa1_right",
-            "mfa2_right",
-            "mfa3_right",
-            "rfa0_right",
-            "rfa1_right",
-            "rfa2_right",
-            "rfa3_right",
-            "tha0_right",
-            "tha1_right",
-            "tha2_right",
-            "tha3_right",
+            "ffa0_right", "ffa1_right", "ffa2_right", "ffa3_right",
+            "mfa0_right", "mfa1_right", "mfa2_right", "mfa3_right",
+            "rfa0_right", "rfa1_right", "rfa2_right", "rfa3_right",
+            "tha0_right", "tha1_right", "tha2_right", "tha3_right",
         ]
         allegro_actuator_left_names = [
-            "rfa0_left",
-            "rfa1_left",
-            "rfa2_left",
-            "rfa3_left",
-            "mfa0_left",
-            "mfa1_left",
-            "mfa2_left",
-            "mfa3_left",
-            "ffa0_left",
-            "ffa1_left",
-            "ffa2_left",
-            "ffa3_left",
-            "tha0_left",
-            "tha1_left",
-            "tha2_left",
-            "tha3_left",
+            "rfa0_left", "rfa1_left", "rfa2_left", "rfa3_left",
+            "mfa0_left", "mfa1_left", "mfa2_left", "mfa3_left",
+            "ffa0_left", "ffa1_left", "ffa2_left", "ffa3_left",
+            "tha0_left", "tha1_left", "tha2_left", "tha3_left",
         ]
 
         self._allegro_joint_right_names = [
-            "ffj0_right",
-            "ffj1_right",
-            "ffj2_right",
-            "ffj3_right",
-            "mfj0_right",
-            "mfj1_right",
-            "mfj2_right",
-            "mfj3_right",
-            "rfj0_right",
-            "rfj1_right",
-            "rfj2_right",
-            "rfj3_right",
-            "thj0_right",
-            "thj1_right",
-            "thj2_right",
-            "thj3_right",
+            "ffj0_right", "ffj1_right", "ffj2_right", "ffj3_right",
+            "mfj0_right", "mfj1_right", "mfj2_right", "mfj3_right",
+            "rfj0_right", "rfj1_right", "rfj2_right", "rfj3_right",
+            "thj0_right", "thj1_right", "thj2_right", "thj3_right",
         ]
         self._allegro_joint_left_names = [
-            "rfj0_left",
-            "rfj1_left",
-            "rfj2_left",
-            "rfj3_left",
-            "mfj0_left",
-            "mfj1_left",
-            "mfj2_left",
-            "mfj3_left",
-            "ffj0_left",
-            "ffj1_left",
-            "ffj2_left",
-            "ffj3_left",
-            "thj0_left",
-            "thj1_left",
-            "thj2_left",
-            "thj3_left",
+            "rfj0_left", "rfj1_left", "rfj2_left", "rfj3_left",
+            "mfj0_left", "mfj1_left", "mfj2_left", "mfj3_left",
+            "ffj0_left", "ffj1_left", "ffj2_left", "ffj3_left",
+            "thj0_left", "thj1_left", "thj2_left", "thj3_left",
         ]
+        # fmt: on
         # Get actuator ids (fall back to mj_name2id if necessary)
         allegro_ids = []
         for name in allegro_actuator_right_names:
@@ -391,27 +345,17 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         }
 
         self._unlock_action_template = np.zeros(7 + _N_ALLEGRO, dtype=np.float32)
+        # fmt: off
         self._unlock_action_template[7 : 7 + _N_ALLEGRO] = np.array(
             [
-                0.1,
-                0.1,
-                0.1,
-                0.0,  # ff (index extended)
-                1.2,
-                1.2,
-                1.2,
-                1.2,  # mf curled
-                1.2,
-                1.2,
-                1.2,
-                1.2,  # rf curled
-                1.0,
-                1.0,
-                1.0,
-                1.0,  # thumb curled
+                0.1, 0.1, 0.1, 0.0,  # ff (index extended)
+                1.2, 1.2, 1.2, 1.2,  # mf curled
+                1.2, 1.2, 1.2, 1.2,  # rf curled
+                1.0, 1.0, 1.0, 1.0,  # thumb curled
             ],
             dtype=np.float32,
         )
+        # fmt: on
         self._success_trigger_count = 0
         self._success_trigger_target = 10
 
@@ -1020,47 +964,27 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         tcp_pose = np.concatenate([tcp_pose_right, tcp_pose_left])
 
         # allegro_qpos = self._data.qpos[self._allegro_dof_ids].astype(np.float32)
+        # fmt: off
         joint_names_right = [
-            "allegro_right/ffj0_pos",
-            "allegro_right/ffj1_pos",
-            "allegro_right/ffj2_pos",
-            "allegro_right/ffj3_pos",
-            "allegro_right/mfj0_pos",
-            "allegro_right/mfj1_pos",
-            "allegro_right/mfj2_pos",
-            "allegro_right/mfj3_pos",
-            "allegro_right/rfj0_pos",
-            "allegro_right/rfj1_pos",
-            "allegro_right/rfj2_pos",
-            "allegro_right/rfj3_pos",
-            "allegro_right/thj0_pos",
-            "allegro_right/thj1_pos",
-            "allegro_right/thj2_pos",
-            "allegro_right/thj3_pos",
+            "allegro_right/ffj0_pos", "allegro_right/ffj1_pos", "allegro_right/ffj2_pos", "allegro_right/ffj3_pos",
+            "allegro_right/mfj0_pos", "allegro_right/mfj1_pos", "allegro_right/mfj2_pos", "allegro_right/mfj3_pos",
+            "allegro_right/rfj0_pos", "allegro_right/rfj1_pos", "allegro_right/rfj2_pos", "allegro_right/rfj3_pos",
+            "allegro_right/thj0_pos", "allegro_right/thj1_pos", "allegro_right/thj2_pos", "allegro_right/thj3_pos",
         ]
+        # fmt: on
         allegro_right_qpos = np.array(
             [self._data.sensor(name).data for name in joint_names_right],
             dtype=np.float32,
         )
 
+        # fmt: off
         joint_names_left = [
-            "allegro_left/rfj0_pos",
-            "allegro_left/rfj1_pos",
-            "allegro_left/rfj2_pos",
-            "allegro_left/rfj3_pos",
-            "allegro_left/mfj0_pos",
-            "allegro_left/mfj1_pos",
-            "allegro_left/mfj2_pos",
-            "allegro_left/mfj3_pos",
-            "allegro_left/ffj0_pos",
-            "allegro_left/ffj1_pos",
-            "allegro_left/ffj2_pos",
-            "allegro_left/ffj3_pos",
-            "allegro_left/thj0_pos",
-            "allegro_left/thj1_pos",
-            "allegro_left/thj2_pos",
-            "allegro_left/thj3_pos",
+            "allegro_left/rfj0_pos", "allegro_left/rfj1_pos", "allegro_left/rfj2_pos", "allegro_left/rfj3_pos",
+            "allegro_left/mfj0_pos", "allegro_left/mfj1_pos", "allegro_left/mfj2_pos", "allegro_left/mfj3_pos",
+            "allegro_left/ffj0_pos", "allegro_left/ffj1_pos", "allegro_left/ffj2_pos", "allegro_left/ffj3_pos",
+            "allegro_left/thj0_pos", "allegro_left/thj1_pos", "allegro_left/thj2_pos", "allegro_left/thj3_pos",
         ]
+        # fmt: on
         allegro_left_qpos = np.array(
             [self._data.sensor(name).data for name in joint_names_left],
             dtype=np.float32,
