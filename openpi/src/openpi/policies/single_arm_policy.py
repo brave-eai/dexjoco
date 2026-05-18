@@ -1,5 +1,5 @@
 """
-Works for dexhand-bench single arm environments.
+Works for DexJoCo single-arm environments.
 """
 
 
