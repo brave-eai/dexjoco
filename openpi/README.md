@@ -11,7 +11,7 @@ Create the Conda environment and install the local packages:
 
 ```bash
 cd openpi
-bash install.sh
+bash install.bash
 conda activate openpi
 ```
 

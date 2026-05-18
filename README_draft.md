@@ -1,4 +1,21 @@
-# DexJoCo
+<img src="docs/pics/dexjoco_logo.png" alt="dexjoco logo" style="display:block; margin:0 auto; height:6em; width:auto;">
+
+<div style="text-align: center;">
+  <a href="https://arxiv.org/abs/2605.16257">
+    <img src="https://img.shields.io/badge/arXiv-2605.16257-b31b1b?style=flat-square" alt="arXiv">
+  </a>
+  <a href="https://dexjoco.github.io/">
+    <img src="https://img.shields.io/badge/GitHub-Page-FF6B00?style=flat-square&logo=github&logoColor=white" alt="Project Homepage">
+  </a>
+  <a href="https://huggingface.co/papers/2605.16257">
+    <img src="https://img.shields.io/badge/🤗%20Hugging%20Face-Paper-FFD21E?style=flat-square" alt="HuggingFace Paper">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License">
+  </a>
+</div>
+
+---
 
 DexJoCo is a MuJoCo-based simulation benchmark and toolkit for task-oriented
 dexterous manipulation. It provides **11 functionally grounded tasks** covering
@@ -6,6 +23,55 @@ dexterous manipulation. It provides **11 functionally grounded tasks** covering
 🧠 **reasoning**, together with a low-cost teleoperation data collection system,
 replayable demonstrations, domain randomization, and OpenPI π0.5 policy
 training/evaluation support.
+
+## 🎬 Demos
+
+<div style="display: flex; overflow-x: auto; gap: 1rem;">
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/bimanual-photograph.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Bimanual photograph</figcaption>
+  </figure>
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/bimanual-unlock-ipad.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Bimanual unlock iPad</figcaption>
+  </figure>
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/water-plant.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Water plant</figcaption>
+  </figure>
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/bimanual-assembly.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Bimanual assembly</figcaption>
+  </figure>
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/bimanual-hanoi.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Bimanual hanoi</figcaption>
+  </figure>
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/bimanual-microwave.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Bimanual microwave</figcaption>
+  </figure>
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/hammer-nail.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Hammer nail</figcaption>
+  </figure>
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/fold-glass.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Fold glasses</figcaption>
+  </figure>
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/pinch-tongs.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Pinch tongs</figcaption>
+  </figure>
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/pick-bucket.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Pick bucket</figcaption>
+  </figure>
+  <figure style="flex: 0 0 auto; margin: 0; text-align: center;">
+    <video src="docs/videos/click-mouse.mp4" controls autoplay loop muted playsinline preload="metadata" style="max-width: min(45vw, 20rem);"></video>
+    <figcaption>Click mouse</figcaption>
+  </figure>
+</div>
 
 ## 🚀 Installation
 
