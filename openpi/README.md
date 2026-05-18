@@ -42,8 +42,8 @@ gcloud storage cp --recursive gs://openpi-assets/checkpoints/pi05_base ./checkpo
 DexJoCo LeRobot datasets: TODO
 
 Place the π0.5 base checkpoint and DexJoCo LeRobot datasets according to the
-paths in `openpi/config.yaml`. You can modify `openpi/config.yaml` to use your
-own paths:
+paths in [`config.yaml`](config.yaml). You can modify [`config.yaml`](config.yaml)
+to use your own paths:
 
 ```yaml
 pretrained_model_path: "../checkpoints/pi05_base/params"
@@ -85,7 +85,7 @@ The `rand-full` dataset root uses the same 11 task directory names:
 
 Custom datasets must use the LeRobot dataset format expected by the DexJoCo
 OpenPI data configs. Place each dataset under a task-specific directory and set
-the corresponding root in `openpi/config.yaml`:
+the corresponding root in [`config.yaml`](config.yaml):
 
 ```text
 ../datasets/my_lerobot_datasets/
@@ -114,7 +114,8 @@ observation.images.wrist_right
 
 For bimanual datasets that use different image keys, set `base_img_name`,
 `wrist_left_img_name`, or `wrist_right_img_name` in the corresponding
-`DexJoCoConfig` entry in `src/openpi/training/dexjoco_configs.py`.
+`DexJoCoConfig` entry in
+[`src/openpi/training/dexjoco_configs.py`](src/openpi/training/dexjoco_configs.py).
 
 The default action dimensions are 22 for single-arm tasks and 44 for bimanual
 tasks.
@@ -157,8 +158,8 @@ python scripts/convert_to_action_dim_44_model.py \
   --output-path ../checkpoints/pi05_base_action_dim_44
 ```
 
-Set `pretrained_model_action_dim_44_path` in `config.yaml` to the converted
-checkpoint's `params` directory.
+Set `pretrained_model_action_dim_44_path` in [`config.yaml`](config.yaml) to the
+converted checkpoint's `params` directory.
 
 ## Normalization Statistics
 
@@ -194,20 +195,22 @@ python scripts/launch_tmux_train.py \
   --gpus 0,1 2,3 4,5 6,7
 ```
 
-`scripts/launch_tmux_train.py` supports the following arguments:
+[`scripts/launch_tmux_train.py`](scripts/launch_tmux_train.py) supports the
+following arguments:
 
 | Argument | Required | Default | Description |
 | --- | --- | --- | --- |
 | `--config-names` | Yes | N/A | Space-separated training config names. Each config is launched in a separate tmux session. |
 | `--gpus` | Yes | N/A | Space-separated GPU assignments matched one-to-one with `--config-names`. Use comma-separated IDs, such as `0,1`, to assign multiple GPUs to one task. |
-| `--wandb-project` | No | `dexjoco-openpi` | Weights & Biases project name passed to `scripts/train.py`. |
+| `--wandb-project` | No | `dexjoco-openpi` | Weights & Biases project name passed to [`scripts/train.py`](scripts/train.py). |
 | `--wandb-mode` | No | `online` | Weights & Biases mode. Valid values are `online` and `offline`. |
 | `--conda-env` | No | `openpi` | Conda environment activated inside each tmux session. |
 | `--mem-fraction` | No | `0.9` | Value assigned to `XLA_PYTHON_CLIENT_MEM_FRACTION` for each training process. |
 | `--nccl-p2p-disable` | No | `False` | Sets `NCCL_P2P_DISABLE=1` before launching training. |
 | `--dry-run` | No | `False` | Prints the tmux session names and training commands without creating sessions. |
 
-Train a single task by passing the config name to `scripts/train.py`:
+Train a single task by passing the config name to
+[`scripts/train.py`](scripts/train.py):
 
 ```bash
 cd openpi
@@ -243,9 +246,9 @@ port.
 ## License and Notices
 
 This repository is derived from OpenPI and is distributed under the Apache
-License, Version 2.0. See `LICENSE` and `NOTICE`.
+License, Version 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
 Gemma-based model components and checkpoints are subject to the Gemma Terms of
-Use. See `LICENSE_GEMMA.txt`. Checkpoints are not included in this repository;
-users are responsible for obtaining π0.5/Gemma checkpoints and using them under
-the applicable model license terms.
+Use. See [`LICENSE_GEMMA.txt`](LICENSE_GEMMA.txt). Checkpoints are not included
+in this repository; users are responsible for obtaining π0.5/Gemma checkpoints
+and using them under the applicable model license terms.

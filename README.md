@@ -365,3 +365,15 @@ Bundled third-party components and assets retain their separate license terms:
 | [`franka_emika_panda`](dexjoco/dexjoco/sim/envs/xmls/franka_emika_panda) | Apache-2.0                                                           |
 | [`wonik_allegro`](dexjoco/dexjoco/sim/envs/xmls/wonik_allegro)           | BSD-2-Clause                                                         |
 | [`openpi/`](openpi)                                                      | Apache License, Version 2.0, plus Gemma model terms where applicable |
+
+## 📚 Citation
+
+```bibtex
+@article{wang2026dexjoco,
+  title = {DexJoCo: A Unified Benchmark and Toolkit for Task-Oriented Dexterous Manipulation on MuJoCo},
+  author = {Wang, Hanwen and Zhao, Weizhi and Wang, Xiangyu and Huang, Siyuan and Lin, He and Zheng, Boyuan and Xu, Rongtao and Wang, Gang and Mu, Yao and Wang, He and Fan, Lue and Li, Hongsheng and Zhang, Zhaoxiang and Tan, Tieniu},
+  journal = {arXiv preprint arXiv:2605.16257},
+  year = {2026},
+  url = {https://dexjoco.github.io}
+}
+```
