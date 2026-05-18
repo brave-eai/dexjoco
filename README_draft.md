@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/pics/dexjoco_logo.png" alt="dexjoco logo" height="96">
+  <img src="docs/pics/dexjoco_logo.jpg" alt="dexjoco logo" height="110">
 </p>
 
 <p align="center">
