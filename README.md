@@ -145,7 +145,8 @@ Convenience launch templates are available at
 | `--pad-state-dim46`               | `False`        | Pads the policy state representation to 46 dimensions for compatibility.                 |
 | `--record-pressed-digits BOOL`    | Task-dependent | Controls whether iPad digit inputs are recorded in episode output names.                 |
 
-TODO: how to adapt other policies?
+For detailed guidance on integrating a custom policy, see
+[docs/custom_policy_integration.md](docs/custom_policy_integration.md).
 
 ## 📦 Data Collection
 
