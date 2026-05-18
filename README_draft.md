@@ -1,4 +1,6 @@
-<img src="docs/pics/dexjoco_logo.png" alt="dexjoco logo" style="display:block; margin:0 auto; height:6em; width:auto;">
+<p align="center">
+  <img src="docs/pics/dexjoco_logo.png" alt="dexjoco logo" height="96">
+</p>
 
 <p align="center">
   <a href="https://arxiv.org/abs/2605.16257"><img src="https://img.shields.io/badge/arXiv-2605.16257-b31b1b?style=flat-square" alt="arXiv"></a>
@@ -16,29 +18,29 @@ dexterous manipulation. It provides **11 functionally grounded tasks** covering
 replayable demonstrations, domain randomization, and OpenPI π0.5 policy
 training/evaluation support.
 
-## 🎬 Demos
+## 🖼️ Demos
 
 <table>
   <tr>
     <td align="center">
-      <video src="docs/videos/bimanual-photograph.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Bimanual photograph</b>
+      <img src="docs/pics/photograph_4.png" alt="Bimanual photograph" width="100%">
+      <br>Bimanual photograph
     </td>
     <td align="center">
-      <video src="docs/videos/bimanual-unlock-ipad.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Bimanual unlock iPad</b>
+      <img src="docs/pics/ipad_2.png" alt="Bimanual unlock iPad" width="100%">
+      <br>Bimanual unlock iPad
     </td>
     <td align="center">
-      <video src="docs/videos/bimanual-assembly.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Bimanual assembly</b>
+      <img src="docs/pics/assembly_3.png" alt="Bimanual assembly" width="100%">
+      <br>Bimanual assembly
     </td>
     <td align="center">
-      <video src="docs/videos/bimanual-hanoi.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Bimanual hanoi</b>
+      <img src="docs/pics/hanoi_3.png" alt="Bimanual hanoi" width="100%">
+      <br>Bimanual hanoi
     </td>
     <td align="center">
-      <video src="docs/videos/bimanual-microwave.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Bimanual microwave</b>
+      <img src="docs/pics/microwave_2.png" alt="Bimanual microwave" width="100%">
+      <br>Bimanual microwave
     </td>
   </tr>
 </table>
@@ -46,28 +48,28 @@ training/evaluation support.
 <table>
   <tr>
     <td align="center">
-      <video src="docs/videos/water-plant.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Water plant</b>
+      <img src="docs/pics/water_plant_4.png" alt="Water plant" width="100%">
+      <br>Water plant
     </td>
     <td align="center">
-      <video src="docs/videos/hammer-nail.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Hammer nail</b>
+      <img src="docs/pics/hammer_3.png" alt="Hammer nail" width="100%">
+      <br>Hammer nail
     </td>
     <td align="center">
-      <video src="docs/videos/fold-glass.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Fold glasses</b>
+      <img src="docs/pics/glass_1.png" alt="Fold glasses" width="100%">
+      <br>Fold glasses
     </td>
     <td align="center">
-      <video src="docs/videos/pinch-tongs.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Pinch tongs</b>
+      <img src="docs/pics/tongs_3.png" alt="Pinch tongs" width="100%">
+      <br>Pinch tongs
     </td>
     <td align="center">
-      <video src="docs/videos/pick-bucket.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Pick bucket</b>
+      <img src="docs/pics/bucket_4.png" alt="Pick bucket" width="100%">
+      <br>Pick bucket
     </td>
     <td align="center">
-      <video src="docs/videos/click-mouse.mp4" muted autoplay loop playsinline width="100%"></video>
-      <br><b>Click mouse</b>
+      <img src="docs/pics/mouse_3.png" alt="Click mouse" width="100%">
+      <br>Click mouse
     </td>
   </tr>
 </table>
