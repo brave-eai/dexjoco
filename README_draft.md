@@ -20,54 +20,54 @@ training/evaluation support.
 
 ## 🖼️ Demos
 
-<table>
+<table width="100%">
   <tr>
-    <td align="center">
+    <td align="center" width="20%">
       <img src="docs/pics/photograph_4.png" alt="Bimanual photograph" width="100%">
       <br>Bimanual photograph
     </td>
-    <td align="center">
+    <td align="center" width="20%">
       <img src="docs/pics/ipad_2.png" alt="Bimanual unlock iPad" width="100%">
       <br>Bimanual unlock iPad
     </td>
-    <td align="center">
+    <td align="center" width="20%">
       <img src="docs/pics/assembly_3.png" alt="Bimanual assembly" width="100%">
       <br>Bimanual assembly
     </td>
-    <td align="center">
+    <td align="center" width="20%">
       <img src="docs/pics/hanoi_3.png" alt="Bimanual hanoi" width="100%">
       <br>Bimanual hanoi
     </td>
-    <td align="center">
+    <td align="center" width="20%">
       <img src="docs/pics/microwave_2.png" alt="Bimanual microwave" width="100%">
       <br>Bimanual microwave
     </td>
   </tr>
 </table>
 
-<table>
+<table width="100%">
   <tr>
-    <td align="center">
+    <td align="center" width="16.66%">
       <img src="docs/pics/water_plant_4.png" alt="Water plant" width="100%">
       <br>Water plant
     </td>
-    <td align="center">
+    <td align="center" width="16.66%">
       <img src="docs/pics/hammer_3.png" alt="Hammer nail" width="100%">
       <br>Hammer nail
     </td>
-    <td align="center">
+    <td align="center" width="16.66%">
       <img src="docs/pics/glass_1.png" alt="Fold glasses" width="100%">
       <br>Fold glasses
     </td>
-    <td align="center">
+    <td align="center" width="16.66%">
       <img src="docs/pics/tongs_3.png" alt="Pinch tongs" width="100%">
       <br>Pinch tongs
     </td>
-    <td align="center">
+    <td align="center" width="16.66%">
       <img src="docs/pics/bucket_4.png" alt="Pick bucket" width="100%">
       <br>Pick bucket
     </td>
-    <td align="center">
+    <td align="center" width="16.66%">
       <img src="docs/pics/mouse_3.png" alt="Click mouse" width="100%">
       <br>Click mouse
     </td>
