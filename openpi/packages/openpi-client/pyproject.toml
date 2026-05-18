@@ -1,0 +1,23 @@
+[project]
+name = "openpi-client"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "dm-tree>=0.1.8",
+    "msgpack>=1.0.5",
+    "numpy==1.26.4",
+    "pillow>=9.0.0",
+    "tree>=0.2.4",
+    "websockets>=11.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3.4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"

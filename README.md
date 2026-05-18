@@ -65,6 +65,8 @@ Teleoperation data collection (`policy_mode=False`) uses the interactive viewer,
 
 The Zarr replay buffer and H.264 video writer live in `dexjoco.data`.
 
+# TODO: openpi train/eval
+
 ## License
 
 DexJoCo-owned code in this repository is released under the

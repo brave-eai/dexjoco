@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["dexjoco"]
+packages = ["dexjoco", "dexjoco_openpi_client"]
 
 [project]
 name = "dexjoco"
@@ -36,12 +36,13 @@ dependencies = [
     "zarr<3",
     "opencv-python",
     "tqdm",
-    "imageio[ffmpeg]"
+    "imageio[ffmpeg]",
+    "pyyaml",
+    "tyro"
 ]
 
+[project.scripts]
+dexjoco-openpi-eval = "dexjoco_openpi_client.cli.evaluate:main"
+
 [project.urls]
-# todo
-# Homepage = "https://github.com/example/example-project"
-# Documentation = "https://example-project.readthedocs.io"
-# Repository = "https://github.com/example/example-project.git"
-# Issues = "https://github.com/example/example-project/issues"
+Homepage = "https://dexjoco.github.io"

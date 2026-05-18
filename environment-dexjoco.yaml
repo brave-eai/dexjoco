@@ -10,8 +10,9 @@ dependencies:
   - gymnasium=1.0.0
   - mujoco=3.4.0
   - numcodecs
-  - numpy=1.26.4
+  - numpy==1.26.4
   - scipy
   - "zarr<3"
   - pip:
       - -e ./dexjoco
+      - -e ./openpi/packages/openpi-client

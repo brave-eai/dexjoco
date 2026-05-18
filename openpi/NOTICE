@@ -1,0 +1,19 @@
+OpenPI π0.5 for DexJoCo
+
+This repository is derived from OpenPI, originally released under the
+Apache License, Version 2.0.
+
+DexJoCo-specific modifications include:
+
+- DexJoCo LeRobot data configs and normalization assets.
+- Single-arm and bimanual DexJoCo policy input/output adapters.
+- π0.5 action-dimension conversion utilities for 44-dimensional bimanual actions.
+- DexJoCo training, normalization, and tmux launch scripts.
+- Documentation and installation workflow for DexJoCo π0.5 training and serving.
+
+Files and examples unrelated to DexJoCo training may be omitted from this
+distribution.
+
+Gemma-based model components and checkpoints are subject to the Gemma Terms of
+Use. See LICENSE_GEMMA.txt. Users are responsible for obtaining and using
+checkpoints under the applicable model license terms.
