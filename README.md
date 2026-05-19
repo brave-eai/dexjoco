@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://arxiv.org/abs/2605.16257"><img src="https://img.shields.io/badge/arXiv-2605.16257-b31b1b?style=flat-square" alt="arXiv"></a>
   <a href="https://dexjoco.github.io/"><img src="https://img.shields.io/badge/GitHub-Page-FF6B00?style=flat-square&logo=github&logoColor=white" alt="Project Homepage"></a>
+  <a href="https://huggingface.co/datasets/DexJoCo/DexJoCo-Datasets-LeRobot"><img src="https://img.shields.io/badge/🤗%20Hugging%20Face-Dataset-FFD21E?style=flat-square" alt="HuggingFace Dataset"></a>
   <a href="https://huggingface.co/papers/2605.16257"><img src="https://img.shields.io/badge/🤗%20Hugging%20Face-Paper-FFD21E?style=flat-square" alt="HuggingFace Paper"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License"></a>
 </p>
