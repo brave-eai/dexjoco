@@ -4,7 +4,7 @@ DexJoCo's default GeoRT retarget checkpoints are tracked directly in this reposi
 
 ## Installation
 
-we recommend using a virtual environment to install the required packages. To install the required packages, run the following command:
+We recommend using a virtual environment to install the required packages. To install the required packages, run the following command:
 
 ```bash
 conda create --name geort python=3.8
@@ -69,6 +69,15 @@ python ./geort/mocap/rokoko_retarget_send_left.py \
   --target_port <TARGET_PORT>
 ```
 
+Default values:
+
+```text
+--bind_ip 10.6.60.137
+--bind_port 5015
+--target_ip 127.0.0.1
+--target_port 5016
+```
+
 To retarget right-hand motion from Rokoko to the right Allegro Hand, run:
 
 ```bash
@@ -79,4 +88,13 @@ python ./geort/mocap/rokoko_retarget_send_right.py \
   --target_port <TARGET_PORT>
 ```
 
-Dexjoco's simulator receives these packets in `dexjoco/tasks/sim_teleop.py`
+Default values:
+
+```text
+--bind_ip 10.6.60.137
+--bind_port 5013
+--target_ip 127.0.0.1
+--target_port 5014
+```
+
+DexJoCo's simulator receives these packets in [`../../dexjoco/dexjoco/tasks/sim_teleop.py`](../../dexjoco/dexjoco/tasks/sim_teleop.py)

@@ -1,4 +1,6 @@
-# Dexjoco Teleoperation UDP Protocol
+# UDP Protocol for DexJoCo Teleoperation
+
+This document provides the default UDP protocol settings for DexJoCo teleoperation. These settings can be modified according to the user's preferences and system requirements.
 
 Dexjoco's teleoperation wrappers accept a small UDP protocol so the simulator
 can stay decoupled from tracker, glove, or mocap implementations.

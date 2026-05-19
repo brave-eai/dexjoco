@@ -150,7 +150,15 @@ For detailed guidance on integrating a custom policy, see
 
 ## 📦 Data Collection
 
-Please refer to the `/teleoperation` directory for the hardware and software configuration required for teleoperation.
+
+Please refer to the [`teleoperation/`](teleoperation/) directory for the hardware and software configuration required for teleoperation:
+
+| Component                   | Documentation                                                                                        |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| hardware setup              | [`teleoperation/Teleoperation_System_Tutorial.pdf`](teleoperation/Teleoperation_System_Tutorial.pdf) |
+| Vive tracker bridge         | [`teleoperation/vive_bridge`](teleoperation/vive_bridge)                                             |
+| Rokoko hand-keypoint bridge | [`teleoperation/rokoko`](teleoperation/rokoko)                                                       |
+| GeoRT hand retargeting      | [`teleoperation/GeoRT`](teleoperation/GeoRT)                                                         |
 
 Supported tasks:
 
@@ -197,16 +205,6 @@ Common `record_demos_zarr.py` options:
 | `--save_depth`       | Saves depth arrays and depth videos alongside RGB videos.                     |
 | `--out_dir`          | Selects the output directory for collected demos.                             |
 
-Teleoperation providers are optional components around the DexJoCo UDP control
-protocol:
-
-| Component                   | Documentation                                                                |
-| --------------------------- | ---------------------------------------------------------------------------- |
-| Collection workflow         | [`docs/demo_collection_walkthrough.md`](docs/demo_collection_walkthrough.md) |
-| UDP payload protocol        | [`docs/teleop_udp_protocol.md`](docs/teleop_udp_protocol.md)                 |
-| Vive tracker bridge         | [`teleoperation/vive_bridge`](teleoperation/vive_bridge)                     |
-| Rokoko hand-keypoint bridge | [`teleoperation/rokoko`](teleoperation/rokoko)                               |
-| GeoRT hand retargeting      | [`teleoperation/GeoRT`](teleoperation/GeoRT)                                 |
 
 ## 🔁 Replay
 
