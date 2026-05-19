@@ -97,4 +97,4 @@ Default values:
 --target_port 5014
 ```
 
-DexJoCo's simulator receives these packets in [`../../dexjoco/dexjoco/tasks/sim_teleop.py`](../../dexjoco/dexjoco/tasks/sim_teleop.py)
+DexJoCo's simulator receives these packets in [`../../dexjoco/dexjoco/tasks/sim_teleop.py`](../../dexjoco/dexjoco/tasks/sim_teleop.py) 

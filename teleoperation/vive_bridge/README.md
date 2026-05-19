@@ -1,10 +1,10 @@
-# Dexjoco Vive Bridge
+# DexJoCo Vive Bridge
 
-This directory contains Dexjoco's own Vive/OpenVR bridge for streaming tracker
+This directory contains DexJoCo's own Vive/OpenVR bridge for streaming tracker
 poses to the simulator over UDP.
 
 It replaces the older vendored `Vive_Tracker` copy with a much smaller tool
-that only implements the behavior Dexjoco needs:
+that only implements the behavior DexJoCo needs:
 
 - discover available OpenVR devices
 - select a tracker by index or serial substring
@@ -32,7 +32,7 @@ python teleoperation/vive_bridge/send_vive_pose.py --device-index 0
 ```
 
 By default the sender streams to `127.0.0.1:5012` at `90 Hz`, which matches
-Dexjoco's teleoperation wrappers.
+DexJoCo's teleoperation wrappers.
 
 ## Stream Two Trackers For Bimanual Teleoperation
 
@@ -47,6 +47,6 @@ You can also select them explicitly:
 
 ```bash
 python teleoperation/vive_bridge/send_vive_pose.py \
-  --device-index 3 \
-  --second-device-index 4
+  --device-index 1 \
+  --second-device-index 2
 ```
