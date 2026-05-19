@@ -25,16 +25,10 @@ pip install openvr
 python teleoperation/vive_bridge/send_vive_pose.py --list-devices
 ```
 
-## Stream Tracker Pose
-
-```bash
-python teleoperation/vive_bridge/send_vive_pose.py --serial-contains tracker
-```
-
 If you know the exact device index, you can also use:
 
 ```bash
-python teleoperation/vive_bridge/send_vive_pose.py --device-index 3
+python teleoperation/vive_bridge/send_vive_pose.py --device-index 0
 ```
 
 By default the sender streams to `127.0.0.1:5012` at `90 Hz`, which matches

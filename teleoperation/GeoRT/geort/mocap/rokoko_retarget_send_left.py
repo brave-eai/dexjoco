@@ -78,6 +78,9 @@ def main():
     # parser.add_argument('-ckpt_tag', type=str, default='zby_1_right')
     parser.add_argument('--bind_ip', type=str, default='10.6.60.137')
     parser.add_argument('--bind_port', type=int, default=5015)
+    parser.add_argument('--target_ip', type=str, default='127.0.0.1')
+    parser.add_argument('--target_port', type=int, default=5016)
+
     args = parser.parse_args()
 
     # Load GeoRT model
@@ -87,9 +90,9 @@ def main():
     mocap = UDPRokokoReceiver(args.bind_ip, args.bind_port)
 
     # UDP out (qpos)
-    qpos_sender = UDPQposSender("127.0.0.1", 5016)
+    qpos_sender = UDPQposSender(args.target_ip, args.target_port)
 
-    print("[main] running, forwarding qpos to UDP 5016...")
+    print(f"[main] running, forwarding qpos to UDP {args.target_port}...")
 
     while True:
         result = mocap.get()
