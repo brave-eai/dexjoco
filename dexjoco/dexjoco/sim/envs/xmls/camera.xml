@@ -12,6 +12,8 @@
     </default>
   </default>
   <asset>
+    <texture name="camera_screen_tex" type="2d" builtin="flat" width="384" height="256" rgb1="0 0 0" rgb2="0 0 0"/>
+    <material name="camera_screen_mat" texture="camera_screen_tex" texuniform="false" texrepeat="1 1" specular="0.15" shininess="0.2" emission="0.15"/>
     <material name="original-42_1_material_0_0" specular="0.06666666666666667" shininess="0.03" rgba="0.8 0.8 0.8 1" />
     <material name="original-42_0_material_1_0" specular="0.06666666666666667" shininess="0.03" rgba="0.3176470588235294 0.3176470588235294 0.3176470588235294 1" />
     <mesh file="camera/textured_objs_thickness/original-42/original-42_0.obj" name="original-42_0" scale="0.14 0.1377 0.15"/>
@@ -387,6 +389,16 @@
     <!-- <body name="link_19" pos="0.1 0.0 1.04" quat="0.7071068 0 0 0.7071068" childclass="camera"> -->
       <freejoint name="camera_root" />
       <camera name="cam_pos_z" pos="0.03 0 0.06" quat="0 0 1 0" mode="fixed"/>
+      <geom name="camera_live_screen"
+            pos="0.01 -0.008 -0.068"
+            quat="1 0 0 0"
+            type="box"
+            size="0.061 0.0405 0.001"
+            material="camera_screen_mat"
+            contype="0"
+            conaffinity="0"
+            density="0"
+            group="0"/>
       <geom name="camera_reference_pos" pos="0.0 0.0 0.0" quat="1 0 0 0" type="mesh" mesh="original-103_0" material="original-103_0_material_1_0" density="0" class="camera/visual" />
         <geom name="camera_axis_x" pos="0.1 0.0 0.0" quat="0.707107 0 0.707107 0" type="cylinder" size="0.002 0.1" rgba="1 0 0 1" contype="0" conaffinity="0" group="3"/>
         <geom name="camera_axis_y" pos="0.0 0.1 0.0" quat="0.707107 -0.707107 0 0" type="cylinder" size="0.002 0.1" rgba="0 1 0 1" contype="0" conaffinity="0" group="3"/>

@@ -236,6 +236,14 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
         except Exception:
             pass
 
+        self._screen_tex_id = -1
+        self._screen_cam_id = -1
+        self._screen_tex_w = 0
+        self._screen_tex_h = 0
+        self._screen_tex_adr = 0
+        self._screen_tex_nchan = 3
+        self._init_camera_screen_streaming()
+
         self._front_camera_id = int(self._model.camera("back").id)
         self._wrist_left_camera_id = self._get_cam_id_by_name("handcam_rgb_left")
         self._wrist_right_camera_id = self._get_cam_id_by_name("handcam_rgb_right")
@@ -492,6 +500,94 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
 
         return len(viewer_candidates) > 0
 
+    def _init_camera_screen_streaming(self):
+        """Look up texture and camera ids used to stream cam_pos_z onto the camera screen."""
+        try:
+            tex_id = int(
+                mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_TEXTURE, "camera_screen_tex")
+            )
+        except Exception:
+            tex_id = -1
+        try:
+            cam_id = int(
+                mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_CAMERA, "cam_pos_z")
+            )
+        except Exception:
+            cam_id = -1
+        if tex_id < 0 or cam_id < 0:
+            return
+        self._screen_tex_id = tex_id
+        self._screen_cam_id = cam_id
+        self._screen_tex_w = int(self._model.tex_width[tex_id])
+        self._screen_tex_h = int(self._model.tex_height[tex_id])
+        self._screen_tex_adr = int(self._model.tex_adr[tex_id])
+        self._screen_tex_nchan = int(self._model.tex_nchannel[tex_id])
+
+    def _update_camera_screen_texture(self):
+        """Render cam_pos_z and push the image into the camera_screen_tex texture."""
+        if self._screen_tex_id < 0:
+            return
+        try:
+            self._set_offscreen_geom_group_visibility(5, False)
+            img = self._viewer.render(
+                render_mode="rgb_array", camera_id=self._screen_cam_id
+            )
+        except Exception:
+            return
+        if img is None or img.ndim != 3 or img.shape[2] < self._screen_tex_nchan:
+            return
+
+        th, tw = self._screen_tex_h, self._screen_tex_w
+        h_in, w_in = img.shape[:2]
+
+        # Center-crop the rendered image to match the texture's aspect ratio
+        # so the camera view isn't stretched on the screen geom.
+        tex_aspect = tw / max(th, 1)
+        img_aspect = w_in / max(h_in, 1)
+        if abs(img_aspect - tex_aspect) > 1e-3:
+            if img_aspect > tex_aspect:
+                new_w = int(round(h_in * tex_aspect))
+                new_w = max(1, min(new_w, w_in))
+                x0 = (w_in - new_w) // 2
+                img = img[:, x0:x0 + new_w, :]
+            else:
+                new_h = int(round(w_in / tex_aspect))
+                new_h = max(1, min(new_h, h_in))
+                y0 = (h_in - new_h) // 2
+                img = img[y0:y0 + new_h, :, :]
+            h_in, w_in = img.shape[:2]
+
+        if h_in != th or w_in != tw:
+            ys = np.linspace(0, h_in - 1, th).astype(np.int64)
+            xs = np.linspace(0, w_in - 1, tw).astype(np.int64)
+            img = img[np.ix_(ys, xs)]
+
+        nchan = self._screen_tex_nchan
+        flat = np.ascontiguousarray(img[:, :, :nchan], dtype=np.uint8).reshape(-1)
+        adr = self._screen_tex_adr
+        self._model.tex_data[adr:adr + flat.size] = flat
+        self._upload_screen_texture_to_all_viewers()
+
+    def _upload_screen_texture_to_all_viewers(self):
+        if self._screen_tex_id < 0:
+            return
+        viewers = getattr(self._viewer, "_viewers", None)
+        if not isinstance(viewers, dict):
+            return
+        for v in viewers.values():
+            if v is None:
+                continue
+            con = getattr(v, "con", None)
+            if con is None:
+                continue
+            try:
+                mkc = getattr(v, "make_context_current", None)
+                if callable(mkc):
+                    mkc()
+                mujoco.mjr_uploadTexture(self._model, con, self._screen_tex_id)
+            except Exception:
+                pass
+
     def randomize_lighting(self):
         model = self._model
 
@@ -705,6 +801,9 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
 
         if self.render_mode == "human":
             try:
+                # Refresh the camera screen texture for the human viewer in case
+                # render() was not called this step (e.g. image_obs is False).
+                self._update_camera_screen_texture()
                 # Keep target-region geom (group 5) visible in MuJoCo human window only.
                 self._set_human_geom_group_visibility(5, True)
                 self._viewer.render("human")
@@ -771,6 +870,8 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
         return bool(success)
 
     def render(self):
+        # Refresh the camera screen texture with the latest cam_pos_z view.
+        self._update_camera_screen_texture()
         # Hide target-region geom (group 5) in offscreen rgb_array cameras.
         self._set_offscreen_geom_group_visibility(5, False)
         rendered_frames = []
