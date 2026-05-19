@@ -244,6 +244,12 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
         self._screen_tex_nchan = 3
         self._init_camera_screen_streaming()
 
+        # Photo capture / flash state.
+        self._capture_flash_total = 5  # ~0.17 s of flash at hz=30
+        self._captured_image = None
+        self._capture_flash_frame = 0
+        self._latest_shutter_pressed = False
+
         self._front_camera_id = int(self._model.camera("back").id)
         self._wrist_left_camera_id = self._get_cam_id_by_name("handcam_rgb_left")
         self._wrist_right_camera_id = self._get_cam_id_by_name("handcam_rgb_right")
@@ -524,35 +530,53 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
         self._screen_tex_nchan = int(self._model.tex_nchannel[tex_id])
 
     def _update_camera_screen_texture(self):
-        """Render cam_pos_z and push the image into the camera_screen_tex texture."""
+        """Drive the camera screen: live preview, capture flash, or frozen photo."""
         if self._screen_tex_id < 0:
             return
-        try:
-            self._set_offscreen_geom_group_visibility(5, False)
-            img = self._viewer.render(
-                render_mode="rgb_array", camera_id=self._screen_cam_id
-            )
-        except Exception:
-            return
-        if img is None or img.ndim != 3 or img.shape[2] < self._screen_tex_nchan:
-            return
 
+        if self._captured_image is None:
+            try:
+                self._set_offscreen_geom_group_visibility(5, False)
+                img = self._viewer.render(
+                    render_mode="rgb_array", camera_id=self._screen_cam_id
+                )
+            except Exception:
+                return
+            if img is None or img.ndim != 3 or img.shape[2] < self._screen_tex_nchan:
+                return
+            img = self._fit_image_to_screen(img)
+
+            if self._latest_shutter_pressed:
+                # First shutter press: cache this frame, start the flash.
+                self._captured_image = img.copy()
+                self._capture_flash_frame = 0
+                final = self._compose_flash_over(img)
+                self._capture_flash_frame += 1
+            else:
+                final = img
+        else:
+            if self._capture_flash_frame < self._capture_flash_total:
+                final = self._compose_flash_over(self._captured_image)
+                self._capture_flash_frame += 1
+            else:
+                final = self._captured_image
+
+        self._write_screen_texture(final)
+
+    def _fit_image_to_screen(self, img: np.ndarray) -> np.ndarray:
+        """Center-crop to the screen aspect ratio and resample to texture size."""
         th, tw = self._screen_tex_h, self._screen_tex_w
         h_in, w_in = img.shape[:2]
 
-        # Center-crop the rendered image to match the texture's aspect ratio
-        # so the camera view isn't stretched on the screen geom.
         tex_aspect = tw / max(th, 1)
         img_aspect = w_in / max(h_in, 1)
         if abs(img_aspect - tex_aspect) > 1e-3:
             if img_aspect > tex_aspect:
-                new_w = int(round(h_in * tex_aspect))
-                new_w = max(1, min(new_w, w_in))
+                new_w = max(1, min(int(round(h_in * tex_aspect)), w_in))
                 x0 = (w_in - new_w) // 2
                 img = img[:, x0:x0 + new_w, :]
             else:
-                new_h = int(round(w_in / tex_aspect))
-                new_h = max(1, min(new_h, h_in))
+                new_h = max(1, min(int(round(w_in / tex_aspect)), h_in))
                 y0 = (h_in - new_h) // 2
                 img = img[y0:y0 + new_h, :, :]
             h_in, w_in = img.shape[:2]
@@ -561,7 +585,19 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
             ys = np.linspace(0, h_in - 1, th).astype(np.int64)
             xs = np.linspace(0, w_in - 1, tw).astype(np.int64)
             img = img[np.ix_(ys, xs)]
+        return img
 
+    def _compose_flash_over(self, base_img: np.ndarray) -> np.ndarray:
+        """Blend a white sheet over the captured image, alpha fading 1 -> 0."""
+        total = max(self._capture_flash_total, 1)
+        progress = min(1.0, self._capture_flash_frame / total)
+        alpha = max(0.0, 1.0 - progress)
+        if alpha <= 0.0:
+            return base_img
+        blended = alpha * 255.0 + (1.0 - alpha) * base_img.astype(np.float32)
+        return np.clip(blended, 0.0, 255.0).astype(np.uint8)
+
+    def _write_screen_texture(self, img: np.ndarray):
         nchan = self._screen_tex_nchan
         flat = np.ascontiguousarray(img[:, :, :nchan], dtype=np.uint8).reshape(-1)
         adr = self._screen_tex_adr
@@ -658,6 +694,11 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
 
     def reset(self, seed=None, **kwargs) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
         mujoco.mj_resetData(self._model, self._data)
+
+        # Clear any prior capture so the screen returns to live preview.
+        self._captured_image = None
+        self._capture_flash_frame = 0
+        self._latest_shutter_pressed = False
 
         self.delta_h = np.float64(np.random.uniform(*_TABLE_HEIGHT_BOUNDS))
         table_pos = self._model.body("table").pos
@@ -794,6 +835,7 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
             mujoco.mj_step(self._model, self._data)
 
         success, metrics = self._compute_success_metrics()
+        self._latest_shutter_pressed = bool(metrics.get("shutter_pressed", False))
         obs = self._compute_observation(metrics=metrics)
         self.env_step += 1
 
