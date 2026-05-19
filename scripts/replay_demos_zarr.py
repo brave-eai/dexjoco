@@ -90,6 +90,13 @@ flags.DEFINE_bool(
     False,
     "Also render a depth_array per RGB camera and save <cam>_depth.npz + .mp4 alongside each video",
 )
+flags.DEFINE_bool(
+    "camera_screen_effect",
+    True,
+    "(bimanual_photograph only) Enable the camera live-screen effect "
+    "(live preview + shutter flash + frozen photo). When False, the screen "
+    "geom is hidden entirely.",
+)
 
 
 def _safe_squeeze_image(img: np.ndarray) -> np.ndarray:
@@ -281,12 +288,17 @@ def _replay_single_demo(
     env_seed: int,
     desc: str,
 ):
+    env_extra_kwargs = {}
+    if task_id == "bimanual_photograph":
+        env_extra_kwargs["camera_screen_effect"] = FLAGS.camera_screen_effect
+
     env = config.get_environment(
         policy_mode=True,
         render_mode="rgb_array",
         randomize=FLAGS.randomize,
         randomize_dynamics=False,
         seed=env_seed,
+        **env_extra_kwargs,
     )
     try:
         obs, _info = env.reset()

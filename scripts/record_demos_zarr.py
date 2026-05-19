@@ -60,6 +60,13 @@ flags.DEFINE_bool(
     False,
     "Also render a depth_array per RGB camera and save <cam>_depth.npz + .mp4 alongside each video",
 )
+flags.DEFINE_bool(
+    "camera_screen_effect",
+    True,
+    "(bimanual_photograph only) Enable the camera live-screen effect "
+    "(live preview + shutter flash + frozen photo). When False, the screen "
+    "geom is hidden entirely.",
+)
 
 
 def _ensure_base_outdir(base: str) -> Path:
@@ -432,9 +439,14 @@ def main(_argv):
 
     config = CONFIG_MAPPING[task_id]()
 
+    env_extra_kwargs = {}
+    if task_id == "bimanual_photograph":
+        env_extra_kwargs["camera_screen_effect"] = FLAGS.camera_screen_effect
+
     env = config.get_environment(
         render_mode=FLAGS.render_mode,
         randomize=FLAGS.randomize,
+        **env_extra_kwargs,
     )
 
     obs, info = env.reset()

@@ -106,11 +106,13 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
         randomize_dynamics: bool = False,
         config=None,
         hz: int = 30,
+        camera_screen_effect: bool = True,
     ):
         self.hz = hz
         self._action_scale = action_scale
         self.randomize = randomize
         self._randomize_dynamics = randomize_dynamics
+        self._camera_screen_effect = bool(camera_screen_effect)
 
         super().__init__(
             xml_path=_XML_PATH,
@@ -243,6 +245,9 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
         self._screen_tex_adr = 0
         self._screen_tex_nchan = 3
         self._init_camera_screen_streaming()
+
+        if not self._camera_screen_effect:
+            self._hide_camera_screen_geom()
 
         # Photo capture / flash state.
         self._capture_flash_total = 5  # ~0.17 s of flash at hz=30
@@ -531,7 +536,7 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
 
     def _update_camera_screen_texture(self):
         """Drive the camera screen: live preview, capture flash, or frozen photo."""
-        if self._screen_tex_id < 0:
+        if self._screen_tex_id < 0 or not self._camera_screen_effect:
             return
 
         if self._captured_image is None:
@@ -603,6 +608,20 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
         adr = self._screen_tex_adr
         self._model.tex_data[adr:adr + flat.size] = flat
         self._upload_screen_texture_to_all_viewers()
+
+    def _hide_camera_screen_geom(self):
+        """Make the camera_live_screen geom visually disappear (used when the
+        camera-screen effect is disabled)."""
+        try:
+            gid = int(self._model.geom("camera_live_screen").id)
+        except Exception:
+            return
+        try:
+            self._model.geom_matid[gid] = -1
+            self._model.geom_rgba[gid] = np.array([0.0, 0.0, 0.0, 0.0], dtype=np.float32)
+            self._model.geom_size[gid] = np.array([1e-9, 1e-9, 1e-9], dtype=np.float64)
+        except Exception:
+            pass
 
     def _upload_screen_texture_to_all_viewers(self):
         if self._screen_tex_id < 0:
