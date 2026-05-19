@@ -39,7 +39,12 @@ mkdir -p ./checkpoints
 gcloud storage cp --recursive gs://openpi-assets/checkpoints/pi05_base ./checkpoints
 ```
 
-DexJoCo LeRobot datasets: TODO
+To download the DexJoCo LeRobot datasets, use the Hugging Face Hub CLI:
+```bash
+curl -LsSf https://hf.co/cli/install.sh | bash
+hf auth login
+hf download DexJoCo/DexJoCo-Datasets-LeRobot --repo-type=dataset --local-dir ./datasets
+```
 
 Place the π0.5 base checkpoint and DexJoCo LeRobot datasets according to the
 paths in [`config.yaml`](config.yaml). You can modify [`config.yaml`](config.yaml)
