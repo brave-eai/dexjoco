@@ -150,7 +150,7 @@ For detailed guidance on integrating a custom policy, see
 
 ## 📦 Data Collection
 
-TODO: hardware
+Please refer to the `/teleoperation` directory for the hardware and software configuration required for teleoperation.
 
 Supported tasks:
 
