@@ -106,7 +106,7 @@ class PandaBimanualPhotographGymEnv(MujocoGymEnv):
         randomize_dynamics: bool = False,
         config=None,
         hz: int = 30,
-        camera_screen_effect: bool = True,
+        camera_screen_effect: bool = False,
     ):
         self.hz = hz
         self._action_scale = action_scale

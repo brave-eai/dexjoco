@@ -62,7 +62,7 @@ flags.DEFINE_bool(
 )
 flags.DEFINE_bool(
     "camera_screen_effect",
-    True,
+    False,
     "(bimanual_photograph only) Enable the camera live-screen effect "
     "(live preview + shutter flash + frozen photo). When False, the screen "
     "geom is hidden entirely.",
