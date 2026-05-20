@@ -1,12 +1,12 @@
-## Teleoperation Providers
+## Teleoperation Interfaces
 
 Please follow the instructions in [`Teleoperation_System_Tutorial.pdf`](Teleoperation_System_Tutorial.pdf) to assemble the teleoperation hardware and complete the required software setup. The [`GloveMount.STL`](GloveMount.STL) file provides the 3D-printable CAD model for mounting the glove and tracker.
 
-This directory contains teleoperation providers that can publish UDP
-messages for DexJoCo's simulated data-collection pipeline.
+This directory contains teleoperation interfaces and helper components that publish UDP
+messages for DexJoCo's simulated data collection pipeline.
 
-- [`vive_bridge/`](vive_bridge/): DexJoCo-maintained OpenVR sender for Vive tracker poses.
-- [`rokoko/`](rokoko/): DexJoCo-maintained Rokoko Studio bridge for forwarding
+- [`vive_bridge/`](vive_bridge/): DexJoCo maintained OpenVR sender for Vive tracker poses.
+- [`rokoko/`](rokoko/): DexJoCo maintained Rokoko Studio bridge for forwarding
   canonicalized hand keypoints from another PC to the GeoRT/DexJoCo stack.
 - [`GeoRT/`](GeoRT/): Third-party hand-retargeting component. This directory includes DexJoCo-specific Rokoko/UDP adaptations.
 

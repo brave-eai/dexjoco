@@ -88,9 +88,7 @@ python ./geort/mocap/rokoko_retarget_send_left.py \
 Default values:
 
 ```text
---bind_ip 10.6.60.137
 --bind_port 5015
---target_ip 127.0.0.1
 --target_port 5016
 ```
 
@@ -107,9 +105,7 @@ python ./geort/mocap/rokoko_retarget_send_right.py \
 Default values:
 
 ```text
---bind_ip 10.6.60.137
 --bind_port 5013
---target_ip 127.0.0.1
 --target_port 5014
 ```
 
