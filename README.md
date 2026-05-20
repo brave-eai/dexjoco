@@ -16,7 +16,7 @@
 DexJoCo is a MuJoCo-based simulation benchmark and toolkit for task-oriented
 dexterous manipulation. It provides **11 functionally grounded tasks** covering
 🛠️ **tool use**, 🤝 **bimanual coordination**, ⏱️ **long-horizon execution**,
-and 🧠 **reasoning**, together with a low-cost teleoperation data collection
+and ⚙️ **reasoning**, together with a low-cost teleoperation data collection
 system, replayable demonstrations, domain randomization, and OpenPI π0.5 policy
 training/evaluation support.
 
@@ -161,6 +161,7 @@ hardware and software configuration required for teleoperation:
 
 | Component                   | Documentation                                                                                        |
 | --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| teleoperation overview      | [`teleoperation/README.md`](teleoperation/README.md)                                                 |
 | hardware setup              | [`teleoperation/Teleoperation_System_Tutorial.pdf`](teleoperation/Teleoperation_System_Tutorial.pdf) |
 | Vive tracker bridge         | [`teleoperation/vive_bridge`](teleoperation/vive_bridge)                                             |
 | Rokoko hand-keypoint bridge | [`teleoperation/rokoko`](teleoperation/rokoko)                                                       |
@@ -309,7 +310,7 @@ proprioception:
 Privileged environment fields should be filtered out before training policy
 models.
 
-## 🧠 Policy Train
+## ⚙️ Policy Train
 
 DexJoCo LeRobot datasets are available from
 [`DexJoCo/DexJoCo-Datasets-LeRobot`](https://huggingface.co/datasets/DexJoCo/DexJoCo-Datasets-LeRobot).
