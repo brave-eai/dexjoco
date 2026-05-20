@@ -67,6 +67,13 @@ flags.DEFINE_bool(
     "(live preview + shutter flash + frozen photo). When False, the screen "
     "geom is hidden entirely.",
 )
+flags.DEFINE_bool(
+    "ipad_screen_effect",
+    False,
+    "(bimanual_unlock_ipad only) Enable the iPad unlock screen fade-in "
+    "transition. When False, the screen flips to unlocked instantly on the "
+    "final correct press.",
+)
 
 
 def _ensure_base_outdir(base: str) -> Path:
@@ -442,6 +449,8 @@ def main(_argv):
     env_extra_kwargs = {}
     if task_id == "bimanual_photograph":
         env_extra_kwargs["camera_screen_effect"] = FLAGS.camera_screen_effect
+    if task_id == "bimanual_unlock_ipad":
+        env_extra_kwargs["ipad_screen_effect"] = FLAGS.ipad_screen_effect
 
     env = config.get_environment(
         render_mode=FLAGS.render_mode,

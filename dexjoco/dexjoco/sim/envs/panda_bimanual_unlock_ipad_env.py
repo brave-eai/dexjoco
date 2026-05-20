@@ -41,11 +41,13 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         config=None,
         hz=30,
         password: list[int] | None = None,
+        ipad_screen_effect: bool = False,
     ):
         self.hz = 30
         self._action_scale = action_scale
         self.randomize = randomize
         self._randomize_dynamics = randomize_dynamics
+        self._ipad_screen_effect = bool(ipad_screen_effect)
 
         super().__init__(
             xml_path=_XML_PATH,
@@ -830,7 +832,12 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             if digit == expected:
                 self._unlock_index += 1
                 if self._unlock_index >= len(self._unlock_sequence):
-                    self._start_unlock_animation({gid})
+                    if self._ipad_screen_effect:
+                        self._start_unlock_animation({gid})
+                    else:
+                        self._set_screen_unlocked()
+                        self._hide_buttons()
+                        self._screen_unlocked = True
             else:
                 # print("----!!!wrong input!!!----")
                 # self.reset()
