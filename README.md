@@ -5,8 +5,9 @@
 <p align="center">
   <a href="https://arxiv.org/abs/2605.16257"><img src="https://img.shields.io/badge/arXiv-2605.16257-b31b1b?style=flat-square" alt="arXiv"></a>
   <a href="https://dexjoco.github.io/"><img src="https://img.shields.io/badge/GitHub-Page-FF6B00?style=flat-square&logo=github&logoColor=white" alt="Project Homepage"></a>
-  <a href="https://huggingface.co/datasets/DexJoCo/DexJoCo-Datasets-LeRobot"><img src="https://img.shields.io/badge/🤗%20Hugging%20Face-Dataset-FFD21E?style=flat-square" alt="HuggingFace Dataset"></a>
-  <a href="https://huggingface.co/papers/2605.16257"><img src="https://img.shields.io/badge/🤗%20Hugging%20Face-Paper-FFD21E?style=flat-square" alt="HuggingFace Paper"></a>
+  <a href="https://huggingface.co/datasets/DexJoCo/DexJoCo-Datasets-LeRobot"><img src="https://img.shields.io/badge/🤗%20HF-Dataset-FFD21E?style=flat-square" alt="HF Dataset"></a>
+  <a href="https://huggingface.co/DexJoCo/DexJoCo-Pi05"><img src="https://img.shields.io/badge/🤗%20HF-Model-FFD21E?style=flat-square" alt="HF Models"></a>
+  <a href="https://huggingface.co/papers/2605.16257"><img src="https://img.shields.io/badge/🤗%20HF-Paper-FFD21E?style=flat-square" alt="HF Paper"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License"></a>
 </p>
 
@@ -94,6 +95,10 @@ conda activate openpi
 
 ## 🤖 Policy Eval
 
+Download model checkpoints from
+[DexJoCo-Pi05](https://huggingface.co/DexJoCo/DexJoCo-Pi05) or train them
+yourself before evaluation.
+
 Start an OpenPI policy server from the `openpi` environment:
 
 ```bash
@@ -151,8 +156,8 @@ For detailed guidance on integrating a custom policy, see
 
 ## 📦 Data Collection
 
-
-Please refer to the [`teleoperation/`](teleoperation/) directory for the hardware and software configuration required for teleoperation:
+Please refer to the [`teleoperation/`](teleoperation/) directory for the
+hardware and software configuration required for teleoperation:
 
 | Component                   | Documentation                                                                                        |
 | --------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -206,8 +211,10 @@ Common `record_demos_zarr.py` options:
 | `--save_depth`       | Saves depth arrays and depth videos alongside RGB videos.                     |
 | `--out_dir`          | Selects the output directory for collected demos.                             |
 
-
 ## 🔁 Replay
+
+Raw DexJoCo datasets for replay are available from
+[`DexJoCo/DexJoCo-Datasets-Raw`](https://huggingface.co/datasets/DexJoCo/DexJoCo-Datasets-Raw).
 
 Replay recorded demonstrations with
 [`scripts/replay_demos_zarr.py`](scripts/replay_demos_zarr.py):
@@ -303,6 +310,9 @@ Privileged environment fields should be filtered out before training policy
 models.
 
 ## 🧠 Policy Train
+
+DexJoCo LeRobot datasets are available from
+[`DexJoCo/DexJoCo-Datasets-LeRobot`](https://huggingface.co/datasets/DexJoCo/DexJoCo-Datasets-LeRobot).
 
 OpenPI π0.5 training support lives under [`openpi/`](openpi). The OpenPI setup
 covers two DexJoCo data regimes:
