@@ -212,7 +212,9 @@ Common `record_demos_zarr.py` options:
 | `--save_depth`       | Saves depth arrays and depth videos alongside RGB videos.                     |
 | `--out_dir`          | Selects the output directory for collected demos.                             |
 
-[`scripts/record_demos_zarr.py`](scripts/record_demos_zarr.py) supports `--camera_screen_effect` to display a camera viewfinder overlay, defaults to `False`.
+[`scripts/record_demos_zarr.py`](scripts/record_demos_zarr.py) supports
+`--camera_screen_effect` to display a camera viewfinder overlay, defaults to
+`False`.
 
 ## 🔁 Replay
 
@@ -252,7 +254,9 @@ Common `replay_demos_zarr.py` options:
 | `--restore_state` | `True`            | Restores initial table height and object poses from the recorded `state[0]` when available.             |
 | `--save_depth`    | `False`           | Saves depth arrays and depth videos alongside RGB replay videos.                                        |
 
-[`scripts/replay_demos_zarr.py`](scripts/replay_demos_zarr.py) supports `--camera_screen_effect` to display a camera viewfinder overlay, defaults to `False`.
+[`scripts/replay_demos_zarr.py`](scripts/replay_demos_zarr.py) supports
+`--camera_screen_effect` to display a camera viewfinder overlay, defaults to
+`False`.
 
 ## 🗂️ Data Format
 
@@ -384,11 +388,13 @@ Bundled third-party components and assets retain their separate license terms:
 ## 📚 Citation
 
 ```bibtex
-@article{wang2026dexjoco,
-  title = {DexJoCo: A Unified Benchmark and Toolkit for Task-Oriented Dexterous Manipulation on MuJoCo},
-  author = {Wang, Hanwen and Zhao, Weizhi and Wang, Xiangyu and Huang, Siyuan and Lin, He and Zheng, Boyuan and Xu, Rongtao and Wang, Gang and Mu, Yao and Wang, He and Fan, Lue and Li, Hongsheng and Zhang, Zhaoxiang and Tan, Tieniu},
-  journal = {arXiv preprint arXiv:2605.16257},
-  year = {2026},
-  url = {https://dexjoco.github.io}
+@misc{wang2026dexjocobenchmarktoolkittaskoriented,
+      title={DexJoCo: A Benchmark and Toolkit for Task-Oriented Dexterous Manipulation on MuJoCo},
+      author={Hanwen Wang and Weizhi Zhao and Xiangyu Wang and Siyuan Huang and He Lin and Boyuan Zheng and Rongtao Xu and Gang Wang and Yao Mu and He Wang and Lue Fan and Hongsheng Li and Zhaoxiang Zhang and Tieniu Tan},
+      year={2026},
+      eprint={2605.16257},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2605.16257},
 }
 ```
