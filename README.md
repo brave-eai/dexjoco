@@ -212,6 +212,8 @@ Common `record_demos_zarr.py` options:
 | `--save_depth`       | Saves depth arrays and depth videos alongside RGB videos.                     |
 | `--out_dir`          | Selects the output directory for collected demos.                             |
 
+[`scripts/record_demos_zarr.py`](scripts/record_demos_zarr.py) supports `--camera_screen_effect` to display a camera viewfinder overlay, defaults to `False`.
+
 ## 🔁 Replay
 
 Raw DexJoCo datasets for replay are available from
@@ -249,6 +251,8 @@ Common `replay_demos_zarr.py` options:
 | `--save_failed`   | `False`           | Saves replay output even when the environment does not report success.                                  |
 | `--restore_state` | `True`            | Restores initial table height and object poses from the recorded `state[0]` when available.             |
 | `--save_depth`    | `False`           | Saves depth arrays and depth videos alongside RGB replay videos.                                        |
+
+[`scripts/replay_demos_zarr.py`](scripts/replay_demos_zarr.py) supports `--camera_screen_effect` to display a camera viewfinder overlay, defaults to `False`.
 
 ## 🗂️ Data Format
 
