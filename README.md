@@ -20,8 +20,6 @@ and ⚙️ **reasoning**, together with a low-cost teleoperation data collection
 system, replayable demonstrations, domain randomization, and OpenPI π0.5 policy
 training/evaluation support.
 
-## 🖼️ Demos
-
 <table width="100%">
   <tr>
     <td align="center" width="20%">
@@ -76,6 +74,19 @@ training/evaluation support.
   </tr>
 </table>
 
+## Table of Contents
+
+- [Installation](#-installation)
+- [Policy Evaluation](#-policy-evaluation)
+- [Custom Policy Integration](#-custom-policy-integration)
+- [Data Collection](#-data-collection)
+- [Demonstration Replay](#-demonstration-replay)
+- [Data Format](#data-format)
+- [Policy Training](#policy-training)
+- [Headless Rendering](#headless-rendering)
+- [License](#-license)
+- [Citation](#-citation)
+
 ## 🚀 Installation
 
 Create and activate the DexJoCo environment:
@@ -93,7 +104,7 @@ bash install.bash
 conda activate openpi
 ```
 
-## 🤖 Policy Eval
+## 🤖 Policy Evaluation
 
 Download model checkpoints from
 [DexJoCo-Pi05](https://huggingface.co/DexJoCo/DexJoCo-Pi05) or train them
@@ -124,7 +135,7 @@ For `rand_full` evaluation, use a config under `configs/rand_full/` and pass
 
 ```bash
 dexjoco-openpi-eval \
-  --config=./configs/rand_full/bimanual_microwave_cook.yaml \
+  --config=./configs/rand_full/water_plant.yaml \
   --seed=0 \
   --port=8000 \
   --rand-full
@@ -136,23 +147,38 @@ Convenience launch templates are available at
 
 `dexjoco-openpi-eval` options:
 
-| Option                            | Default        | Description                                                                              |
-| --------------------------------- | -------------- | ---------------------------------------------------------------------------------------- |
-| `--config PATH`                   | Required       | Evaluation YAML under `configs/rand_obj/` or `configs/rand_full/`.                       |
-| `--seed INT`                      | `0`            | Random seed for NumPy and Python random state.                                           |
-| `--rand-full`                     | `False`        | Enables the `rand_full` evaluation regime.                                               |
-| `--randomize-dynamics`            | `False`        | Enables dynamics randomization.                                                          |
-| `--port INT`                      | `8000`         | OpenPI websocket policy server port.                                                     |
-| `--host HOST`                     | `0.0.0.0`      | Host address used by the OpenPI websocket client.                                        |
-| `--output PATH`                   | Auto-generated | Output directory for videos and success-rate marker files.                               |
-| `--render-mode {rgb_array,human}` | `rgb_array`    | DexJoCo rendering mode. `rgb_array` is headless.                                         |
-| `--replan-ratio FLOAT`            | `0.8`          | Fraction of the OpenPI action horizon to execute before requesting a fresh action chunk. |
-| `--episodes INT`                  | `50`           | Number of evaluation episodes to run.                                                    |
-| `--pad-state-dim46`               | `False`        | Pads the policy state representation to 46 dimensions for compatibility.                 |
-| `--record-pressed-digits BOOL`    | Task-dependent | Controls whether iPad digit inputs are recorded in episode output names.                 |
+| Option                            | Default        | Description                                                        |
+| --------------------------------- | -------------- | ------------------------------------------------------------------ |
+| `--config PATH`                   | Required       | Evaluation YAML under `configs/rand_obj/` or `configs/rand_full/`. |
+| `--seed INT`                      | `0`            | Random seed for NumPy and Python random state.                     |
+| `--rand-full`                     | `False`        | Enables the `rand_full` evaluation regime.                         |
+| `--randomize-dynamics`            | `False`        | Enables dynamics randomization.                                    |
+| `--port INT`                      | `8000`         | OpenPI websocket policy server port.                               |
+| `--output PATH`                   | Auto-generated | Output directory for videos and success-rate marker files.         |
+| `--render-mode {rgb_array,human}` | `rgb_array`    | DexJoCo rendering mode. `rgb_array` is headless.                   |
+| `--episodes INT`                  | `50`           | Number of evaluation episodes to run.                              |
 
-For detailed guidance on integrating a custom policy, see
-[docs/custom_policy_integration.md](docs/custom_policy_integration.md).
+See
+[`dexjoco/dexjoco_openpi_client/eval_dexjoco_openpi.py`](dexjoco/dexjoco_openpi_client/eval_dexjoco_openpi.py)
+for the complete option set.
+
+## 🔌 Custom Policy Integration
+
+DexJoCo supports custom policy evaluation through the same environment contract
+used by the OpenPI client. Observations are collected from the simulator and
+passed to a policy for action inference. The resulting actions are executed in
+the environment.
+
+Custom integrations should follow the protocol described in
+[`docs/custom_policy_integration.md`](docs/custom_policy_integration.md),
+including:
+
+- observation fields for camera images, proprioceptive state, and prompts
+- action layout conversion from rotation-vector policy actions to quaternion
+  environment actions
+- chunked action execution and replanning for latency-tolerant inference
+- optional multi-frame observation history
+- LeRobot-style `async_inference` integration patterns
 
 ## 📦 Data Collection
 
@@ -183,7 +209,7 @@ Supported tasks:
 | Fold glasses   | Single-arm | `fold_glasses`            |
 | Water plant    | Single-arm | `water_plant`             |
 
-TODO： how to add new tasks?
+TODO: how to add new tasks?
 
 Start demonstration recording from the repository root with
 [`scripts/record_demos_zarr.py`](scripts/record_demos_zarr.py):
@@ -216,7 +242,7 @@ Common `record_demos_zarr.py` options:
 `--camera_screen_effect` to display a camera viewfinder overlay, defaults to
 `False`.
 
-## 🔁 Replay
+## 🔁 Demonstration Replay
 
 Raw DexJoCo datasets for replay are available from
 [`DexJoCo/DexJoCo-Datasets-Raw`](https://huggingface.co/datasets/DexJoCo/DexJoCo-Datasets-Raw).
@@ -240,23 +266,23 @@ camera, lighting, and table texture randomization.
 
 Common `replay_demos_zarr.py` options:
 
-| Flag              | Default           | Purpose                                                                                                 |
-| ----------------- | ----------------- | ------------------------------------------------------------------------------------------------------- |
-| `--exp_name`      | `water_plant`     | Selects the task used to replay the demonstrations.                                                     |
-| `--input_dir`     | `./`              | Directory containing recorded demo folders with `replay.zarr`.                                          |
-| `--out_dir`       | `./replay_output` | Output directory for replayed Zarr episodes and videos.                                                 |
-| `--video_fps`     | `30`              | FPS for saved replay videos.                                                                            |
-| `--data_fps`      | `30`              | Sampling frequency used to write replay timestamps.                                                     |
-| `--randomize`     | `True`            | Enables replay-time `rand_full` visual randomization with preset camera, lighting, and texture changes. |
-| `--seed`          | `0`               | Base replay seed; the demo index is added for each input demo.                                          |
-| `--extend_steps`  | `0`               | Repeats the final action for additional steps when replaying older clipped data.                        |
-| `--save_failed`   | `False`           | Saves replay output even when the environment does not report success.                                  |
-| `--restore_state` | `True`            | Restores initial table height and object poses from the recorded `state[0]` when available.             |
-| `--save_depth`    | `False`           | Saves depth arrays and depth videos alongside RGB replay videos.                                        |
+| Flag           | Default           | Purpose                                                                                                 |
+| -------------- | ----------------- | ------------------------------------------------------------------------------------------------------- |
+| `--exp_name`   | `water_plant`     | Selects the task used to replay the demonstrations.                                                     |
+| `--input_dir`  | `./`              | Directory containing recorded demo folders with `replay.zarr`.                                          |
+| `--out_dir`    | `./replay_output` | Output directory for replayed Zarr episodes and videos.                                                 |
+| `--randomize`  | `True`            | Enables replay-time `rand_full` visual randomization with preset camera, lighting, and texture changes. |
+| `--seed`       | `0`               | Base replay seed; the demo index is added for each input demo.                                          |
+| `--save_depth` | `False`           | Saves depth arrays and depth videos alongside RGB replay videos.                                        |
+
+See [`scripts/replay_demos_zarr.py`](scripts/replay_demos_zarr.py) for the
+complete option set.
 
 [`scripts/replay_demos_zarr.py`](scripts/replay_demos_zarr.py) supports
 `--camera_screen_effect` to display a camera viewfinder overlay, defaults to
 `False`.
+
+<a id="data-format"></a>
 
 ## 🗂️ Data Format
 
@@ -281,7 +307,9 @@ The Zarr replay buffer stores low-dimensional episode data:
 | `timestamp`     | Per-step timestamps derived from `--data_fps`.                                                  |
 | `state`         | Proprioceptive and task state used by replay and state restoration when available.              |
 
-### Policy Data Notes
+TODO: data converter
+
+### Policy Training Action and State Layout
 
 For bimanual demonstrations, the recorded action layout is:
 
@@ -318,7 +346,9 @@ proprioception:
 Privileged environment fields should be filtered out before training policy
 models.
 
-## ⚙️ Policy Train
+<a id="policy-training"></a>
+
+## ⚙️ Policy Training
 
 DexJoCo LeRobot datasets are available from
 [`DexJoCo/DexJoCo-Datasets-LeRobot`](https://huggingface.co/datasets/DexJoCo/DexJoCo-Datasets-LeRobot).
@@ -352,7 +382,9 @@ Training workflow:
 See [`openpi/README.md`](openpi/README.md) for command examples and checkpoint
 layout details.
 
-## 🖥️ Headless
+<a id="headless-rendering"></a>
+
+## 🖥️ Headless Rendering
 
 Headless environments use `policy_mode=True` and `render_mode="rgb_array"`:
 
