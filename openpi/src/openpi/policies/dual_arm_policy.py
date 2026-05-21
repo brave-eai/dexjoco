@@ -1,5 +1,5 @@
 """
-Works for dexhand-bench dual arm environments.
+Works for DexJoCo dual-arm environments.
 """
 
 import dataclasses

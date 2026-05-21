@@ -30,7 +30,7 @@ import openpi.training.weight_loaders as weight_loaders
 import openpi.transforms as _transforms
 
 from openpi.policies import single_arm_policy, dual_arm_policy
-from .hand_bench_configs import get_hand_bench_configs
+from .dexjoco_configs import get_dexjoco_configs
 
 ModelType: TypeAlias = _model.ModelType
 # Work around a tyro issue with using nnx.filterlib.Filter directly.
@@ -363,7 +363,7 @@ class LeRobotLiberoDataConfig(DataConfigFactory):
 @dataclasses.dataclass(frozen=True)
 class SingleArmDataConfig(DataConfigFactory):
     """
-    Works for dexhand-bench single-arm envs
+    Works for DexJoCo single-arm environments.
     This config is used to configure transforms that are applied at various parts of the data pipeline.
     For your own dataset, you can copy this class and modify the transforms to match your dataset based on the
     comments below.
@@ -436,7 +436,7 @@ class SingleArmDataConfig(DataConfigFactory):
 @dataclasses.dataclass(frozen=True)
 class DualArmDataConfig(DataConfigFactory):
     """
-    Works for dexhand-bench dual-arm envs
+    Works for DexJoCo dual-arm environments.
     This config is used to configure transforms that are applied at various parts of the data pipeline.
     For your own dataset, you can copy this class and modify the transforms to match your dataset based on the
     comments below.
@@ -1124,8 +1124,8 @@ _CONFIGS = [
     # RoboArena & PolaRiS configs.
     *roboarena_config.get_roboarena_configs(),
     *polaris_config.get_polaris_configs(),
-    # DexHand configs.
-    *get_hand_bench_configs()
+    # DexJoCo configs.
+    *get_dexjoco_configs()
 ]
 
 if len({config.name for config in _CONFIGS}) != len(_CONFIGS):

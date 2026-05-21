@@ -1,15 +1,21 @@
-## Teleoperation Providers
+## Teleoperation Interfaces
 
-This directory contains optional teleoperation providers that can publish UDP
-messages for Dexjoco's simulated data-collection pipeline.
+Please follow the instructions in [`Teleoperation_System_Tutorial.pdf`](Teleoperation_System_Tutorial.pdf) to assemble the teleoperation hardware and complete the required software setup. The [`GloveMount.STL`](GloveMount.STL) file provides the 3D-printable CAD model for mounting the glove and tracker.
 
-- `vive_bridge/`: Dexjoco-maintained OpenVR sender for Vive tracker poses.
-- `rokoko/`: Dexjoco-maintained Rokoko Studio bridge for forwarding
-  canonicalized hand keypoints from another PC to the GeoRT/Dexjoco stack.
-- `GeoRT/`: third-party hand-retargeting component kept in-repo for
-  non-commercial research use. This directory keeps its own upstream license
-  and includes Dexjoco-specific Rokoko/UDP adaptations.
+This directory contains teleoperation interfaces and helper components that publish UDP
+messages for DexJoCo's simulated data collection pipeline.
 
-Dexjoco's simulation collector only depends on the UDP payloads documented in
-[`../docs/teleop_udp_protocol.md`](../docs/teleop_udp_protocol.md). The
-providers in this directory are optional helpers around that protocol.
+- [`vive_bridge/`](vive_bridge/): DexJoCo maintained OpenVR sender for Vive tracker poses.  Before pressing the keyboard key `;` to enable human intervention, keep your hand flat and align its pose with the simulated hand.
+- [`rokoko/`](rokoko/): DexJoCo maintained Rokoko Studio bridge for forwarding
+  canonicalized hand keypoints from another PC to the GeoRT/DexJoCo stack.
+- [`GeoRT/`](GeoRT/): Third-party hand-retargeting component. This directory includes DexJoCo-specific Rokoko/UDP adaptations.
+
+
+
+DexJoCo's simulation collector uses a few UDP payloads by default. The
+providers in this directory are optional helpers around these default ports,
+which can be changed in the corresponding teleoperation configs or scripts:
+
+- `5012`: Vive tracker pose for single-arm and bimanual tasks.
+- `5014`: right-hand or single-hand joint targets.
+- `5016`: left-hand joint targets for bimanual tasks.

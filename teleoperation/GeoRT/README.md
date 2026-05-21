@@ -1,174 +1,112 @@
-# Geometric Retargeting
+# Geometric Retargeting for DexJoCo
 
-[![CC BY-NC 4.0 License](https://licensebuttons.net/l/by-nc/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc/4.0/)
+DexJoCo's default GeoRT retarget checkpoints are tracked directly in this repository under `teleoperation/GeoRT/checkpoint/`.
 
-Welcome! This repository contains the code for the paper "Geometric Retargeting: A Principled, Ultrafast Neural Hand Retargeting Algorithm".
-
-![Demo GIF](./images/demo.gif)
 ## Installation
-If you have already got a conda environment with torch, you just need these packages
-```
-pip install trimesh open3d sapien zmq
-pip install -e .
-```
 
-Dexjoco's default GeoRT retarget checkpoints are tracked directly in this repository under `teleoperation/GeoRT/checkpoint/`.
+We recommend using a virtual environment to install the required packages. To install the required packages, run the following command:
 
-Otherwise, we recommend using a virtual environment to install the required packages. To install the required packages, run the following command:
-```
+```bash
 conda create --name geort python=3.8
 pip install -r requirements.txt
 pip install -e .
 ```
-## Quick Overview
-Upon completion, you will be able to train GeoRT and deploy the checkpoint in a clean and straightforward way. 
-### Training (1-2min):
-```
-python ./geort/trainer.py -hand allegro_right -human_data YOUR_DATASET_NAME -ckpt_tag geort_1
-```
-### Deploy in code
-```
-import geort
-model = geort.load_model('geort_1')
-mocap = ...
-qpos = model.forward(mocap.get())
-```
-But before this, we need to complete some one-time system setup steps outlined below.
 
-**Useful Links**: [Notes and Troubleshooting](#notes-and-troubleshooting)
 ## Getting Started
-We use the native Allegro Hand as an example. 
 
-### Step 1: Import your robot hand (one-time setup).
-Note: For the Allegro Hand, you can actually skip this step. However, please follow it if you want to import a customized robot hand.
+### Step 1: Collect Human Hand Mocap Data
 
-We just need to complete a quick setup process outlined below:
+You need to collect human hand data to train the retargeting model. Follow the tutorial to configure Rokoko so that it can stream pose data to the PC.
 
-1. Place your robot hand URDF file in the ``assets`` folder. (We have included the Allegro example there.)
-2. Create a config file named ``your_robot_name.json`` in the ``geort/config`` directory. Below is an example for the Allegro hand. For brevity, the details are omitted here, but you can refer to the [this](./geort/config/allegro_right.json) for full information. For setup instructions, please read [this](./geort/config/template.py).
-
-```
-{
-    "name": "allegro_right",  
-    "urdf_path": "./assets/allegro_right/allegro_hand_description_right.urdf",
-    "base_link": "base_link",
-    "joint_order": [
-        "joint_0.0", "joint_1.0", "joint_2.0", "joint_3.0",
-        "joint_4.0", "joint_5.0", "joint_6.0", "joint_7.0",
-        "joint_8.0", "joint_9.0", "joint_10.0", "joint_11.0",
-        "joint_12.0", "joint_13.0", "joint_14.0", "joint_15.0"
-    ],
-    "fingertip_link": [
-        {
-            "name": "index",
-            "link": "link_4.0_tip",
-            "joint": ["joint_0.0", "joint_1.0", "joint_2.0", "joint_3.0"],
-            "center_offset": [0.0, 0.0, 0.0],
-            "human_hand_id": 8,
-        },
-        ...
-    ]
-}
-
-```
-Now, you can run this command to visualize your hand.
-```
-python geort/env/hand.py --hand [YOUR_HAND_CONFIG_NAME]
-```
-such as 
-```
-python geort/env/hand.py --hand allegro_right
-```
-<span style="color:red"> If there is any segmentation error, please simplify the collision meshes or just remove all the `<collision>` fields in your URDF. </span> See the [Notes and Troubleshooting](#notes-and-troubleshooting) section.
-
-### Step 2: Collect human hand mocap data.
-Now we need to collect some human hand data for training the retargeting model. We put an example human recording dataset in data folder. You can add your own data to that folder and here is a template python script to do this.
-
-```
-import geort
-import time
-
-# Dataset Name
-data_output_name = "human" # TODO(): Specify a name for this (e.g. your name)
-
-# Your data collection loop.
-mocap = YourAwesomeMocap() # TODO(): your mocap system.
-                           # Define a mocap.get() method.
-                           # Apologies, you still have to do this...
- 
-data = []
-
-for step in range(5000):       # collect 5000 data points.
-    hand_keypoint = mocap.get() # mocap.get() return [N, 3] numpy array.
-    data.append(hand_keypoint)
-    
-    time.sleep(0.01)            # take a short break.
-
-# finish data collection.
-geort.save_human_data(data, data_output_name)
-```
-Use ``geort.save_human_data`` API -- this can simplify your effort in specifying the path. This dataset can be reloaded later using **data_output_name**. 
-
-During the data collection process, try to 1. fully stretch each finger and explore its fingertip moving range and 2. perform pinch grasps. Ensure that your fingers feel natural and comfortable—since during teleoperation deployment, you will use these recorded gestures to control the robot! Please avoid any unnatural or strained movements.
-
-Please ensure that the hand frame orientation is consistent between your motion capture system and the hand URDF (but fortunately the origin does not require any alignment and you can just set it to palm center). In our provided Rokoko path, we support the **right** hand using the following convention:+Y axis: from the palm center to the thumb. +Z axis: from the palm center to the middle fingertip. +X axis: palm normal (pointing out of the palm). 
-
-### Step 3: Train the Model
-Assuming you have placed ``your_robot_name.json`` in the ``geort/config`` folder as described in Step 1, and set ``data_output_name`` to ``human`` in Step 2, run the following command. TAG is the checkpoint id to use in later deployment.
-
-```
-python ./geort/trainer.py -hand your_robot_name -human_data human -ckpt_tag TAG
+```bash
+python dexjoco/teleoperation/rokoko/collect_mocap_data.py \
+  --listen-ip <LISTEN_IP> \
+  --listen-port <ROKOKO_STREAMING_PORT> \
+  --hand <HAND_TYPE> \
+  --output-name <OUTPUT_NAME>
 ```
 
-Let it train for about 30–50 epochs (approximately 1–2 minutes). You can press Ctrl+C to stop early if you wish. 
+The collected data should be placed under:
 
-If this is the first time you’re training for a new hand, an additional 5 minutes will be needed to train the neural FK model — this only happens once.
-In the command above, 
-
-In this Dexjoco release, the ``data`` folder is intentionally kept empty. Place your own recorded hand data there and reference it by name when training.
-
-### Step 4: Deploy!
-Ok, now we are all set. Use the following code to import and deploy the trained model. 
-
+```text
+./GeoRT/data/
 ```
-import geort
 
-checkpoint_tag = 'geort_1'          # TODO: your checkpoint name, assume it is 'TAG'
-model = geort.load_model(checkpoint_tag, epoch=50)  # set epoch=-1 to use the last model.
+During data collection, try to:
 
-mocap = YourAwesomeMocap()      # TODO: your mocap.
-robot = YourRobustRobotHand()   # TODO: your robot.
+1. Fully stretch each finger and explore its fingertip range of motion.
+2. Perform pinch grasps.
 
-while True:
-    qpos = model.forward(mocap.get()) # This is the retargeted qpos. 
-                                      # (Note: unnormalized joint angle)
-    robot.command(qpos)               # execute!
+Ensure that your fingers feel natural and comfortable, because during teleoperation deployment, you will use these recorded gestures to control the robot. Avoid any unnatural or strained movements.
 
+### Step 2: Train the Model
+
+```bash
+python ./geort/trainer.py -hand allegro_right -human_data YOUR_DATASET_NAME -ckpt_tag TAG
 ```
-We provide examples in ``geort/mocap/replay_evaluation.py`` and Rokoko-facing retarget senders under ``geort/mocap/``.
 
-The simplest way for testing is to use the replay evaluation as below. This will show the retargeted trajectory in the viewer. 
+Let it train for about 30-50 epochs (approximately 1-2 minutes). You can press `Ctrl+C` to stop early if you wish.
+
+### Step 3: Deploy
+
+We provide deployment examples in `geort/mocap/rokoko_evaluation.py`.
+
+The simplest way to test the trained retargeting network is to run replay evaluation. This will visualize the retargeted hand trajectory in the viewer:
+
+```bash
+python ./geort/mocap/rokoko_evaluation.py \
+  -hand allegro_right \
+  -ckpt_tag <YOUR_CKPT> \
+  -data <YOUR_TRAINING_DATA>
 ```
-python ./geort/mocap/replay_evaluation.py -hand allegro_right -ckpt_tag YOUR_CKPT -data YOUR_TRAINING_DATA
+
+Once the test runs successfully, you can use the trained retargeting network for teleoperation and collect robot hand trajectories in the simulator.
+
+Before running the retargeting scripts, you need to run the Rokoko mocap sender on the PC where Rokoko Studio is installed. This script receives the hand pose data streamed from Rokoko Studio and forwards the left- and right-hand data to the corresponding retargeting ports.
+
+```bash
+python ../rokoko/rokoko_mocap_bimanual.py \
+  --listen-ip <LISTEN_IP> \
+  --listen-port <ROKOKO_STREAMING_PORT> \
+  --target-ip <TARGET_IP> \
+  --left-port <LEFT_HAND_PORT> \
+  --right-port <RIGHT_HAND_PORT>
 ```
-For instance, if you have ``human.npy`` in the ``data`` folder
+
+Make sure that the listening port and the target ports are correctly configured and consistent with your simulator setup.
+
+To retarget left-hand motion from Rokoko to the left Allegro Hand, run:
+
+```bash
+python ./geort/mocap/rokoko_retarget_send_left.py \
+  --bind_ip <BIND_IP> \
+  --bind_port <BIND_PORT> \
+  --target_ip <TARGET_IP> \
+  --target_port <TARGET_PORT>
 ```
-python ./geort/mocap/replay_evaluation.py -hand allegro_right -ckpt_tag YOUR_CKPT -data human
+
+Default values:
+
+```text
+--bind_port 5015
+--target_port 5016
 ```
-## Contributing
-Feel free to contribute your robot model and mocap system to the GeoRT repository!
 
-## [Notes and Troubleshooting](#notes-and-troubleshooting)
-1. **Note:Joint Range Clipping.** One core assumption of GeoRT is that the motion range of robot fingertips resembles that of human hands. To maintain realistic fingertip poses, please clip your robot's joint movement ranges appropriately and avoid unnatural configurations.
+To retarget right-hand motion from Rokoko to the right Allegro Hand, run:
 
-2. **Simulation Errors with New Hands?** Simulation errors (segmentation fault) may occur when importing new robotic hands (e.g. [this issue](https://github.com/facebookresearch/GeoRT/issues/7)), and this is usually caused by collision meshes. To avoid this, ensure that the collision meshes defined in your URDF are simple—such as boxes or basic convex shapes. Alternatively, you can remove all <collision> elements from the URDF to eliminate these issues entirely. 
+```bash
+python ./geort/mocap/rokoko_retarget_send_right.py \
+  --bind_ip <BIND_IP> \
+  --bind_port <BIND_PORT> \
+  --target_ip <TARGET_IP> \
+  --target_port <TARGET_PORT>
+```
 
-3. **Hand Coordinate System (Frame) Convention** Please ensure that the hand frame orientation is consistent between your motion capture system and the hand URDF (but fortunately the origin does not require any alignment and you can just set it to palm center). In our provided mocap example, we support the **right** hand using the following convention:+Y axis: from the palm center to the thumb. +Z axis: from the palm center to the middle fingertip. +X axis: palm normal (pointing out of the palm). 
+Default values:
 
+```text
+--bind_port 5013
+--target_port 5014
+```
 
-## Contact Us
-For any inquiries, please open an issue or contact the authors via email at ``zhaohengyin@cs.berkeley.edu``
-<!-- ## Bibliography -->
-
-## License
-CC-by-NC license
+DexJoCo's simulator receives these packets in [`../../dexjoco/dexjoco/tasks/sim_teleop.py`](../../dexjoco/dexjoco/tasks/sim_teleop.py).

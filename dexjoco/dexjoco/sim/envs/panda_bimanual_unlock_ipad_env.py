@@ -41,11 +41,13 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         config=None,
         hz=30,
         password: list[int] | None = None,
+        ipad_screen_effect: bool = False,
     ):
         self.hz = 30
         self._action_scale = action_scale
         self.randomize = randomize
         self._randomize_dynamics = randomize_dynamics
+        self._ipad_screen_effect = bool(ipad_screen_effect)
 
         super().__init__(
             xml_path=_XML_PATH,
@@ -313,6 +315,12 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         self._pressed_last = set()
         self._buttons_hidden = False
         self._screen_unlocked = False
+        self._unlock_pending = False
+        self._unlock_delay_steps = 12
+        self._unlock_delay_count = 0
+        self._unlock_transition_steps = 18
+        self._unlock_transition_step = 0
+        self._unlock_final_pressed = set()
         self._screen_geom_id = -1
         self._mat_screen_locked_id = -1
         self._mat_screen_unlocked_id = -1
@@ -330,6 +338,12 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             )
         except Exception:
             pass
+        self._mat_screen_locked_rgba = self._get_material_rgba(
+            self._mat_screen_locked_id, np.array([0.2, 0.2, 0.2, 1.0])
+        )
+        self._mat_screen_unlocked_rgba = self._get_material_rgba(
+            self._mat_screen_unlocked_id, np.ones(4)
+        )
 
         # Default unlock parameters and pose.
         self._unlock_params = {
@@ -557,6 +571,10 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         self._success_trigger_count = 0
         self._pressed_last = set()
         self._buttons_hidden = False
+        self._unlock_pending = False
+        self._unlock_delay_count = 0
+        self._unlock_transition_step = 0
+        self._unlock_final_pressed = set()
         self._set_screen_locked()
         self._show_buttons()
         self._screen_unlocked = False
@@ -697,6 +715,7 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         # Update button colors based on contacts
         try:
             pressed_digits = self._update_button_visuals()
+            self._update_unlock_animation()
         except Exception:
             pass
             # print("[Warning] failed to update button visuals:", e)
@@ -772,6 +791,9 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             return
         if self._buttons_hidden:
             return
+        if self._unlock_pending:
+            self._set_button_materials(self._unlock_final_pressed)
+            return []
 
         button_set = set(self._button_geom_ids)
         pressed = set()
@@ -810,9 +832,12 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
             if digit == expected:
                 self._unlock_index += 1
                 if self._unlock_index >= len(self._unlock_sequence):
-                    self._set_screen_unlocked()
-                    self._hide_buttons()
-                    self._screen_unlocked = True
+                    if self._ipad_screen_effect:
+                        self._start_unlock_animation({gid})
+                    else:
+                        self._set_screen_unlocked()
+                        self._hide_buttons()
+                        self._screen_unlocked = True
             else:
                 # print("----!!!wrong input!!!----")
                 # self.reset()
@@ -824,14 +849,76 @@ class PandaBimanualUnlockIpadGymEnv(MujocoGymEnv):
         self._pressed_last = pressed
         return pressed_digits
 
+    def _get_material_rgba(self, mat_id: int, fallback: np.ndarray) -> np.ndarray:
+        if mat_id >= 0:
+            try:
+                return self._model.mat_rgba[mat_id].copy()
+            except Exception:
+                pass
+        return fallback.astype(np.float32).copy()
+
     def _set_screen_locked(self):
         if self._screen_geom_id >= 0 and self._mat_screen_locked_id >= 0:
             self._model.geom_matid[self._screen_geom_id] = self._mat_screen_locked_id
+        if self._mat_screen_unlocked_id >= 0:
+            self._model.mat_rgba[self._mat_screen_unlocked_id] = (
+                self._mat_screen_unlocked_rgba
+            )
 
     def _set_screen_unlocked(self):
         if self._screen_geom_id >= 0 and self._mat_screen_unlocked_id >= 0:
             self._model.geom_matid[self._screen_geom_id] = self._mat_screen_unlocked_id
+            self._model.mat_rgba[self._mat_screen_unlocked_id] = (
+                self._mat_screen_unlocked_rgba
+            )
         self._screen_unlocked = True
+
+    def _start_unlock_animation(self, final_pressed: set):
+        self._unlock_pending = True
+        self._unlock_delay_count = int(self._unlock_delay_steps)
+        self._unlock_transition_step = 0
+        self._unlock_final_pressed = set(final_pressed)
+        self._set_button_materials(self._unlock_final_pressed)
+
+    def _update_unlock_animation(self):
+        if not self._unlock_pending or self._screen_unlocked:
+            return
+        if self._unlock_delay_count > 0:
+            self._unlock_delay_count -= 1
+            self._set_button_materials(self._unlock_final_pressed)
+            return
+
+        steps = max(1, int(self._unlock_transition_steps))
+        t = min(1.0, float(self._unlock_transition_step + 1) / float(steps))
+        t = t * t * (3.0 - 2.0 * t)
+
+        if self._screen_geom_id >= 0 and self._mat_screen_unlocked_id >= 0:
+            self._model.geom_matid[self._screen_geom_id] = self._mat_screen_unlocked_id
+            rgba = (
+                self._mat_screen_locked_rgba * (1.0 - t)
+                + self._mat_screen_unlocked_rgba * t
+            )
+            rgba[3] = self._mat_screen_unlocked_rgba[3]
+            self._model.mat_rgba[self._mat_screen_unlocked_id] = rgba
+
+        self._fade_buttons(1.0 - t)
+        self._unlock_transition_step += 1
+
+        if self._unlock_transition_step >= steps:
+            self._unlock_pending = False
+            self._set_screen_unlocked()
+            self._hide_buttons()
+
+    def _fade_buttons(self, alpha_scale: float):
+        """Fade button/digit geoms while preserving their current materials."""
+        alpha_scale = float(np.clip(alpha_scale, 0.0, 1.0))
+        if not self._button_visual_geom_ids:
+            return
+        for gid in self._button_visual_geom_ids:
+            base = self._button_visual_orig_rgba.get(gid, self._model.geom_rgba[gid])
+            rgba = self._model.geom_rgba[gid].copy()
+            rgba[3] = float(base[3]) * alpha_scale
+            self._model.geom_rgba[gid] = rgba
 
     def _hide_buttons(self):
         """Hide all button and digit visuals (alpha=0)."""

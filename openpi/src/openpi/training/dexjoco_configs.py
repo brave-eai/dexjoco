@@ -24,7 +24,7 @@ DUAL_ARM_STEPS = config["dual_arm_steps"]
 
 
 @dataclass
-class HandBenchConfig:
+class DexJoCoConfig:
     name: str
     checkpoint_base_dir: str
     data_root: Path
@@ -34,70 +34,70 @@ class HandBenchConfig:
     wrist_right_img_name: str | None = None
 
 
-TrainConfigs: list[HandBenchConfig] = [
+TrainConfigs: list[DexJoCoConfig] = [
     # rand_obj datasets
-    HandBenchConfig(
+    DexJoCoConfig(
         name="bimanual_assembly",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/bimanual_assembly"),
         single_arm=False,
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="bimanual_microwave_cook",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/bimanual_microwave_cook"),
         single_arm=False,
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="bimanual_unlock_ipad",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/bimanual_unlock_ipad"),
         single_arm=False,
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="bimanual_hanoi",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/bimanual_hanoi"),
         single_arm=False,
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="bimanual_photograph",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/bimanual_photograph"),
         single_arm=False,
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="fold_glasses",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/fold_glasses"),
         single_arm=True,
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="pick_bucket",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/pick_bucket"),
         single_arm=True,
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="water_plant",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/water_plant"),
         single_arm=True,
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="click_mouse",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/click_mouse"),
         single_arm=True,
         base_img_name="observation.images.ego_right",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="hammer_nail",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/hammer_nail"),
         single_arm=True,
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="pinch_tongs",
         checkpoint_base_dir=f"{CKPTS_ROOT}",
         data_root=Path(f"{DATASET_ROOT}/pinch_tongs"),
@@ -105,77 +105,77 @@ TrainConfigs: list[HandBenchConfig] = [
     ),
 
     # rand_full datasets
-    HandBenchConfig(
+    DexJoCoConfig(
         name="bimanual_assembly_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/bimanual_assembly"),
         single_arm=False,
         base_img_name="observation.images.random_camera",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="bimanual_microwave_cook_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/bimanual_microwave_cook"),
         single_arm=False,
         base_img_name="observation.images.random_camera",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="bimanual_unlock_ipad_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/bimanual_unlock_ipad"),
         single_arm=False,
         base_img_name="observation.images.random_camera",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="bimanual_hanoi_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/bimanual_hanoi"),
         single_arm=False,
         base_img_name="observation.images.random_camera",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="bimanual_photograph_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/bimanual_photograph"),
         single_arm=False,
         base_img_name="observation.images.random_camera",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="fold_glasses_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/fold_glasses"),
         single_arm=True,
         base_img_name="observation.images.random_camera",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="pick_bucket_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/pick_bucket"),
         single_arm=True,
         base_img_name="observation.images.random_camera",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="water_plant_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/water_plant"),
         single_arm=True,
         base_img_name="observation.images.random_camera",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="click_mouse_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/click_mouse"),
         single_arm=True,
         base_img_name="observation.images.random_camera",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="hammer_nail_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/hammer_nail"),
         single_arm=True,
         base_img_name="observation.images.random_camera",
     ),
-    HandBenchConfig(
+    DexJoCoConfig(
         name="pinch_tongs_rand_full",
         checkpoint_base_dir=f"{RAND_FULL_CKPTS_ROOT}",
         data_root=Path(f"{RAND_FULL_DATASET_ROOT}/pinch_tongs"),
@@ -185,7 +185,7 @@ TrainConfigs: list[HandBenchConfig] = [
 ]
 
 
-def make_single_arm_config(cfg: HandBenchConfig):
+def make_single_arm_config(cfg: DexJoCoConfig):
     # import in function to avoid circular import
     from .config import DataConfig  # noqa: PLC0415
     from .config import SingleArmDataConfig  # noqa: PLC0415
@@ -232,7 +232,7 @@ def make_single_arm_config(cfg: HandBenchConfig):
     )
 
 
-def make_dual_arm_config(cfg: HandBenchConfig):
+def make_dual_arm_config(cfg: DexJoCoConfig):
     # import in function to avoid circular import
     from .config import DataConfig  # noqa: PLC0415
     from .config import DualArmDataConfig  # noqa: PLC0415
@@ -283,7 +283,7 @@ def make_dual_arm_config(cfg: HandBenchConfig):
     )
 
 
-def get_hand_bench_configs():
+def get_dexjoco_configs():
     cfgs = []
     for cfg in TrainConfigs:
         if cfg.single_arm:
