@@ -182,6 +182,15 @@ TrainConfigs: list[DexJoCoConfig] = [
         single_arm=True,
         base_img_name="observation.images.random_camera",
     ),
+    DexJoCoConfig(
+        name="multi_task",
+        checkpoint_base_dir=f"{CKPTS_ROOT}",
+        data_root=Path("path/to/multi_task/dataset"),
+        single_arm=False,
+        base_img_name="observation.images.base",
+        wrist_left_img_name="observation.images.wrist1",
+        wrist_right_img_name="observation.images.wrist2",
+    ),
 ]
 
 

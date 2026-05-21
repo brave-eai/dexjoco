@@ -18,7 +18,7 @@ dexjoco-openpi-eval --config=./configs/rand_obj/bimanual_microwave_cook.yaml --s
 # dexjoco-openpi-eval --config=./configs/rand_full/bimanual_assembly.yaml --seed=1 --port=8001 --rand-full
 # dexjoco-openpi-eval --config=./configs/rand_full/bimanual_assembly.yaml --seed=2 --port=8001 --rand-full
 
-# dexjoco-openpi-eval --config=./configs/rand_obj/bimanual_hanoi.yaml --seed=0 --port=8002
+dexjoco-openpi-eval --config=./configs/rand_obj/bimanual_hanoi.yaml --seed=0 --port=8001
 # dexjoco-openpi-eval --config=./configs/rand_obj/bimanual_hanoi.yaml --seed=1 --port=8002
 # dexjoco-openpi-eval --config=./configs/rand_obj/bimanual_hanoi.yaml --seed=2 --port=8002
 # dexjoco-openpi-eval --config=./configs/rand_full/bimanual_hanoi.yaml --seed=0 --port=8002 --rand-full

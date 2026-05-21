@@ -1,0 +1,7 @@
+env_name: bimanual_hanoi
+camera_mapping:  # pi0.5 image name -- env image name
+  base: ego
+  wrist_left: wrist_left
+  wrist_right: wrist_right
+prompt: "Execute the final two moves of the three-level Tower of Hanoi: move the medium disk from the middle peg to the right peg with the right hand, then move the small disk from the left peg to the right peg with the left hand."
+robot_type: dual_arm

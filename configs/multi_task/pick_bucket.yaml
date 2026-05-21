@@ -1,0 +1,7 @@
+env_name: pick_bucket
+camera_mapping:  # pi0.5 image name -- env image name
+  base: front
+  wrist_left: wrist
+  wrist_right: wrist
+prompt: "Place the boxed food into the bucket and then lift the bucket."
+robot_type: single_arm

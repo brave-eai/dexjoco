@@ -233,6 +233,8 @@ def main(
 ):
     if render_mode == "rgb_array":
         os.environ.setdefault("MUJOCO_GL", "egl")
+    else:
+        os.environ.setdefault("MUJOCO_GL", "glfw")
     _set_seed(seed)
 
     # Load evaluation configuration.
