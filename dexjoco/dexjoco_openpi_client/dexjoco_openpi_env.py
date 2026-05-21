@@ -29,7 +29,7 @@ class DexJoCoOpenPIEnv:
         prompt: str,
         render_mode: Literal["rgb_array", "human"],
         pad_state_dim46: bool = False,
-        # password: list | None = None
+        password: list[int] | None = None,
     ):
         """Create a wrapper for one DexJoCo task environment.
 
@@ -44,6 +44,7 @@ class DexJoCoOpenPIEnv:
             prompt: Language prompt passed to the policy.
             render_mode: Render mode forwarded to the DexJoCo environment.
             pad_state_dim46: Whether to pad single-arm state to 46 dimensions.
+            password: List of digits representing the password for the iPad unlock task.
         """
         self.env_name = env_name
         self.camera_mapping = camera_mapping
@@ -54,7 +55,7 @@ class DexJoCoOpenPIEnv:
         self.prompt = prompt
         self.render_mode: Literal["rgb_array", "human"] = render_mode
         self.pad_state_dim46 = pad_state_dim46
-        # self.password = password
+        self.password = password
 
         self.env = None
         # Processed one-frame observation used as OpenPI policy input.
@@ -67,12 +68,23 @@ class DexJoCoOpenPIEnv:
     def start(self):
         """Instantiate the underlying DexJoCo simulation environment."""
         config = CONFIG_MAPPING[self.env_name]()
+
+        if self.env_name == "bimanual_unlock_ipad" and self.password is not None:
+            env_kwargs = {"password": self.password}
+        else:
+            env_kwargs = {}
+            if self.password is not None:
+                print(
+                    f"Warning: password provided but will be ignored for env {self.env_name}"
+                )
+
         self.env = config.get_environment(
             policy_mode=True,
             render_mode=self.render_mode,
             randomize=self.rand_full,
             seed=self.seed,
             randomize_dynamics=self.randomize_dynamics,
+            **env_kwargs,
         )
 
     def close(self):

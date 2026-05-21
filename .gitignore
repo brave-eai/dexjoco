@@ -23,3 +23,5 @@ rand_full_outputs/
 rand_obj_outputs/
 temp/
 DexJoCo.pdf
+outputs_ipad_reasoning/
+outputs_rand_dyn/

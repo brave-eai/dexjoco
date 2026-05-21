@@ -273,6 +273,7 @@ def main(
         prompt=prompt,
         render_mode=render_mode,
         pad_state_dim46=pad_state_dim46,
+        password=cfg.get("password", None),  # Pass password from config if available
     )
     env.start()
 
