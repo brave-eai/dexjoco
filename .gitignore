@@ -17,3 +17,9 @@ teleoperation/GeoRT/checkpoint/**/*.pth
 teleoperation/GeoRT/data/*
 !teleoperation/GeoRT/data/
 !teleoperation/GeoRT/data/README.md
+checkpoints_temp/
+outputs_multi_task/
+rand_full_outputs/
+rand_obj_outputs/
+temp/
+DexJoCo.pdf
