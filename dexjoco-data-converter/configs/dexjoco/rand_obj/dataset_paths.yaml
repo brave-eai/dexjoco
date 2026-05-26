@@ -1,0 +1,11 @@
+- datasets/raw/dexjoco_raw_datasets/bimanual_assembly
+- datasets/raw/dexjoco_raw_datasets/bimanual_hanoi
+- datasets/raw/dexjoco_raw_datasets/bimanual_microwave_cook
+- datasets/raw/dexjoco_raw_datasets/bimanual_photograph
+- datasets/raw/dexjoco_raw_datasets/bimanual_unlock_ipad
+- datasets/raw/dexjoco_raw_datasets/click_mouse
+- datasets/raw/dexjoco_raw_datasets/fold_glasses
+- datasets/raw/dexjoco_raw_datasets/hammer_nail
+- datasets/raw/dexjoco_raw_datasets/pick_bucket
+- datasets/raw/dexjoco_raw_datasets/pinch_tongs
+- datasets/raw/dexjoco_raw_datasets/water_plant

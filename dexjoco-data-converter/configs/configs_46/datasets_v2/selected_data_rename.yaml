@@ -1,0 +1,89 @@
+# cameras: dataset name: raw name
+
+bimanual_assembly:
+  cameras:
+    base: ego
+    wrist1: wrist_left
+    wrist2: wrist_right
+  action: action_rotvec
+  state: state
+
+bimanual_hanoi:
+  cameras:
+    base: ego
+    wrist1: wrist_left
+    wrist2: wrist_right
+  action: action_rotvec
+  state: state
+
+bimanual_microwave_cook:
+  cameras:
+    base: ego
+    wrist1: wrist_left
+    wrist2: wrist_right
+  action: action_rotvec
+  state: state
+
+bimanual_photograph:
+  cameras:
+    base: ego
+    wrist1: wrist_left
+    wrist2: wrist_right
+  action: action_rotvec
+  state: state
+
+bimanual_unlock_ipad:
+  cameras:
+    base: ego
+    wrist1: wrist_left
+    wrist2: wrist_right
+  action: action_rotvec
+  state: state
+
+click_mouse:
+  cameras:
+    base: ego_right
+    wrist1: wrist
+    wrist2: wrist
+  action: action_rotvec
+  state: state
+
+fold_glasses:
+  cameras:
+    base: front
+    wrist1: wrist
+    wrist2: wrist
+  action: action_rotvec
+  state: state
+
+hammer_nail:
+  cameras:
+    base: front
+    wrist1: wrist
+    wrist2: wrist
+  action: action_rotvec
+  state: state
+
+pick_bucket:
+  cameras:
+    base: front
+    wrist1: wrist
+    wrist2: wrist
+  action: action_rotvec
+  state: state
+
+pinch_tongs:
+  cameras:
+    base: front
+    wrist1: wrist
+    wrist2: wrist
+  action: action_rotvec
+  state: state
+
+water_plant:
+  cameras:
+    base: front
+    wrist1: wrist
+    wrist2: wrist
+  action: action_rotvec
+  state: state

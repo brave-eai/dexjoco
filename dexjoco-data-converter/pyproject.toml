@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dexjoco-data-converter"
+version = "0.0.1"
+authors = [
+    { name = "Weizhi Zhao", email = "zhaoweizhi2025@ia.ac.cn" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "lerobot",
+    "opencv-python",
+    "tyro",
+    "tqdm",
+    "pillow",
+    "zarr<3",
+    "imageio[ffmpeg]",
+    "scipy"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dexjoco_data_converter", "src/diffusion_policy"]
+
+[tool.hatch.build.hooks.custom]

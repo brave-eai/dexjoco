@@ -25,3 +25,8 @@ temp/
 DexJoCo.pdf
 outputs_ipad_reasoning/
 outputs_rand_dyn/
+test/
+AGENTS.md
+.repomixignore
+repomix-output.xml
+repomix.config.json

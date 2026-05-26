@@ -1,0 +1,23 @@
+bimanual_assembly:
+  cameras:
+    - random_camera
+    - wrist_left
+    - wrist_right
+  action: action_rotvec
+  state: state
+
+bimanual_hanoi:
+  cameras:
+    - random_camera
+    - wrist_left
+    - wrist_right
+  action: action_rotvec
+  state: state
+
+bimanual_unlock_ipad:
+  cameras:
+    - random_camera
+    - wrist_left
+    - wrist_right
+  action: action_rotvec
+  state: state

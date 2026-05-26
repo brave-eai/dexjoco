@@ -1,3 +1,6 @@
 [submodule "teleoperation/GeoRT"]
 	path = teleoperation/GeoRT
 	url = https://github.com/facebookresearch/GeoRT.git
+[submodule "dexjoco-data-converter/src/3rd/diffusion_policy"]
+	path = dexjoco-data-converter/src/3rd/diffusion_policy
+	url = https://github.com/real-stanford/diffusion_policy.git

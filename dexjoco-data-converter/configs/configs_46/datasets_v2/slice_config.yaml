@@ -1,0 +1,32 @@
+bimanual_assembly:
+    state: [null, 46]
+
+bimanual_hanoi:
+    state: [null, 46]
+
+bimanual_microwave_cook:
+    state: [null, 46]
+
+bimanual_photograph:
+    state: [null, 46]
+
+bimanual_unlock_ipad:
+    state: [null, 46]
+
+click_mouse:
+    state: [null, 23]
+
+fold_glasses:
+    state: [null, 23]
+
+hammer_nail:
+    state: [null, 23]
+
+pick_bucket:
+    state: [null, 23]
+
+pinch_tongs:
+    state: [null, 23]
+
+water_plant:
+    state: [null, 23]
