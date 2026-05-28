@@ -51,7 +51,7 @@ dexjoco-dc-batch-lerobot \
     --language-instruction-cfg-path dexjoco-data-converter/configs/rand_full/language_instructions.yaml \
     --selected-data-cfg-path dexjoco-data-converter/configs/rand_full/selected_data.yaml \
     --slice-cfg-path dexjoco-data-converter/configs/rand_full/slice_config.yaml \
-    --num-workers 6
+    --num-workers 3
 
 # Convert each dataset listed in rand_full/dataset_paths.yaml to a separate
 # Zarr dataset.
@@ -59,7 +59,7 @@ dexjoco-dc-batch-zarr \
     --output ./converted_datasets/zarr/rand_full \
     --dataset-paths-cfg-path dexjoco-data-converter/configs/rand_full/dataset_paths.yaml \
     --slice-cfg-path dexjoco-data-converter/configs/rand_full/slice_config.yaml \
-    --num-workers 6
+    --num-workers 3
 
 
 # ---------------------------------------------------------------------------

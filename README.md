@@ -82,6 +82,7 @@ training/evaluation support.
 - [Data Collection](#-data-collection)
 - [Demonstration Replay](#-demonstration-replay)
 - [Data Format](#data-format)
+- [Data Conversion](#data-conversion)
 - [Policy Training](#policy-training)
 - [Headless Rendering](#headless-rendering)
 - [License](#-license)
@@ -242,7 +243,7 @@ Common `record_demos_zarr.py` options:
 `--camera_screen_effect` to display a camera viewfinder overlay, defaults to
 `False`.
 
-## 🔁 Demonstration Replay
+## 🎬 Demonstration Replay
 
 Raw DexJoCo datasets for replay are available from
 [`DexJoCo/DexJoCo-Datasets-Raw`](https://huggingface.co/datasets/DexJoCo/DexJoCo-Datasets-Raw).
@@ -307,8 +308,6 @@ The Zarr replay buffer stores low-dimensional episode data:
 | `timestamp`     | Per-step timestamps derived from `--data_fps`.                                                  |
 | `state`         | Proprioceptive and task state used by replay and state restoration when available.              |
 
-TODO: data converter
-
 ### Policy Training Action and State Layout
 
 For bimanual demonstrations, the recorded action layout is:
@@ -345,6 +344,28 @@ proprioception:
 
 Privileged environment fields should be filtered out before training policy
 models.
+
+<a id="data-conversion"></a>
+
+## 🔄 Data Conversion
+
+Use [`dexjoco-data-converter/`](dexjoco-data-converter/) to convert raw DexJoCo
+datasets into LeRobot datasets or Zarr replay buffers.
+
+```bash
+bash dexjoco-data-converter/install.bash
+conda activate dexjoco-dc
+
+dexjoco-dc-single-lerobot \
+  --input ./datasets/raw/dexjoco_raw_datasets/water_plant \
+  --output ./converted_datasets/lerobot/single/water_plant \
+  --language-instruction "Grasp the watering can and apply water to the plant." \
+  --selected-data-yaml "{action: action_rotvec, state: state, cameras: {front: front, wrist: wrist}}" \
+  --slice-yaml "{state: [null, 23]}"
+```
+
+See [`dexjoco-data-converter/README.md`](dexjoco-data-converter/README.md) for
+batch conversion, multi-task merge and configuration files.
 
 <a id="policy-training"></a>
 
