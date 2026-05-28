@@ -486,4 +486,4 @@ def merge_episode(
             if state.done_msg is not None:
                 print(state.done_msg)
         case "running":
-            pass
+            raise RuntimeError(f"{dataset_name} exited without sending done message")
