@@ -1,7 +1,0 @@
-bimanual_unlock_ipad_reasoning:
-  cameras:
-    - ego
-    - wrist_left
-    - wrist_right
-  action: action_rotvec
-  state: state

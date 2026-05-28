@@ -63,7 +63,7 @@ def batch_merge_episode(
         with open(bad_episodes_cfg_path, "r") as f:
             bad_episodes_config = yaml.safe_load(f)
     else:
-        bad_episodes_config = {}
+        bad_episodes_config = None
 
     # * load slice config
     with open(slice_cfg_path, "r") as f:
@@ -89,7 +89,11 @@ def batch_merge_episode(
                     language_instruction=language_instruction_config[dataset_dir.name],
                     slice_cfg=dict_to_slice(slice_config[dataset_dir.name]),
                     selected_data=selected_data_config[dataset_dir.name],
-                    bad_episodes=bad_episodes_config.get(dataset_dir.name),
+                    bad_episodes=(
+                        None
+                        if bad_episodes_config is None
+                        else bad_episodes_config[dataset_dir.name]
+                    ),
                     skip_static_frames=skip_static_frames,
                     silent=silent,
                 )

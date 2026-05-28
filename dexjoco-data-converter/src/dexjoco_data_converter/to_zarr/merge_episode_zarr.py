@@ -195,8 +195,8 @@ def merge_episode_worker(
 def merge_episode(
     input: Path,
     output: Path,
-    slice_spec: dict[str, list],
-    bad_episodes: list[str] | None = None,
+    slice_yaml: str,
+    bad_episodes_yaml: str | None = None,
     skip_static_frames: bool = True,
 ) -> None:
     """Run a single-dataset Zarr merge in a worker process.
@@ -204,12 +204,22 @@ def merge_episode(
     Args:
         input: Dataset directory containing episode subdirectories.
         output: Destination directory for the merged Zarr dataset.
-        slice_spec: Serializable slice configuration keyed by data field.
-        bad_episodes: Episode directory names excluded from the merge.
+        slice_yaml: YAML string containing slice configuration keyed by data field.
+        bad_episodes_yaml: YAML string containing episode directory names excluded
+            from the merge.
         skip_static_frames: Whether to remove static leading frames from each episode.
     """
     if output.exists() and any(output.iterdir()):
         raise RuntimeError(f"Output directory is not empty: {output}")
+
+    slice_spec = yaml.safe_load(slice_yaml)
+    bad_episodes = (
+        None if bad_episodes_yaml is None else yaml.safe_load(bad_episodes_yaml)
+    )
+    assert isinstance(slice_spec, dict), "slice_yaml must be a YAML dict string"
+    assert bad_episodes is None or isinstance(bad_episodes, list), (
+        "bad_episodes_yaml must be a YAML list string"
+    )
 
     dataset_name = input.name
 

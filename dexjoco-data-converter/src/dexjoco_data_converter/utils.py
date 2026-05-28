@@ -19,6 +19,29 @@ def normalize_array_shape(arr: np.ndarray) -> np.ndarray:
     return arr
 
 
+def pad_to_dim(arr: np.ndarray, target_dim: int) -> np.ndarray:
+    """Right-pad the feature dimension of a 2D array with zeros.
+
+    Args:
+        arr: Array whose second dimension is the feature dimension.
+        target_dim: Required feature dimension.
+
+    Returns:
+        Array with the same leading dimension and a second dimension equal to
+        ``target_dim``.
+    """
+    assert arr.ndim == 2, f"arr must have 2 dims (t, n), got {arr.shape}"
+    current_dim = arr.shape[1]
+    if current_dim > target_dim:
+        raise Exception(f"arr dim {current_dim} exceeds target dim {target_dim}")
+    if current_dim == target_dim:
+        return arr
+
+    pad_width = [(0, 0)] * arr.ndim
+    pad_width[1] = (0, target_dim - current_dim)
+    return np.pad(arr, pad_width, mode="constant", constant_values=0)
+
+
 def dict_to_slice(d: dict[str, list]):
     """Convert serialized slice specifications to Python slice objects.
 

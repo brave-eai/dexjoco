@@ -2,6 +2,7 @@ import os
 import logging
 import multiprocessing as mp
 import sys
+from collections import OrderedDict
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from queue import Empty
@@ -10,6 +11,7 @@ from typing import Any, cast, Literal
 import imageio
 import imageio.v3 as iio
 import numpy as np
+import yaml
 import zarr
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.utils.constants import ACTION, OBS_IMAGES, OBS_STATE
@@ -215,7 +217,8 @@ def _merge_episode_worker_impl(
     try:
         selected_action_key: str = selected_data["action"]
         selected_state_key: str = selected_data["state"]
-        selected_cam_keys: list[str] = selected_data["cameras"]
+        selected_cam_map: OrderedDict[str, str] = OrderedDict(selected_data["cameras"])
+        selected_raw_cams = set(selected_cam_map.values())
 
         # * Get num episodes
         episode_dirs = [d for d in input_dir.iterdir()]
@@ -233,14 +236,9 @@ def _merge_episode_worker_impl(
         # * Map between video key and file name
         first_episode_videos = (episode_dirs[0] / "videos").iterdir()
         first_episode_videos = sorted(first_episode_videos, key=lambda x: x.name)
-        assert set(selected_cam_keys).issubset(
+        assert selected_raw_cams.issubset(
             set(v.stem for v in first_episode_videos)
         ), "Selected cameras must be a subset of available videos in the first episode"
-        video_name_map = {
-            video.name: Path(video.name).stem
-            for video in first_episode_videos
-            if video.stem in selected_cam_keys
-        }
 
         # * Get image size
         props = iio.improps(first_episode_videos[0], index=0)
@@ -259,7 +257,7 @@ def _merge_episode_worker_impl(
             first_episode_data[k] = first_episode_data[k][:, v]
 
         features = _build_features(
-            selected_cam_keys,
+            list(selected_cam_map.keys()),
             image_size=image_size,
             action_shape=tuple(first_episode_data[selected_action_key].shape[1:]),
             state_shape=tuple(first_episode_data[selected_state_key].shape[1:]),
@@ -314,13 +312,18 @@ def _merge_episode_worker_impl(
             for k, v in slice_cfg.items():
                 episode_data[k] = episode_data[k][:, v]
 
-            video_queues = {cam_name: mp.Queue() for cam_name in selected_cam_keys}
+            video_queues = {raw_cam: mp.Queue() for raw_cam in selected_raw_cams}
             video_processes = {
-                cam_name: mp.Process(
+                raw_cam: mp.Process(
                     target=_process_video_task,
-                    args=(video_name, videos_dir, start_idx, video_queues[cam_name]),
+                    args=(
+                        f"{raw_cam}.mp4",
+                        videos_dir,
+                        start_idx,
+                        video_queues[raw_cam],
+                    ),
                 )
-                for video_name, cam_name in video_name_map.items()
+                for raw_cam in selected_raw_cams
             }
 
             for p in video_processes.values():
@@ -330,17 +333,20 @@ def _merge_episode_worker_impl(
                 frame_data: dict[str, Any] = {"task": language_instruction}
                 frame_data[ACTION] = episode_data[selected_action_key][t]
                 frame_data[OBS_STATE] = episode_data[selected_state_key][t]
-                for cam_name in selected_cam_keys:
+                raw_video_frame: dict[str, np.ndarray] = {}
+                for raw_cam in selected_raw_cams:
                     try:
-                        video_msg = video_queues[cam_name].get(timeout=30.0)
+                        video_msg = video_queues[raw_cam].get(timeout=30.0)
                     except Empty:
-                        if not video_processes[cam_name].is_alive():
-                            raise Exception(f"decoder process died: {cam_name}")
-                        raise Exception(f"waiting frame timeout: {cam_name}, step={t}")
+                        if not video_processes[raw_cam].is_alive():
+                            raise Exception(f"decoder process died: {raw_cam}")
+                        raise Exception(f"waiting frame timeout: {raw_cam}, step={t}")
                     assert video_msg.type == "frame" and video_msg.step == t, (
                         "Video processing out of sync"
                     )
-                    frame_data[f"{OBS_IMAGES}.{cam_name}"] = video_msg.frame
+                    raw_video_frame[raw_cam] = video_msg.frame
+                for cam_name, raw_cam in selected_cam_map.items():
+                    frame_data[f"{OBS_IMAGES}.{cam_name}"] = raw_video_frame[raw_cam]
                 dataset.add_frame(frame_data)
             dataset.save_episode()
             total_steps += n_steps
@@ -349,13 +355,13 @@ def _merge_episode_worker_impl(
                 p.join(timeout=10.0)
                 assert not p.is_alive(), "Video processing did not finish properly"
 
-            for cam_name in selected_cam_keys:
-                video_msg = video_queues[cam_name].get(timeout=10.0)
+            for raw_cam in selected_raw_cams:
+                video_msg = video_queues[raw_cam].get(timeout=10.0)
 
                 assert video_msg.type == "end" and video_msg.step == n_steps, (
                     "Video processing did not end properly"
                 )
-                video_queues[cam_name].close()
+                video_queues[raw_cam].close()
 
             message_queue.put(
                 ProgressMsg(dataset_name=dataset_name, episode_name=ep_dir.name)
@@ -391,9 +397,9 @@ def merge_episode(
     input: Path,
     output: Path,
     language_instruction: str,
-    selected_data: dict,
-    slice_spec: dict[str, list],
-    bad_episodes: list[str] | None = None,
+    selected_data_yaml: str,
+    slice_yaml: str,
+    bad_episodes_yaml: str | None = None,
     skip_static_frames: bool = True,
     silent: bool = True,
 ) -> None:
@@ -403,9 +409,10 @@ def merge_episode(
         input: Dataset directory containing episode subdirectories.
         output: Destination LeRobot dataset root.
         language_instruction: Task instruction written to each output frame.
-        selected_data: Mapping with selected action, state, and camera keys.
-        slice_spec: Serializable slice configuration keyed by selected data key.
-        bad_episodes: Episode directory names excluded from the merge.
+        selected_data_yaml: YAML string containing selected action, state, and camera keys.
+        slice_yaml: YAML string containing slice configuration keyed by selected data key.
+        bad_episodes_yaml: YAML string containing episode directory names excluded
+            from the merge.
         skip_static_frames: Whether to remove static leading frames from each episode.
         silent: Whether to suppress stdout and stderr inside the worker.
 
@@ -419,6 +426,19 @@ def merge_episode(
     """
     if output.exists() and any(output.iterdir()):
         raise RuntimeError(f"Output directory is not empty: {output}")
+
+    selected_data = yaml.safe_load(selected_data_yaml)
+    slice_spec = yaml.safe_load(slice_yaml)
+    bad_episodes = (
+        None if bad_episodes_yaml is None else yaml.safe_load(bad_episodes_yaml)
+    )
+    assert isinstance(selected_data, dict), (
+        "selected_data_yaml must be a YAML dict string"
+    )
+    assert isinstance(slice_spec, dict), "slice_yaml must be a YAML dict string"
+    assert bad_episodes is None or isinstance(bad_episodes, list), (
+        "bad_episodes_yaml must be a YAML list string"
+    )
 
     dataset_name = input.name
 

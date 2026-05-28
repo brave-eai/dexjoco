@@ -2,6 +2,7 @@ import logging
 import multiprocessing as mp
 import os
 import sys
+from collections import OrderedDict
 from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,7 +20,7 @@ from zarr import Array, Group
 
 from ..episode_common import find_first_non_static_frame
 from ..process_protocol import DoneMsg, ErrorMsg, InitMsg, ProgressBar, ProgressMsg
-from ..utils import dict_to_slice, normalize_array_shape, terminate_process
+from ..utils import dict_to_slice, normalize_array_shape, pad_to_dim, terminate_process
 
 
 def _load_episode_arrays(
@@ -28,11 +29,11 @@ def _load_episode_arrays(
     """Load selected episode arrays from a replay Zarr store.
 
     Args:
-        zarr_path: Path to an episode ``replay.zarr`` directory.
-        selected_keys: Data keys to load from the Zarr ``data`` group.
+        zarr_path: Path to an episode `replay.zarr` directory.
+        selected_keys: Data keys to load from the Zarr `data` group.
 
     Returns:
-        Mapping from selected key to a normalized ``float32`` NumPy array.
+        Mapping from selected key to a normalized `float32` NumPy array.
     """
     # Load all arrays from replay.zarr/data group as numpy arrays.
     root = cast(Group, zarr.open(str(zarr_path), mode="r"))
@@ -50,6 +51,19 @@ class ProcessVideoMessage:
     type: Literal["frame", "end"]
     step: int
     frame: np.ndarray | None
+
+
+@dataclass(frozen=True)
+class DatasetSpec:
+    """Processing configuration for one input dataset."""
+
+    dataset_id: str
+    episode_dirs: list[Path]
+    instruction: str
+    action_key: str
+    state_key: str
+    cam_map: OrderedDict[str, str]  # std cam -> raw cam
+    slice_cfg: dict[str, slice]
 
 
 def _process_video_task(
@@ -109,41 +123,112 @@ def _build_features(
             "names": ["height", "width", "channel"],
         }
 
-    features.update(
-        {
-            ACTION: {"dtype": "float32", "shape": action_shape},
-            OBS_STATE: {"dtype": "float32", "shape": state_shape},
-        }
-    )
+    features.update({
+        ACTION: {"dtype": "float32", "shape": action_shape},
+        OBS_STATE: {"dtype": "float32", "shape": state_shape},
+    })
 
     return features
 
 
-def _pad_to_dim(arr: np.ndarray, target_dim: int) -> np.ndarray:
-    """Right-pad the feature dimension of an array with zeros.
+def _get_episode_dirs(
+    dataset_dir: Path, bad_episodes: list[str] | None = None
+) -> list[Path]:
+    """Return sorted episode directories after excluding configured episodes."""
+    episode_dirs = list(filter(lambda d: d.is_dir(), dataset_dir.iterdir()))
+    episode_dirs.sort(key=lambda x: x.name)
 
-    Args:
-        arr: Array whose second dimension is the feature dimension.
-        target_dim: Required feature dimension.
+    if bad_episodes is not None:
+        assert set(bad_episodes).issubset(set(d.name for d in episode_dirs)), (
+            "bad_episodes must be a subset of episode directories"
+        )
+        episode_dirs = [d for d in episode_dirs if d.name not in bad_episodes]
 
-    Returns:
-        Array with the same leading and trailing dimensions and a second
-        dimension equal to ``target_dim``.
+    assert len(episode_dirs) > 0, f"No episodes found in {dataset_dir}"
+    return episode_dirs
 
-    Raises:
-        AssertionError: If the array has fewer than two dimensions.
-        Exception: If the current feature dimension is larger than ``target_dim``.
-    """
-    assert arr.ndim >= 2, f"arr must have at least 2 dims, got {arr.shape}"
-    current_dim = arr.shape[1]
-    if current_dim > target_dim:
-        raise Exception(f"arr dim {current_dim} exceeds target dim {target_dim}")
-    if current_dim == target_dim:
-        return arr
 
-    pad_width = [(0, 0)] * arr.ndim
-    pad_width[1] = (0, target_dim - current_dim)
-    return np.pad(arr, pad_width, mode="constant", constant_values=0)
+def _build_dataset_specs(
+    dataset_dirs: list[Path],
+    language_instruction_config: dict[str, str],
+    selected_data_config: dict[str, dict],
+    slice_config: dict[str, dict[str, slice]],
+    bad_episodes_config: dict[str, list[str]] | None = None,
+) -> tuple[list[DatasetSpec], list[str], tuple, int]:
+    """Build per-dataset processing specs and validate shared LeRobot schema."""
+    dataset_specs: list[DatasetSpec] = []
+    total_episodes = 0
+    cam_key_lists = [
+        list(selected_data["cameras"].keys())
+        for selected_data in selected_data_config.values()
+    ]
+    assert len(cam_key_lists) > 0, "No camera config found"
+    assert all(cam_keys == cam_key_lists[0] for cam_keys in cam_key_lists), (
+        f"Camera key mismatch: {cam_key_lists}"
+    )
+    standard_cam_names = cam_key_lists[0]
+
+    # confirm constant image size
+    image_sizes = []
+    dataset_episode_dirs: dict[str, list[Path]] = {}
+    for dataset_dir in dataset_dirs:
+        dataset_id = dataset_dir.name
+        bad_episodes = (
+            None if bad_episodes_config is None else bad_episodes_config[dataset_id]
+        )
+        episode_dirs = _get_episode_dirs(dataset_dir, bad_episodes=bad_episodes)
+        dataset_episode_dirs[dataset_id] = episode_dirs
+
+        first_episode_videos = sorted(
+            (episode_dirs[0] / "videos").iterdir(), key=lambda x: x.name
+        )
+        for video in first_episode_videos:
+            props = iio.improps(video, index=0)
+            current_image_size = tuple(props.shape[:2])
+            if current_image_size[0] != current_image_size[1]:
+                logging.warning(
+                    f"Non-square frames detected in {video}: {current_image_size}"
+                )
+            image_sizes.append(current_image_size)
+
+    assert len(image_sizes) > 0, "No video found"
+    assert all(size == image_sizes[0] for size in image_sizes), (
+        f"Image size mismatch: {image_sizes}"
+    )
+    image_size = image_sizes[0]
+
+    for dataset_dir in dataset_dirs:
+        dataset_id = dataset_dir.name
+        selected_data = selected_data_config[dataset_id]
+        selected_action_key: str = selected_data["action"]
+        selected_state_key: str = selected_data["state"]
+        selected_cam_map: OrderedDict[str, str] = OrderedDict(selected_data["cameras"])
+        selected_raw_cams = list(set(selected_cam_map.values()))
+
+        episode_dirs = dataset_episode_dirs[dataset_id]
+
+        first_episode_videos = sorted(
+            (episode_dirs[0] / "videos").iterdir(), key=lambda x: x.name
+        )
+        available_video_stems = set(v.stem for v in first_episode_videos)
+        assert set(selected_raw_cams).issubset(available_video_stems), (
+            f"Selected cameras must be a subset of available videos: {dataset_id}"
+        )
+
+        dataset_specs.append(
+            DatasetSpec(
+                dataset_id=dataset_id,
+                episode_dirs=episode_dirs,
+                instruction=language_instruction_config[dataset_id],
+                action_key=selected_action_key,
+                state_key=selected_state_key,
+                cam_map=selected_cam_map,
+                slice_cfg=slice_config[dataset_id],
+            )
+        )
+        total_episodes += len(episode_dirs)
+
+    return dataset_specs, standard_cam_names, image_size, total_episodes
 
 
 @contextmanager
@@ -177,14 +262,14 @@ def _suppress_process_output():
         devnull.close()
 
 
-def merge_episode_worker(
+def merge_datasets_worker(
     dataset_dirs: list[Path],
     output_dir: Path,
     dataset_name: str,
     message_queue: mp.Queue,
     language_instruction_config: dict[str, str],
     slice_config: dict[str, dict[str, slice]],
-    selected_data_rename_config: dict[str, dict],
+    selected_data_config: dict[str, dict],
     target_action_dim: int,
     target_state_dim: int,
     bad_episodes_config: dict[str, list[str]] | None = None,
@@ -200,8 +285,7 @@ def merge_episode_worker(
         message_queue: Multiprocessing queue used to emit worker status messages.
         language_instruction_config: Per-dataset task instructions.
         slice_config: Per-dataset slices keyed by selected data key.
-        selected_data_rename_config: Per-dataset mapping for action, state, and
-            camera key normalization.
+        selected_data_config: Per-dataset mapping for action, state, and cameras.
         target_action_dim: Required action feature dimension after padding.
         target_state_dim: Required state feature dimension after padding.
         bad_episodes_config: Per-dataset episode names excluded from the merge.
@@ -213,14 +297,14 @@ def merge_episode_worker(
     """
     output_ctx = _suppress_process_output() if silent else nullcontext()
     with output_ctx:
-        _merge_episode_worker_impl(
+        _merge_datasets_worker_impl(
             dataset_dirs=dataset_dirs,
             output_dir=output_dir,
             dataset_name=dataset_name,
             message_queue=message_queue,
             language_instruction_config=language_instruction_config,
             slice_config=slice_config,
-            selected_data_rename_config=selected_data_rename_config,
+            selected_data_config=selected_data_config,
             target_action_dim=target_action_dim,
             target_state_dim=target_state_dim,
             bad_episodes_config=bad_episodes_config,
@@ -228,14 +312,14 @@ def merge_episode_worker(
         )
 
 
-def _merge_episode_worker_impl(
+def _merge_datasets_worker_impl(
     dataset_dirs: list[Path],
     output_dir: Path,
     dataset_name: str,
     message_queue: mp.Queue,
     language_instruction_config: dict[str, str],
     slice_config: dict[str, dict[str, slice]],
-    selected_data_rename_config: dict[str, dict],
+    selected_data_config: dict[str, dict],
     target_action_dim: int,
     target_state_dim: int,
     bad_episodes_config: dict[str, list[str]] | None = None,
@@ -250,109 +334,23 @@ def _merge_episode_worker_impl(
         message_queue: Multiprocessing queue used to emit worker status messages.
         language_instruction_config: Per-dataset task instructions.
         slice_config: Per-dataset slices keyed by selected data key.
-        selected_data_rename_config: Per-dataset mapping for action, state, and
-            camera key normalization.
+        selected_data_config: Per-dataset mapping for action, state, and cameras.
         target_action_dim: Required action feature dimension after padding.
         target_state_dim: Required state feature dimension after padding.
         bad_episodes_config: Per-dataset episode names excluded from the merge.
         skip_static_frames: Whether to remove static leading frames from each episode.
-
-    Returns:
-        None.
-
-    Raises:
-        AssertionError: If dataset schemas, image sizes, camera maps, or video
-            decoding synchronization are invalid.
-        Exception: If Zarr loading, padding, LeRobot writing, or worker processing
-            fails.
     """
     try:
-        dataset_specs: list[dict[str, Any]] = []
-        total_episodes = 0
-        image_size: tuple | None = None
-        standard_cam_names: list[str] | None = None
+        dataset_specs, standard_cam_names, image_size, total_episodes = (
+            _build_dataset_specs(
+                dataset_dirs=dataset_dirs,
+                language_instruction_config=language_instruction_config,
+                selected_data_config=selected_data_config,
+                slice_config=slice_config,
+                bad_episodes_config=bad_episodes_config,
+            )
+        )
 
-        # Build per-dataset processing specs first, and validate that all datasets
-        # can be merged into one unified output schema.
-        for dataset_dir in dataset_dirs:
-            dataset_id = dataset_dir.name
-            selected_data_rename = selected_data_rename_config[dataset_id]
-            selected_action_key: str = selected_data_rename["action"]
-            selected_state_key: str = selected_data_rename["state"]
-            selected_cam_map: dict[str, str] = selected_data_rename["cameras"]
-            selected_cam_keys = list(selected_cam_map.keys())
-            selected_raw_cams = list(set(selected_cam_map.values()))
-
-            episode_dirs = sorted(
-                [d for d in dataset_dir.iterdir()], key=lambda x: x.name
-            )
-            bad_episodes = (
-                None
-                if bad_episodes_config is None
-                else bad_episodes_config.get(dataset_id)
-            )
-            if bad_episodes is not None:
-                assert set(bad_episodes).issubset(set(d.name for d in episode_dirs)), (
-                    "bad_episodes must be a subset of episode directories"
-                )
-                episode_dirs = [d for d in episode_dirs if d.name not in bad_episodes]
-
-            assert len(episode_dirs) > 0, f"No episodes found in {dataset_dir}"
-            first_episode_videos = sorted(
-                (episode_dirs[0] / "videos").iterdir(), key=lambda x: x.name
-            )
-            available_video_stems = set(v.stem for v in first_episode_videos)
-            assert set(selected_raw_cams).issubset(available_video_stems), (
-                f"Selected cameras must be a subset of available videos: {dataset_id}"
-            )
-            # video_name_map: raw camera name -> video file name (include suffix)
-            video_name_map = {
-                video.stem: video.name
-                for video in first_episode_videos
-                if video.stem in selected_raw_cams
-            }
-
-            # check image size consistency
-            props = iio.improps(
-                episode_dirs[0] / "videos" / video_name_map[selected_raw_cams[0]],
-                index=0,
-            )
-            current_image_size = tuple(props.shape[:2])
-            image_size = current_image_size if image_size is None else image_size
-            assert image_size == current_image_size, (
-                f"Image size mismatch in dataset {dataset_id}: {current_image_size} vs {image_size}"
-            )
-            if image_size[0] != image_size[1]:
-                logging.warning(
-                    f"Non-square frames detected in {dataset_id}: {image_size}"
-                )
-
-            # check camera key consistency
-            standard_cam_names = (
-                selected_cam_keys if standard_cam_names is None else standard_cam_names
-            )
-            assert standard_cam_names == selected_cam_keys, (
-                f"Camera key mismatch in dataset {dataset_id}: {selected_cam_keys} vs {standard_cam_names}"
-            )
-
-            dataset_specs.append(
-                {
-                    "dataset_id": dataset_id,
-                    "dataset_dir": dataset_dir,
-                    "episode_dirs": episode_dirs,
-                    "instruction": language_instruction_config[dataset_id],
-                    "action_key": selected_action_key,
-                    "state_key": selected_state_key,
-                    "cam_map": selected_cam_map,
-                    "video_name_map": video_name_map,
-                    "slice_cfg": slice_config.get(dataset_id, {}),
-                }
-            )
-            total_episodes += len(episode_dirs)
-
-        assert image_size is not None and standard_cam_names is not None
-
-        # Init progress with the total episode count across all input datasets.
         message_queue.put(
             InitMsg(dataset_name=dataset_name, total_episodes=total_episodes)
         )
@@ -384,14 +382,14 @@ def _merge_episode_worker_impl(
     total_steps = 0
     total_truncated_frames = 0
     for spec in dataset_specs:
-        selected_action_key = spec["action_key"]
-        selected_state_key = spec["state_key"]
-        selected_cam_map: dict[str, str] = spec["cam_map"]
+        selected_action_key = spec.action_key
+        selected_state_key = spec.state_key
+        selected_cam_map = spec.cam_map
+        # 1 raw cam may be mapped to multiple std cams
         selected_raw_cams = set(selected_cam_map.values())
-        video_name_map: dict[str, str] = spec["video_name_map"]
-        slice_cfg: dict[str, slice] = spec["slice_cfg"]
+        slice_cfg = spec.slice_cfg
 
-        for ep_dir in spec["episode_dirs"]:
+        for ep_dir in spec.episode_dirs:
             try:
                 zarr_file = ep_dir / "replay.zarr"
                 videos_dir = ep_dir / "videos"
@@ -419,10 +417,10 @@ def _merge_episode_worker_impl(
                 for k, v in slice_cfg.items():
                     episode_data[k] = episode_data[k][:, v]
                 # Enforce a fixed action/state schema across mixed datasets by right-padding with zeros.
-                episode_data[selected_action_key] = _pad_to_dim(
+                episode_data[selected_action_key] = pad_to_dim(
                     episode_data[selected_action_key], target_action_dim
                 )
-                episode_data[selected_state_key] = _pad_to_dim(
+                episode_data[selected_state_key] = pad_to_dim(
                     episode_data[selected_state_key], target_state_dim
                 )
 
@@ -431,7 +429,7 @@ def _merge_episode_worker_impl(
                     raw_cam: mp.Process(
                         target=_process_video_task,
                         args=(
-                            video_name_map[raw_cam],
+                            f"{raw_cam}.mp4",
                             videos_dir,
                             start_idx,
                             video_queues[raw_cam],
@@ -443,13 +441,15 @@ def _merge_episode_worker_impl(
                     p.start()
 
                 for t in range(n_steps):
-                    frame_data: dict[str, Any] = {"task": spec["instruction"]}
+                    frame_data: dict[str, Any] = {"task": spec.instruction}
                     frame_data[ACTION] = episode_data[selected_action_key][t]
                     frame_data[OBS_STATE] = episode_data[selected_state_key][t]
                     raw_video_frame: dict = {}
                     for raw_cam in selected_raw_cams:
                         try:
-                            video_msg: ProcessVideoMessage = video_queues[raw_cam].get(timeout=30.0)
+                            video_msg: ProcessVideoMessage = video_queues[raw_cam].get(
+                                timeout=30.0
+                            )
                         except Empty:
                             if not video_processes[raw_cam].is_alive():
                                 raise Exception(f"decoder process died: {raw_cam}")
@@ -479,7 +479,7 @@ def _merge_episode_worker_impl(
                 message_queue.put(
                     ProgressMsg(
                         dataset_name=dataset_name,
-                        episode_name=f"{spec['dataset_id']}/{ep_dir.name}",
+                        episode_name=f"{spec.dataset_id}/{ep_dir.name}",
                     )
                 )
             except Exception as e:
@@ -487,7 +487,7 @@ def _merge_episode_worker_impl(
                     ErrorMsg(
                         dataset_name=dataset_name,
                         error=str(e),
-                        episode_name=f"{spec['dataset_id']}/{ep_dir.name}",
+                        episode_name=f"{spec.dataset_id}/{ep_dir.name}",
                     )
                 )
                 if video_processes is not None:
@@ -513,7 +513,7 @@ def merge_datasets(
     output: Path,
     dataset_paths_cfg_path: Path,
     language_instruction_cfg_path: Path,
-    selected_data_rename_cfg_path: Path,
+    selected_data_cfg_path: Path,
     slice_cfg_path: Path,
     target_action_dim: int,
     target_state_dim: int,
@@ -528,8 +528,8 @@ def merge_datasets(
         dataset_paths_cfg_path: YAML file containing dataset root paths.
         language_instruction_cfg_path: YAML file containing per-dataset task
             instructions.
-        selected_data_rename_cfg_path: YAML file mapping each dataset to selected
-            action, state, and camera keys.
+        selected_data_cfg_path: YAML file mapping each dataset to selected action,
+            state, and camera keys.
         slice_cfg_path: YAML file containing per-dataset slice specifications.
         target_action_dim: Required action feature dimension after padding.
         target_state_dim: Required state feature dimension after padding.
@@ -557,8 +557,8 @@ def merge_datasets(
     assert all(p.exists() for p in dataset_dirs), "Some datasets path do not exist"
     with open(language_instruction_cfg_path, "r") as f:
         language_instruction_config = yaml.safe_load(f)
-    with open(selected_data_rename_cfg_path, "r") as f:
-        selected_data_rename_config = yaml.safe_load(f)
+    with open(selected_data_cfg_path, "r") as f:
+        selected_data_config = yaml.safe_load(f)
     with open(slice_cfg_path, "r") as f:
         raw_slice_config = yaml.safe_load(f)
     slice_config = {k: dict_to_slice(v) for k, v in raw_slice_config.items()}
@@ -569,18 +569,17 @@ def merge_datasets(
         bad_episodes_config = None
 
     dataset_name = output.stem
-    # start one worker.
-    queue: mp.Queue = mp.Queue()
+    msg_que: mp.Queue = mp.Queue()
     worker = mp.Process(
-        target=merge_episode_worker,
+        target=merge_datasets_worker,
         kwargs={
             "dataset_dirs": dataset_dirs,
             "output_dir": output,
             "dataset_name": dataset_name,
-            "message_queue": queue,
+            "message_queue": msg_que,
             "language_instruction_config": language_instruction_config,
             "slice_config": slice_config,
-            "selected_data_rename_config": selected_data_rename_config,
+            "selected_data_config": selected_data_config,
             "target_action_dim": target_action_dim,
             "target_state_dim": target_state_dim,
             "bad_episodes_config": bad_episodes_config,
@@ -594,18 +593,17 @@ def merge_datasets(
     try:
         while True:
             try:
-                msg = queue.get(timeout=1.0)
+                msg = msg_que.get(timeout=1.0)
             except Empty:
-                if not worker.is_alive() and queue.empty():
+                if not worker.is_alive() and msg_que.empty():
                     break
                 continue
 
             pbar.update(msg)
     finally:
         terminate_process(worker, process_name=dataset_name)
-
-        queue.cancel_join_thread()
-        queue.close()
+        msg_que.cancel_join_thread()
+        msg_que.close()
         pbar.close()
 
     state = pbar.state
@@ -616,10 +614,4 @@ def merge_datasets(
             if state.done_msg is not None:
                 print(state.done_msg)
         case "running":
-            pass
-
-
-if __name__ == "__main__":
-    import tyro
-
-    tyro.cli(merge_datasets)
+            raise RuntimeError(f"{dataset_name} exited without sending done message")

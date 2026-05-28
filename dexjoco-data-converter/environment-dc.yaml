@@ -5,6 +5,6 @@ channels:
 dependencies:
   - python=3.11
   - ffmpeg=7
-  - git
-  - git-lfs
+  # - git
+  # - git-lfs
   - pip

@@ -39,7 +39,7 @@ def batch_merge_episode(
         with open(bad_episodes_cfg_path, "r") as f:
             bad_episodes_config = yaml.safe_load(f)
     else:
-        bad_episodes_config = {}
+        bad_episodes_config = None
 
     bars = {
         dataset_dir.name: ProgressBar(idx=idx, dataset_name=dataset_dir.name)
@@ -57,8 +57,12 @@ def batch_merge_episode(
                     output_dir=output / dataset_dir.name,
                     dataset_name=dataset_dir.name,
                     message_queue=msg_queue,
-                    slice_cfg=dict_to_slice(slice_config.get(dataset_dir.name, {})),
-                    bad_episodes=bad_episodes_config.get(dataset_dir.name),
+                    slice_cfg=dict_to_slice(slice_config[dataset_dir.name]),
+                    bad_episodes=(
+                        None
+                        if bad_episodes_config is None
+                        else bad_episodes_config[dataset_dir.name]
+                    ),
                     skip_static_frames=skip_static_frames,
                 )
                 futures[dataset_dir.name] = future

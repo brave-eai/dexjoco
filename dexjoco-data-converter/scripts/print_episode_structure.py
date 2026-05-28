@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import tyro
-import yaml
 import zarr
 from zarr import Array, Group
 
@@ -68,28 +67,11 @@ def _print_dataset_structure(dataset_dir: Path, episode_index: int) -> None:
 
 
 def main(
-    dataset_path: Path | None = None,
-    datasets_path_cfg: Path = Path("configs/datasets_path.yaml"),
+    dataset_path: Path,
     episode_index: int = 0,
 ) -> None:
-    if dataset_path is not None:
-        _print_dataset_structure(dataset_path, episode_index)
-        return
-
-    with open(datasets_path_cfg, "r") as f:
-        datasets_path = yaml.safe_load(f)
-        datasets_path = map(Path, datasets_path)
-
-    for dataset_dir in datasets_path:
-        _print_dataset_structure(dataset_dir, episode_index)
+    _print_dataset_structure(dataset_path, episode_index)
 
 
 if __name__ == "__main__":
     tyro.cli(main)
-
-
-"""
-python scripts/print_dexjoco_dataset_structure.py --dataset-path /data/weizhi_zhao/dexjoco/dexjoco_raw_datasets/assembly_3_22_adjust
-python scripts/print_dexjoco_dataset_structure.py --datasets-path_cfg configs/filtered_dataset_path.yaml
-python scripts/print_dexjoco_dataset_structure.py --datasets-path_cfg configs/assembly_path.yaml
-"""

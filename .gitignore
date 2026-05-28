@@ -30,3 +30,4 @@ AGENTS.md
 .repomixignore
 repomix-output.xml
 repomix.config.json
+converted_datasets/

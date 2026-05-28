@@ -142,13 +142,9 @@ def _check_dataset_consistency(dataset_dir: Path, verbose: bool) -> tuple[int, i
 
 
 def main(
-    dataset_path: Path | None = None,
-    input_root: Path = Path("/data/weizhi_zhao/dexjoco/dexjoco_raw_datasets"),
+    input_root: Path,
     verbose: bool = True,
 ) -> None:
-    if dataset_path is not None:
-        _check_dataset_consistency(dataset_path, verbose=verbose)
-        return
 
     dataset_count = 0
     bad_dataset_count = 0
@@ -172,14 +168,3 @@ def main(
 
 if __name__ == "__main__":
     tyro.cli(main)
-
-
-"""
-python scripts/check_dexjoco_dataset_consistency.py --dataset-path=/data/weizhi_zhao/dexjoco/dexjoco_raw_datasets/ipad_pswd123_3_22_test
-python scripts/check_dexjoco_dataset_consistency.py --dataset-path=/data/weizhi_zhao/dexjoco/dexjoco_raw_datasets/ipad_pswd123_3_22_replay_test 
-python scripts/check_dexjoco_dataset_consistency.py --input-root /data/weizhi_zhao/dexjoco/dexjoco_raw_datasets/dataset_filter
-
-python scripts/check_dexjoco_dataset_consistency.py --dataset-path /data/weizhi_zhao/dexjoco/dexjoco_raw_datasets/assembly_3_22_adjust
-
-python scripts/check_dexjoco_dataset_consistency.py --input-root /data1/weizhi_zhao/dexjoco/raw_datasets/randomize_datasets
-"""
