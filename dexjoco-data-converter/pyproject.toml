@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dexjoco-data-converter"
+version = "0.0.1"
+authors = [
+    { name = "Weizhi Zhao", email = "zhaoweizhi2025@ia.ac.cn" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "lerobot",
+    "opencv-python",
+    "tyro",
+    "tqdm",
+    "pillow",
+    "zarr<3",
+    "imageio[ffmpeg]",
+    "scipy"
+]
+
+[project.scripts]
+dexjoco-dc-single-lerobot = "dexjoco_data_converter.cli:single_lerobot_cli"
+dexjoco-dc-single-zarr = "dexjoco_data_converter.cli:single_zarr_cli"
+dexjoco-dc-batch-lerobot = "dexjoco_data_converter.cli:batch_lerobot_cli"
+dexjoco-dc-batch-zarr = "dexjoco_data_converter.cli:batch_zarr_cli"
+dexjoco-dc-merge-lerobot = "dexjoco_data_converter.cli:merge_lerobot_cli"
+dexjoco-dc-merge-zarr = "dexjoco_data_converter.cli:merge_zarr_cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dexjoco_data_converter", "src/diffusion_policy"]
+
+[tool.hatch.build.hooks.custom]

@@ -1,0 +1,81 @@
+bimanual_assembly:
+  cameras:
+    ego: ego
+    wrist_left: wrist_left
+    wrist_right: wrist_right
+  action: action_rotvec
+  state: state
+
+bimanual_hanoi:
+  cameras:
+    ego: ego
+    wrist_left: wrist_left
+    wrist_right: wrist_right
+  action: action_rotvec
+  state: state
+
+bimanual_microwave_cook:
+  cameras:
+    ego: ego
+    wrist_left: wrist_left
+    wrist_right: wrist_right
+  action: action_rotvec
+  state: state
+
+bimanual_photograph:
+  cameras:
+    ego: ego
+    wrist_left: wrist_left
+    wrist_right: wrist_right
+  action: action_rotvec
+  state: state
+
+bimanual_unlock_ipad:
+  cameras:
+    ego: ego
+    wrist_left: wrist_left
+    wrist_right: wrist_right
+  action: action_rotvec
+  state: state
+
+click_mouse:
+  cameras:
+    ego_right: ego_right
+    wrist: wrist
+  action: action_rotvec
+  state: state
+
+fold_glasses:
+  cameras:
+    front: front
+    wrist: wrist
+  action: action_rotvec
+  state: state
+
+hammer_nail:
+  cameras:
+    front: front
+    wrist: wrist
+  action: action_rotvec
+  state: state
+
+pick_bucket:
+  cameras:
+    front: front
+    wrist: wrist
+  action: action_rotvec
+  state: state
+
+pinch_tongs:
+  cameras:
+    front: front
+    wrist: wrist
+  action: action_rotvec
+  state: state
+
+water_plant:
+  cameras:
+    front: front
+    wrist: wrist
+  action: action_rotvec
+  state: state
