@@ -1,0 +1,28 @@
+[project]
+name = "dexjoco"
+version = "0.2.0"
+description = "DexJoCo simulation environments for LeRobot EnvHub"
+readme = "README.md"
+authors = [
+    { name = "Weizhi Zhao", email = "zhaoweizhi2025@ia.ac.cn" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "gymnasium>=1.3.0",
+    "mujoco==3.4.0",
+    "numpy>=2.0.0,<2.3.0",
+    "scipy>=1.18.1",
+    "tqdm>=4.70.1",
+    "tyro>=1.0.16",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.18,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "lerobot>=0.6.1",
+    "pytest>=9.1.1",
+    "ruff>=0.16.8",
+]

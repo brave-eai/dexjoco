@@ -1,0 +1,485 @@
+<mujoco model="allegro_right">
+  <!-- No <default> usage — everything expanded inline for robosuite compatibility -->
+
+  <option cone="elliptic" impratio="10"/>
+
+  <asset>
+    <material name="black" rgba="0.2 0.2 0.2 1"/>
+    <material name="white" rgba="0.9 0.9 0.9 1"/>
+
+    <!-- meshes: keep these relative to where you store them -->
+    <mesh name="gripper0_right_base_link" file="meshes/allegro_hands/base_link.stl"/>
+    <mesh name="gripper0_right_link_0.0" file="meshes/allegro_hands/link_0.0.stl"/>
+    <mesh name="gripper0_right_link_1.0" file="meshes/allegro_hands/link_1.0.stl"/>
+    <mesh name="gripper0_right_link_2.0" file="meshes/allegro_hands/link_2.0.stl"/>
+    <mesh name="gripper0_right_link_3.0" file="meshes/allegro_hands/link_3.0.stl"/>
+    <mesh name="gripper0_right_link_3.0_tip" file="meshes/allegro_hands/link_3.0_tip.stl"/>
+    <mesh name="gripper0_right_link_12.0_right" file="meshes/allegro_hands/link_12.0_right.stl"/>
+    <mesh name="gripper0_right_link_13.0" file="meshes/allegro_hands/link_13.0.stl"/>
+    <mesh name="gripper0_right_link_14.0" file="meshes/allegro_hands/link_14.0.stl"/>
+    <mesh name="gripper0_right_link_15.0" file="meshes/allegro_hands/link_15.0.stl"/>
+    <mesh name="gripper0_right_link_15.0_tip" file="meshes/allegro_hands/link_15.0_tip.stl"/>
+  </asset>
+
+  <worldbody>
+    <body name="right_hand" pos="0 0 0" quat="0.7071068 0.7071068 0 0">
+      <!-- very small inertial to avoid mjMINVAL -->
+      <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+
+      <!-- force/torque site for ft sensor -->
+      <site name="ft_frame" pos="0 0 0" size="0.01 0.01 0.01" rgba="1 0 0 0" type="sphere" group="1"/>
+
+      <!-- End-effector visualization sites -->
+      <body name="eef" pos="0 0 0" quat="0.707 0. -0.707 0.">
+        <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+        <site name="grip_site" pos="0 0 0" size="0.01 0.01 0.01" rgba="1 1 0 1" type="sphere" group="2"/>
+        <site name="ee_x" pos="0.1 0 0" size="0.005 0.1" quat="0.707105 0 0.707108 0" rgba="1 0 0 0" type="cylinder" group="1"/>
+        <site name="ee_y" pos="0 0.1 0" size="0.005 0.1" quat="0.707105 0.707108 0 0" rgba="0 1 0 0" type="cylinder" group="1"/>
+        <site name="ee_z" pos="0 0 0.1" size="0.005 0.1" quat="1 0 0 0" rgba="0 0 1 0" type="cylinder" group="1"/>
+        <site name="grip_site_cylinder" pos="0 0 0" quat="-0.5 -0.5 -0.5 0.5" size="0.005 0.5" rgba="0 1 0 0.3" type="cylinder" group="1"/>
+      </body>
+
+      <!-- Palm (explicit visual + collision geoms) -->
+      <body name="palm" pos="0 0 0.05" quat="0 1 0 1">
+        <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+        <!-- small axis geoms for orientation check -->
+        <geom type="capsule" fromto="0 0 0 0.05 0 0" size="0.007" rgba="1 0 0 1"/>
+        <geom type="capsule" fromto="0 0 0 0 0.05 0" size="0.007" rgba="0 1 0 1"/>
+        <geom type="capsule" fromto="0 0 0 0 0 0.05" size="0.007" rgba="0 0 1 1"/>
+
+        <!-- Visual geom (mesh) -->
+        <geom name="palm_vis"
+              type="mesh"
+              mesh="base_link"
+              contype="0"
+              conaffinity="0"
+              group="2"
+              material="black"/>
+        <!-- Collision geom -->
+        <geom name="palm_col"
+              type="box"
+              group="3"
+              mass="0"
+              density="800"
+              size="0.0204 0.0565 0.0475"
+              pos="-0.0093 0 -0.0475"/>
+
+        <!-- Index finger (ff_)  -->
+        <body name="ff_base" pos="0 0.0435 -0.001542" quat="0.999048 -0.0436194 0 0">
+          <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+          <!-- base joint: class 'base' expanded: axis=0 0 1, range, damping -->
+          <joint name="ffj0" axis="0 0 1" range="-0.47 0.47" damping=".1"/>
+          <!-- visual and collision for base -->
+          <geom name="ff_base_vis"
+                type="mesh"
+                mesh="link_0.0"
+                contype="0"
+                conaffinity="0"
+                group="2"
+                material="black"/>
+          <geom name="ff_base_col"
+                type="box"
+                group="3"
+                density="800"
+                size="0.0098 0.01375 0.0082"
+                pos="0 0 0.0082"/>
+
+          <body name="ff_proximal" pos="0 0 0.0164">
+            <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+            <!-- proximal joint: inherits top-level axis 0 1 0, range from proximal default -->
+            <joint name="ffj1" axis="0 1 0" range="-0.196 1.61" damping=".1"/>
+            <geom name="ff_proximal_vis"
+                  type="mesh"
+                  mesh="link_1.0"
+                  contype="0"
+                  conaffinity="0"
+                  group="2"
+                  material="black"/>
+            <geom name="ff_proximal_col"
+                  type="box"
+                  group="3"
+                  density="800"
+                  size="0.0098 0.01375 0.027"
+                  pos="0 0 0.027"/>
+
+            <body name="ff_medial" pos="0 0 0.054">
+              <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+              <joint name="ffj2" axis="0 1 0" range="-0.174 1.709" damping=".1"/>
+              <geom name="ff_medial_vis"
+                    type="mesh"
+                    mesh="link_2.0"
+                    contype="0"
+                    conaffinity="0"
+                    group="2"
+                    material="black"/>
+              <geom name="ff_medial_col"
+                    type="box"
+                    group="3"
+                    density="800"
+                    size="0.0098 0.01375 0.0192"
+                    pos="0 0 0.0192"/>
+
+              <body name="ff_distal" pos="0 0 0.0384">
+                <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+                <joint name="ffj3" axis="0 1 0" range="-0.227 1.618" damping=".1"/>
+                <geom name="ff_distal_vis"
+                      type="mesh"
+                      mesh="link_3.0"
+                      contype="0"
+                      conaffinity="0"
+                      group="2"
+                      material="black"/>
+                <geom name="ff_distal_col"
+                      type="box"
+                      group="3"
+                      density="800"
+                      size="0.0098 0.01375 0.008"
+                      pos="0 0 0.008"/>
+
+                <body name="ff_tip">
+                  <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+                  <geom name="ff_tip_vis"
+                        type="mesh"
+                        mesh="link_3.0_tip"
+                        contype="0"
+                        conaffinity="0"
+                        group="2"
+                        material="white"
+                        pos="0 0 0.0267"/>
+                  <geom name="ff_tip_col"
+                        type="capsule"
+                        group="3"
+                        density="800"
+                        size="0.012 0.01"
+                        pos="0 0 0.019"/>
+                  <site name="index_tip" pos="-0.00 -0.0 0.0" size="0.02" rgba="0 1 0 1"/>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+
+        <!--- Middle finger (mf_)  -->
+        <body name="mf_base" pos="0 0 0.0007">
+          <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+          <joint name="mfj0" axis="0 0 1" range="-0.47 0.47" damping=".1"/>
+          <geom name="mf_base_vis"
+                type="mesh"
+                mesh="link_0.0"
+                contype="0"
+                conaffinity="0"
+                group="2"
+                material="black"/>
+          <geom name="mf_base_col"
+                type="box"
+                group="3"
+                density="800"
+                size="0.0098 0.01375 0.0082"
+                pos="0 0 0.0082"/>
+
+          <body name="mf_proximal" pos="0 0 0.0164">
+            <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+            <joint name="mfj1" axis="0 1 0" range="-0.196 1.61" damping=".1"/>
+            <geom name="mf_proximal_vis"
+                  type="mesh"
+                  mesh="link_1.0"
+                  contype="0"
+                  conaffinity="0"
+                  group="2"
+                  material="black"/>
+            <geom name="mf_proximal_col"
+                  type="box"
+                  group="3"
+                  density="800"
+                  size="0.0098 0.01375 0.027"
+                  pos="0 0 0.027"/>
+
+            <body name="mf_medial" pos="0 0 0.054">
+              <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+              <joint name="mfj2" axis="0 1 0" range="-0.174 1.709" damping=".1"/>
+              <geom name="mf_medial_vis"
+                    type="mesh"
+                    mesh="link_2.0"
+                    contype="0"
+                    conaffinity="0"
+                    group="2"
+                    material="black"/>
+              <geom name="mf_medial_col"
+                    type="box"
+                    group="3"
+                    density="800"
+                    size="0.0098 0.01375 0.0192"
+                    pos="0 0 0.0192"/>
+
+              <body name="mf_distal" pos="0 0 0.0384">
+                <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+                <joint name="mfj3" axis="0 1 0" range="-0.227 1.618" damping=".1"/>
+                <geom name="mf_distal_vis"
+                      type="mesh"
+                      mesh="link_3.0"
+                      contype="0"
+                      conaffinity="0"
+                      group="2"
+                      material="black"/>
+                <geom name="mf_distal_col"
+                      type="box"
+                      group="3"
+                      density="800"
+                      size="0.0098 0.01375 0.008"
+                      pos="0 0 0.008"/>
+
+                <body name="mf_tip">
+                  <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+                  <geom name="mf_tip_vis"
+                        type="mesh"
+                        mesh="link_3.0_tip"
+                        contype="0"
+                        conaffinity="0"
+                        group="2"
+                        material="white"
+                        pos="0 0 0.0267"/>
+                  <geom name="mf_tip_col"
+                        type="capsule"
+                        group="3"
+                        density="800"
+                        size="0.012 0.01"
+                        pos="0 0 0.019"/>
+                  <site name="middle_tip" pos="-0.00 -0.0 0.0" size="0.02" rgba="0 1 0 1"/>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+
+        <!-- Ring finger (rf_)  -->
+        <body name="rf_base" pos="0 -0.0435 -0.001542" quat="0.999048 0.0436194 0 0">
+          <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+          <joint name="rfj0" axis="0 0 1" range="-0.47 0.47" damping=".1"/>
+          <geom name="rf_base_vis"
+                type="mesh"
+                mesh="link_0.0"
+                contype="0"
+                conaffinity="0"
+                group="2"
+                material="black"/>
+          <geom name="rf_base_col"
+                type="box"
+                group="3"
+                density="800"
+                size="0.0098 0.01375 0.0082"
+                pos="0 0 0.0082"/>
+
+          <body name="rf_proximal" pos="0 0 0.0164">
+            <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+            <joint name="rfj1" axis="0 1 0" range="-0.196 1.61" damping=".1"/>
+            <geom name="rf_proximal_vis"
+                  type="mesh"
+                  mesh="link_1.0"
+                  contype="0"
+                  conaffinity="0"
+                  group="2"
+                  material="black"/>
+            <geom name="rf_proximal_col"
+                  type="box"
+                  group="3"
+                  density="800"
+                  size="0.0098 0.01375 0.027"
+                  pos="0 0 0.027"/>
+
+            <body name="rf_medial" pos="0 0 0.054">
+              <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+              <joint name="rfj2" axis="0 1 0" range="-0.174 1.709" damping=".1"/>
+              <geom name="rf_medial_vis"
+                    type="mesh"
+                    mesh="link_2.0"
+                    contype="0"
+                    conaffinity="0"
+                    group="2"
+                    material="black"/>
+              <geom name="rf_medial_col"
+                    type="box"
+                    group="3"
+                    density="800"
+                    size="0.0098 0.01375 0.0192"
+                    pos="0 0 0.0192"/>
+
+              <body name="rf_distal" pos="0 0 0.0384">
+                <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+                <joint name="rfj3" axis="0 1 0" range="-0.227 1.618" damping=".1"/>
+                <geom name="rf_distal_vis"
+                      type="mesh"
+                      mesh="link_3.0"
+                      contype="0"
+                      conaffinity="0"
+                      group="2"
+                      material="black"/>
+                <geom name="rf_distal_col"
+                      type="box"
+                      group="3"
+                      density="800"
+                      size="0.0098 0.01375 0.008"
+                      pos="0 0 0.008"/>
+
+                <body name="rf_tip">
+                  <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+                  <geom name="rf_tip_vis"
+                        type="mesh"
+                        mesh="link_3.0_tip"
+                        contype="0"
+                        conaffinity="0"
+                        group="2"
+                        material="white"
+                        pos="0 0 0.0267"/>
+                  <geom name="rf_tip_col"
+                        type="capsule"
+                        group="3"
+                        density="800"
+                        size="0.012 0.01"
+                        pos="0 0 0.019"/>
+                  <site name="ring_tip" pos="-0.00 -0.0 0.0" size="0.02" rgba="0 1 0 1"/>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+
+        <!-- Thumb (th_) -->
+        <!-- thumb_base joint uses thumb_base defaults: axis="-1 0 0", range="0.263 1.396" -->
+        <body name="th_base" pos="-0.0182 0.019333 -0.045987" quat="0.477714 -0.521334 -0.521334 -0.477714">
+          <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+          <joint name="thj0" axis="-1 0 0" range="0.263 1.396" damping=".1"/>
+          <geom name="th_base_vis"
+                type="mesh"
+                mesh="link_12.0_right"
+                contype="0"
+                conaffinity="0"
+                group="2"
+                material="black"/>
+          <geom name="th_base_col"
+                type="box"
+                group="3"
+                density="800"
+                size="0.0179 0.017 0.02275"
+                pos="-0.0179 0.009 0.0145"/>
+
+          <body name="th_proximal" pos="-0.027 0.005 0.0399">
+            <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+            <!-- thumb_proximal joint axis=0 0 1 range -0.105 1.163 -->
+            <joint name="thj1" axis="0 0 1" range="-0.105 1.163" damping=".1"/>
+            <geom name="th_proximal_vis"
+                  type="mesh"
+                  mesh="link_13.0"
+                  contype="0"
+                  conaffinity="0"
+                  group="2"
+                  material="black"/>
+            <geom name="th_proximal_col"
+                  type="box"
+                  group="3"
+                  density="800"
+                  size="0.0098 0.01375 0.00885"
+                  pos="0 0 0.00885"/>
+
+            <body name="th_medial" pos="0 0 0.0177">
+              <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+              <!-- thumb_medial: uses range from thumb_medial default -->
+              <joint name="thj2" axis="0 1 0" range="-0.189 1.644" damping=".1"/>
+              <geom name="th_medial_vis"
+                    type="mesh"
+                    mesh="link_14.0"
+                    contype="0"
+                    conaffinity="0"
+                    group="2"
+                    material="black"/>
+              <geom name="th_medial_col"
+                    type="box"
+                    group="3"
+                    density="800"
+                    size="0.0098 0.01375 0.0257"
+                    pos="0 0 0.0257"/>
+
+              <body name="th_distal" pos="0 0 0.0514">
+                <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+                <joint name="thj3" axis="0 1 0" range="-0.162 1.719" damping=".1"/>
+                <geom name="th_distal_vis"
+                      type="mesh"
+                      mesh="link_15.0"
+                      contype="0"
+                      conaffinity="0"
+                      group="2"
+                      material="black"/>
+                <geom name="th_distal_col"
+                      type="box"
+                      group="3"
+                      density="800"
+                      size="0.0098 0.01375 0.0157"
+                      pos="0 0 0.0157"/>
+
+                <body name="th_tip">
+                  <inertial pos="0 0 0" mass="0.001" diaginertia="0.001 0.001 0.001"/>
+                  <geom name="th_tip_vis"
+                        type="mesh"
+                        mesh="link_15.0_tip"
+                        contype="0"
+                        conaffinity="0"
+                        group="2"
+                        material="white"
+                        pos="0 0 0.0423"/>
+                  <geom name="th_tip_col"
+                        type="capsule"
+                        group="3"
+                        density="800"
+                        size="0.012 0.008"
+                        pos="0 0 0.035"/>
+                  <site name="thumb_tip" pos="-0.00 -0. -0.0" size="0.02" rgba="0 1 0 1"/>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+
+      </body> <!-- end palm -->
+    </body> <!-- end right_hand -->
+  </worldbody>
+
+  <contact>
+    <exclude body1="palm" body2="ff_base"/>
+    <exclude body1="palm" body2="mf_base"/>
+    <exclude body1="palm" body2="rf_base"/>
+    <exclude body1="palm" body2="th_base"/>
+    <exclude body1="palm" body2="th_proximal"/>
+  </contact>
+
+  <actuator>
+    <!-- base actuators (expanded from class="base") -->
+    <position name="ffa0" joint="ffj0" ctrlrange="-0.47 0.47" kp="1"/>
+    <position name="mfa0" joint="mfj0" ctrlrange="-0.47 0.47" kp="1"/>
+    <position name="rfa0" joint="rfj0" ctrlrange="-0.47 0.47" kp="1"/>
+
+    <!-- proximal actuators (expanded from class="proximal") -->
+    <position name="ffa1" joint="ffj1" ctrlrange="-0.196 1.61" kp="1"/>
+    <position name="mfa1" joint="mfj1" ctrlrange="-0.196 1.61" kp="1"/>
+    <position name="rfa1" joint="rfj1" ctrlrange="-0.196 1.61" kp="1"/>
+
+    <!-- medial actuators -->
+    <position name="ffa2" joint="ffj2" ctrlrange="-0.174 1.709" kp="1"/>
+    <position name="mfa2" joint="mfj2" ctrlrange="-0.174 1.709" kp="1"/>
+    <position name="rfa2" joint="rfj2" ctrlrange="-0.174 1.709" kp="1"/>
+
+    <!-- distal actuators -->
+    <position name="ffa3" joint="ffj3" ctrlrange="-0.227 1.618" kp="1"/>
+    <position name="mfa3" joint="mfj3" ctrlrange="-0.227 1.618" kp="1"/>
+    <position name="rfa3" joint="rfj3" ctrlrange="-0.227 1.618" kp="1"/>
+
+    <!-- thumb actuators -->
+    <position name="tha0" joint="thj0" ctrlrange="0.263 1.396" kp="1"/>
+    <position name="tha1" joint="thj1" ctrlrange="-0.105 1.163" kp="1"/>
+    <position name="tha2" joint="thj2" ctrlrange="-0.189 1.644" kp="1"/>
+    <position name="tha3" joint="thj3" ctrlrange="-0.162 1.719" kp="1"/>
+  </actuator>
+
+  <sensor>
+    <force name="force_ee" site="ft_frame"/>
+    <torque name="torque_ee" site="ft_frame"/>
+  </sensor>
+</mujoco>

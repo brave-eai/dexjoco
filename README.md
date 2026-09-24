@@ -1,3 +1,39 @@
+## Water Plant Action Interface
+
+The new EnvHub environment uses a `float32` action of shape `(22,)` containing
+absolute targets in physical units:
+
+| Slice | Fields | Meaning |
+| --- | --- | --- |
+| `0:3` | `x, y, z` | World position of `attachment_site`, in meters |
+| `3:6` | `rx, ry, rz` | Rotation vector of `attachment_site` relative to the world, in radians |
+| `6:10` | `ffj0, ffj1, ffj2, ffj3` | Index finger joint targets, in radians |
+| `10:14` | `mfj0, mfj1, mfj2, mfj3` | Middle finger joint targets, in radians |
+| `14:18` | `rfj0, rfj1, rfj2, rfj3` | Ring finger joint targets, in radians |
+| `18:22` | `thj0, thj1, thj2, thj3` | Thumb joint targets, in radians |
+
+The rotation vector is `axis * angle`, not Euler angles. Its rotation maps the
+site's local coordinates into world coordinates. Use the site's frame, including
+its XML orientation offset, rather than the parent body or palm frame.
+
+Each action sets an absolute target; it is not a displacement or a velocity.
+The controller tracks the target through physics steps instead of teleporting
+the robot. Finger joints are ordered from root to tip within each finger, with
+positive directions and limits defined by the XML. Joint and actuator indices
+are resolved by name. Actions are not normalized to `[-1, 1]`. All action values
+must be finite. Finger targets are clipped to the model's joint limits; Cartesian
+targets have no additional workspace clipping in this first implementation.
+
+`agent_pos` uses the same 22-field order, reporting the actual site pose and
+finger joint angles rather than the previous targets. Rotation vectors in the
+state use the principal representation (angle at most pi).
+
+This defines the new environment interface. Existing policies and datasets must
+be checked for matching frames, rotation representation, and joint order before
+use; matching dimensions alone do not establish compatibility.
+
+---
+
 <p align="center">
   <img src="docs/pics/dexjoco_logo.jpg" alt="dexjoco logo" height="110">
 </p>
