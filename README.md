@@ -21,8 +21,9 @@ The controller tracks the target through physics steps instead of teleporting
 the robot. Finger joints are ordered from root to tip within each finger, with
 positive directions and limits defined by the XML. Joint and actuator indices
 are resolved by name. Actions are not normalized to `[-1, 1]`. All action values
-must be finite. Finger targets are clipped to the model's joint limits; Cartesian
-targets have no additional workspace clipping in this first implementation.
+must be finite. Targets are passed to MuJoCo without additional Python clipping;
+the XML actuator limits apply during physics stepping. Cartesian targets have
+no additional workspace clipping.
 
 `agent_pos` uses the same 22-field order, reporting the actual site pose and
 finger joint angles rather than the previous targets. Rotation vectors in the
@@ -31,6 +32,103 @@ state use the principal representation (angle at most pi).
 This defines the new environment interface. Existing policies and datasets must
 be checked for matching frames, rotation representation, and joint order before
 use; matching dimensions alone do not establish compatibility.
+
+### Legacy control and replay
+
+Both action formats use the original operational-space controller, including
+its inertia compensation, quaternion calculations from
+`dm-robotics-transformations`, nullspace control and gains. Each control step
+runs 10 physics steps of 0.002 seconds, preserving the legacy `mj_step` and
+sensor sampling order. Sensor-derived observations therefore reflect the same
+sampling point as the old environment; no extra `mj_forward` is inserted.
+
+For recorded 23-value actions, select `action_format="quaternion"`. These actions
+contain `[x, y, z, qw, qx, qy, qz, 16 finger targets]`. The original quaternion
+values are passed through without a rotation-vector round trip or conversion
+to float32. An all-zero seven-value pose retains the previous target, as in the
+old environment. `agent_pos` remains the 22-value rotation-vector observation.
+
+```python
+from dexjoco.envs.water_plant import WaterPlantEnv
+
+env = WaterPlantEnv(image_observations=False, action_format="quaternion")
+try:
+    observation, info = env.reset(seed=42)
+    # For a recorded episode, restore its scene using fields from state[0]:
+    # env.reset(seed=42, options={
+    #     "table_delta_height": recorded_table_height,  # scalar or shape (1,)
+    #     "spray_ori_pose": recorded_spray_pose,         # xyz + wxyz, shape (7,)
+    #     "plant_ori_pose": recorded_plant_pose,         # xyz + wxyz, shape (7,)
+    # })
+    # env.step(recorded_action)  # shape (23,), preserve recording precision
+finally:
+    env.close()
+```
+
+Reset preserves the old table-height and object-position sampling order using
+an independent NumPy `RandomState`. `reset(seed=s)` reproduces the first reset
+of an old environment initialized with `seed=s`; subsequent unseeded resets
+continue the sequence. Recorded scene restoration matches the old replay
+script (including restoring the plant position only).
+
+### Randomization
+
+The defaults implement the paper's **rand-obj** setting: object positions and
+table height vary at reset. Enable the other settings when constructing an
+environment or calling `make_env`:
+
+```python
+env = WaterPlantEnv(randomize=True, randomize_dynamics=True)
+# Or: make_env(n_envs=2, randomize=True, randomize_dynamics=True)
+```
+
+`randomize=True` implements **rand-full**, following Appendix VII: sample one
+of the original 50 third-person camera presets, then use the legacy lighting
+and tabletop texture randomization. The actual sampling order remains lighting,
+camera, texture, matching the old code. The wrist camera stays attached to the
+hand; image keys remain `front` and `wrist` in both settings.
+
+`randomize_dynamics=True` applies the Water Plant settings in Table VI:
+
+| Parameter | Distribution at each reset |
+| --- | --- |
+| Spray trigger joint `joint_0` friction loss | `U(0, 0.05)` |
+| Trigger joint stiffness | Original value × `U(0.75, 1.25)` |
+| Spray body `link_2` mass | Original value × `U(0.75, 1.25)` |
+
+This changes joint friction loss, not the contact friction coefficients of the
+hand, bottle or table. Multipliers always apply to original values, so they do
+not accumulate over episodes. Visual and dynamics switches are independent and
+both default to `False`; set them at construction time.
+
+Paper/source cross-check: object XY bounds, table height, all dynamics ranges,
+and lighting ranges match Appendix VII and Table VI. Light XY position offsets
+are `U(-0.3, 0.3)`, direction XY offsets `U(-0.4, 0.4)`, diffuse RGB
+`U(0.3, 0.8)`, headlight ambient RGB `U(0.3, 0.7)` and headlight diffuse RGB
+`U(0.2, 0.6)`. The original camera pool matches Fig. 8's 50 single-arm presets;
+its distance is approximately 1.4 m and azimuth spans approximately -70 to 70
+degrees. Those numeric camera bounds are from the released asset, not specified
+in the paper. The fourth preset column contains 45-degree FOV values; legacy
+code uses the first three columns and keeps the scene's 45-degree FOV.
+
+Each environment owns NumPy and Python RNGs matching the legacy generators.
+`reset(seed=s)` reseeds both, preserving the old sampling order without changing
+global random state or coupling vector environments. To reproduce a randomized
+episode, use the same seed, reset sequence and switches; restoring object poses
+alone does not restore its dynamics or camera sample. Tests compare randomized
+model parameters and trajectories directly with the old implementation.
+
+
+The new Gymnasium interface reports success as `info["is_success"]`, and the
+1000-step time limit as `truncated`; the old interface used `succeed` and
+`terminated`. The paper reports 30 Hz control, and the old code throttles wall
+clock execution with `hz=30`, while advancing 0.02 seconds of simulated time per
+action. We preserve that physics interval and omit wall-clock throttling.
+Replay equivalence requires the same MuJoCo version, model, initial state and
+actions. Run `uv run pytest tests/test_legacy_control.py` to compare against the
+original code in this repository; this does not assert cross-platform or
+cross-version bitwise reproducibility.
+
 
 ---
 

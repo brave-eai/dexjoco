@@ -20,72 +20,72 @@
 
     <!-- Table / room assets (from your table_arena) -->
     <texture builtin="gradient" height="256" rgb1=".9 .9 1." rgb2=".2 .3 .4" type="skybox" width="256"/>
-    <texture file="common/table_arena/textures/light-gray-floor-tile.png" type="2d" name="texplane"/>
+    <texture file="common/textures/light-gray-floor-tile.png" type="2d" name="texplane"/>
     <material name="floorplane" reflectance="0.01" shininess="0.0" specular="0.0" texrepeat="2 2" texture="texplane" texuniform="true"/>
-    <texture file="common/table_arena/textures/steel-brushed.png" type="cube" name="tex-steel-brushed"/>
+    <texture file="common/textures/steel-brushed.png" type="cube" name="tex-steel-brushed"/>
     <material name="table_legs_metal" reflectance="0.8" shininess="0.8" texrepeat="1 1" texture="tex-steel-brushed" />
-    <texture file="common/table_arena/textures/light-gray-plaster.png" type="2d" name="tex-light-gray-plaster"/>
+    <texture file="common/textures/light-gray-plaster.png" type="2d" name="tex-light-gray-plaster"/>
     <material name="walls_mat" reflectance="0.0" shininess="0.1" specular="0.1" texrepeat="3 3" texture="tex-light-gray-plaster" texuniform="true" />
     <texture  name="textable" builtin="flat" height="512" width="512" rgb1="0.5 0.5 0.5" rgb2="0.5 0.5 0.5"/>
     <material name="table_mat" texture="textable" />
 
     <!-- table texture for randomization -->
 
-    <texture file="common/table_arena/textures/desktop_random_textures/bamboo.png" type="2d" name="tex-bamboo"/>
+    <texture file="common/desktop_random_textures/bamboo.png" type="2d" name="tex-bamboo"/>
     <material name="table_bamboo" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-bamboo"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/blue-wood.png" type="2d" name="tex-blue-wood"/>
+    <texture file="common/desktop_random_textures/blue-wood.png" type="2d" name="tex-blue-wood"/>
     <material name="table_blue-wood" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-blue-wood"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/brass-ambra.png" type="2d" name="tex-brass-ambra"/>
+    <texture file="common/desktop_random_textures/brass-ambra.png" type="2d" name="tex-brass-ambra"/>
     <material name="table_brass-ambra" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-brass-ambra"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/ceramic.png" type="2d" name="tex-ceramic"/>
+    <texture file="common/desktop_random_textures/ceramic.png" type="2d" name="tex-ceramic"/>
     <material name="table_ceramic" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-ceramic"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/cream-plaster.png" type="2d" name="tex-cream-plaster"/>
+    <texture file="common/desktop_random_textures/cream-plaster.png" type="2d" name="tex-cream-plaster"/>
     <material name="table_cream-plaster" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-cream-plaster"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/dark_wood_planks_2.png" type="2d" name="tex-dark_wood_planks_2"/>
+    <texture file="common/desktop_random_textures/dark_wood_planks_2.png" type="2d" name="tex-dark_wood_planks_2"/>
     <material name="table_dark_wood_planks_2" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-dark_wood_planks_2"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/dark-wood.png" type="2d" name="tex-dark-wood"/>
+    <texture file="common/desktop_random_textures/dark-wood.png" type="2d" name="tex-dark-wood"/>
     <material name="table_dark-wood" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-dark-wood"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/gray-plaster.png" type="2d" name="tex-gray-plaster"/>
+    <texture file="common/desktop_random_textures/gray-plaster.png" type="2d" name="tex-gray-plaster"/>
     <material name="table_gray-plaster" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-gray-plaster"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/gray_wood_planks.png" type="2d" name="tex-gray_wood_planks"/>
+    <texture file="common/desktop_random_textures/gray_wood_planks.png" type="2d" name="tex-gray_wood_planks"/>
     <material name="table_gray_wood_planks" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-gray_wood_planks"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/light-wood.png" type="2d" name="tex-light-wood"/>
+    <texture file="common/desktop_random_textures/light-wood.png" type="2d" name="tex-light-wood"/>
     <material name="table_light-wood" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-light-wood"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/metal.png" type="2d" name="tex-metal"/>
+    <texture file="common/desktop_random_textures/metal.png" type="2d" name="tex-metal"/>
     <material name="table_metal" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-metal"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/pink-plaster.png" type="2d" name="tex-pink-plaster"/>
+    <texture file="common/desktop_random_textures/pink-plaster.png" type="2d" name="tex-pink-plaster"/>
     <material name="table_pink-plaster" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-pink-plaster"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/red-wood.png" type="2d" name="tex-red-wood"/>
+    <texture file="common/desktop_random_textures/red-wood.png" type="2d" name="tex-red-wood"/>
     <material name="table_red-wood" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-red-wood"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/steel-scratched.png" type="2d" name="tex-steel-scratched"/>
+    <texture file="common/desktop_random_textures/steel-scratched.png" type="2d" name="tex-steel-scratched"/>
     <material name="table_steel-scratched" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-steel-scratched"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/walnut_wood_grain.png" type="2d" name="tex-walnut_wood_grain"/>
+    <texture file="common/desktop_random_textures/walnut_wood_grain.png" type="2d" name="tex-walnut_wood_grain"/>
     <material name="table_walnut_wood_grain" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-walnut_wood_grain"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/warm_wood_grain_2.png" type="2d" name="tex-warm_wood_grain_2"/>
+    <texture file="common/desktop_random_textures/warm_wood_grain_2.png" type="2d" name="tex-warm_wood_grain_2"/>
     <material name="table_warm_wood_grain_2" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-warm_wood_grain_2"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/white-plaster.png" type="2d" name="tex-white-plaster"/>
+    <texture file="common/desktop_random_textures/white-plaster.png" type="2d" name="tex-white-plaster"/>
     <material name="table_white-plaster" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-white-plaster"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/wood_grain_1.png" type="2d" name="tex-wood_grain_1"/>
+    <texture file="common/desktop_random_textures/wood_grain_1.png" type="2d" name="tex-wood_grain_1"/>
     <material name="table_wood_grain_1" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-wood_grain_1"/>
 
-    <texture file="common/table_arena/textures/desktop_random_textures/yellow-plaster.png" type="2d" name="tex-yellow-plaster"/>
+    <texture file="common/desktop_random_textures/yellow-plaster.png" type="2d" name="tex-yellow-plaster"/>
     <material name="table_yellow-plaster" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-yellow-plaster"/>
   </asset>
 

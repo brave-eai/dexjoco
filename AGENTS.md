@@ -1,5 +1,7 @@
 # Repository Guidelines
 
+use uv
+
 ## Project Structure & Module Organization
 
 This is a multi-package robotics benchmark. Core MuJoCo environments, task configs, controllers, and simulation assets live in `dexjoco/dexjoco/`; task configs are in `tasks/`, and XML/mesh assets in `sim/envs/xmls/`. Top-level `configs/` contains policy evaluation YAMLs, while `scripts/` provides recording, replay, and smoke tests. `openpi/` contains policy training and serving; `dexjoco-data-converter/` handles Zarr and LeRobot conversion. `teleoperation/` contains device bridges and motion-capture tools; `docs/` holds integration references. Datasets and checkpoints are runtime data, not source files.

@@ -27,7 +27,7 @@ to `assets/`, including those in included XML files:
 <mesh file="robots/franka_emika_panda/assets/link0.stl" />
 <mesh file="tasks/water_plant/plant/visuals/model_0.obj" />
 <texture name="floor" type="2d"
-         file="common/table_arena/textures/light-gray-floor-tile.png" />
+         file="common/textures/light-gray-floor-tile.png" />
 ```
 
 `include` paths are separate: they are relative to the XML file containing the
