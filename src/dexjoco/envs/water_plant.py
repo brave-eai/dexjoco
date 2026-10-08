@@ -86,6 +86,7 @@ class WaterPlantEnv(gym.Env):
         randomize_dynamics: bool = False,
         render_width: int = 640,
         render_height: int = 480,
+        seed: int | None = None,
     ):
         assert render_mode in ("rgb_array", "human", "none"), (
             f"Unsupported render mode: {render_mode}"
@@ -144,9 +145,9 @@ class WaterPlantEnv(gym.Env):
         self.leg_half_lengths = self.model.geom_size[self.leg_ids, 1].copy()
 
         # Independent RNGs per randomization domain.
-        self.reset_rng = np.random.RandomState()
-        self.dynamics_rng = np.random.RandomState()
-        self.visual_rng = np.random.RandomState()
+        self.reset_rng = np.random.RandomState(seed)
+        self.dynamics_rng = np.random.RandomState(seed)
+        self.visual_rng = np.random.RandomState(seed)
 
         # Visual randomization baselines and camera samples.
         self.camera_params = np.load(ASSET_ROOT / "common" / "replay_cameras.npy")
