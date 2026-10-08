@@ -24,6 +24,17 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "lerobot>=0.6.1",
+    "mypy>=2.3.1",
     "pytest>=9.1.1",
     "ruff>=0.16.8",
 ]
+
+[tool.mypy]
+files = ["src"]
+python_version = "3.12"
+# Third-party packages are not checked; mujoco ships no type stubs.
+ignore_missing_imports = true
+
+[tool.ruff]
+# Only lint the package sources, so `uv run ruff check` needs no path argument.
+include = ["src/**/*.py", "pyproject.toml"]

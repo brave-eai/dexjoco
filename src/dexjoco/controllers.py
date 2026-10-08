@@ -1,7 +1,7 @@
-"""Legacy DexJoCo operational-space control, preserving its arithmetic.
+"""Operational-space control for the Panda arm.
 
-Ported from dexjoco/dexjoco/sim/controllers/opspace.py. Keep the inertia,
-quaternion, singularity and nullspace calculations unchanged for replay.
+Keep the inertia, quaternion, singularity and nullspace calculations
+unchanged for replay.
 """
 
 import mujoco

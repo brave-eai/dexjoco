@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from functools import partial
+from typing import Any
 
 import gymnasium as gym
 
@@ -30,8 +31,8 @@ def make_env(
 
     vector_cls = gym.vector.AsyncVectorEnv if use_async_envs else gym.vector.SyncVectorEnv
     # Spawn workers with fresh EGL state, even if the parent has already rendered.
-    vector_kwargs = {"context": "spawn"} if use_async_envs else {}
-    tasks = {}
+    vector_kwargs: dict[str, Any] = {"context": "spawn"} if use_async_envs else {}
+    tasks: dict[int, gym.vector.VectorEnv] = {}
     try:
         for task_id, constructor in TASKS.items():
             tasks[task_id] = vector_cls(
