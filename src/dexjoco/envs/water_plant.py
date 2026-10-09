@@ -286,14 +286,21 @@ class WaterPlantEnv(gym.Env):
         assert action.shape == (self.action_dim,), (
             f"Expected {self.action_dim} action values"
         )
-        if self.action_format == "rotvec":
-            target_quat = Rotation.from_rotvec(action[3:6]).as_quat(scalar_first=True)
-            finger_targets = action[6:]
+        pose_dim = 6 if self.action_format == "rotvec" else 7
+        finger_targets = action[pose_dim:]
+        if np.allclose(action[:pose_dim], 0.0):
+            # TODO: Replace the legacy zero-pose hack with an explicit hold command.
+            # Keep the previous target (the initial pose immediately after reset).
+            pass
         else:
-            target_quat = action[3:7]
-            finger_targets = action[7:]
-        self.data.mocap_pos[0] = action[:3]
-        self.data.mocap_quat[0] = target_quat
+            if self.action_format == "rotvec":
+                target_quat = Rotation.from_rotvec(action[3:6]).as_quat(
+                    scalar_first=True
+                )
+            else:
+                target_quat = action[3:7]
+            self.data.mocap_pos[0] = action[:3]
+            self.data.mocap_quat[0] = target_quat
 
         for _ in range(int(CONTROL_TIMESTEP // PHYSICS_TIMESTEP)):
             self.apply_arm_control()

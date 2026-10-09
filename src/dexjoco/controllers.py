@@ -1,9 +1,3 @@
-"""Operational-space control for the Panda arm.
-
-Keep the inertia, quaternion, singularity and nullspace calculations
-unchanged for replay.
-"""
-
 import mujoco
 import numpy as np
 from dm_robotics.transformations import transformations as tr
@@ -41,7 +35,7 @@ def opspace(
     data,
     site_id,
     dof_ids,
-    pos=None,
+    pos,
     ori=None,
     joint=None,
     pos_gains=(200.0, 200.0, 200.0),
@@ -52,12 +46,12 @@ def opspace(
     max_ori_acceleration=None,
     gravity_comp=True,
 ):
-    x_des = data.site_xpos[site_id] if pos is None else np.asarray(pos)
+    x_des = np.asarray(pos)
     if ori is None:
-        quat_des = tr.mat_to_quat(data.site_xmat[site_id].reshape(3, 3))
+        quat_des = np.asarray(tr.mat_to_quat(data.site_xmat[site_id].reshape(3, 3)))
     else:
         ori = np.asarray(ori)
-        quat_des = tr.mat_to_quat(ori) if ori.shape == (3, 3) else ori
+        quat_des = np.asarray(tr.mat_to_quat(ori)) if ori.shape == (3, 3) else ori
     q_des = data.qpos[dof_ids] if joint is None else np.asarray(joint)
 
     kp = np.asarray(pos_gains)
@@ -76,7 +70,7 @@ def opspace(
     dq = data.qvel[dof_ids]
     J_v = np.zeros((3, model.nv), dtype=np.float64)
     J_w = np.zeros((3, model.nv), dtype=np.float64)
-    mujoco.mj_jacSite(model, data, J_v, J_w, site_id)
+    mujoco.mj_jacSite(model, data, J_v, J_w, site_id)  # pyright: ignore[reportAttributeAccessIssue]
     J_v = J_v[:, dof_ids]
     J_w = J_w[:, dof_ids]
     J = np.concatenate([J_v, J_w], axis=0)
@@ -85,7 +79,7 @@ def opspace(
         x=data.site_xpos[site_id], x_des=x_des, dx=J_v @ dq,
         kp_kv=kp_kv_pos, ddx_max=ddx_max,
     )
-    quat = tr.mat_to_quat(data.site_xmat[site_id].reshape(3, 3))
+    quat = np.asarray(tr.mat_to_quat(data.site_xmat[site_id].reshape(3, 3)))
     if quat @ quat_des < 0.0:
         quat *= -1.0
     dw = pd_control_orientation(
@@ -94,7 +88,7 @@ def opspace(
     )
 
     M = np.zeros((model.nv, model.nv), dtype=np.float64)
-    mujoco.mj_fullM(model, M, data.qM)
+    mujoco.mj_fullM(model, M, data.qM)  # pyright: ignore[reportAttributeAccessIssue]
     M = M[dof_ids, :][:, dof_ids]
     M_inv = np.linalg.inv(M)
     Mx_inv = J @ M_inv @ J.T
