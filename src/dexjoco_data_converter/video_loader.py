@@ -6,11 +6,11 @@ from pathlib import Path
 import av
 
 
-def decode_video(video_path: Path, stop_event: EventClass, frame_queue: mp.Queue):
+def decode_video(video_path: Path, stop_event: EventClass, image_queue: mp.Queue):
     def put(item):
         while not stop_event.is_set():
             try:
-                frame_queue.put(item, timeout=0.1)
+                image_queue.put(item, timeout=0.1)
                 break
             except queue.Full:
                 continue
@@ -20,7 +20,7 @@ def decode_video(video_path: Path, stop_event: EventClass, frame_queue: mp.Queue
             for idx, frame in enumerate(container.decode(video=0)):
                 if stop_event.is_set():
                     break
-                put((frame, idx))
+                put((frame.to_ndarray(format="rgb24"), idx))
             put(None)
     except Exception as e:  # noqa: BLE001
         print(e)

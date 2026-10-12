@@ -18,16 +18,12 @@ def load_zarr_episode(episode_dir: Path, action_dim: int, state_dim: int):
     action = arrays["action_rotvec"]
     state = arrays["state"][:, 0, :state_dim]
     replay_initial_positions = arrays["state"][0, 0, state_dim:]
-    timestamp = arrays["timestamp"]
 
-    len_time_steps = timestamp.shape[0]
-
-    assert action.shape[0] == len_time_steps
-    assert state.shape[0] == len_time_steps
+    assert action.shape[0] == state.shape[0]
 
     assert action.ndim == 2 and action.shape[1] == action_dim
     assert state.ndim == 2 and state.shape[1] == state_dim
-    return state, action, timestamp, replay_initial_positions
+    return state, action, replay_initial_positions
 
 
 if __name__ == "__main__":
