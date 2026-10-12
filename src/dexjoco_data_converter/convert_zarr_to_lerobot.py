@@ -66,8 +66,8 @@ def build_features(
 ) -> dict[str, Any]:
     """Build action, robot state, and RGB video features for a dataset."""
     features: dict[str, Any] = {
-        "action": {"dtype": "float32", "shape": (cfg.action_dim,)},
-        "observation.state": {"dtype": "float32", "shape": (cfg.state_dim,)},
+        "action": {"dtype": "float64", "shape": (cfg.action_dim,)},
+        "observation.state": {"dtype": "float64", "shape": (cfg.state_dim,)},
     }
     for camera_name in camera_names:
         video_path = episode_dir / "videos" / f"{camera_name}.mp4"
@@ -112,8 +112,8 @@ def convert_one_episode(
 
     for t in range(state.shape[0]):
         frame = {
-            "action": np.asarray(action[t], np.float32),
-            "observation.state": np.asarray(state[t], np.float32),
+            "action": np.asarray(action[t], np.float64),
+            "observation.state": np.asarray(state[t], np.float64),
             "task": cfg.task_description,
         }
         for camera_name in camera_names:

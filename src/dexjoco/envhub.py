@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 from functools import partial
-from typing import Any
+from typing import Any, Literal
 
 import gymnasium as gym
 
@@ -17,6 +17,7 @@ def make_env(
     use_async_envs: bool = False,
     randomize: bool = False,
     randomize_dynamics: bool = False,
+    render_mode: Literal["rgb_array", "human", "none"] = "rgb_array",
 ) -> dict[str, dict[int, gym.vector.VectorEnv]]:
     """Create n_envs independent instances of each implemented task.
 
@@ -25,6 +26,7 @@ def make_env(
     Async callers must use an ``if __name__ == "__main__":`` entry point.
     ``randomize`` enables paper rand-full; ``randomize_dynamics`` enables
     spray joint friction, stiffness, and body mass randomization.
+    ``render_mode="none"`` disables image observations and graphics resources.
     """
     if n_envs < 1:
         raise ValueError("`n_envs` must be at least 1")
@@ -36,9 +38,12 @@ def make_env(
     try:
         for task_id, constructor in TASKS.items():
             tasks[task_id] = vector_cls(
-                [partial(constructor, randomize=randomize, randomize_dynamics=randomize_dynamics)
-                 for _ in range(n_envs)],
-                autoreset_mode=gym.vector.AutoresetMode.SAME_STEP,
+                [partial(
+                    constructor,
+                    randomize=randomize,
+                    randomize_dynamics=randomize_dynamics,
+                    render_mode=render_mode,
+                ) for _ in range(n_envs)],
                 **vector_kwargs,
             )
     except Exception:
