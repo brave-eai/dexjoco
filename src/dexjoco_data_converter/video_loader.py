@@ -2,16 +2,15 @@ import multiprocessing as mp
 import queue
 from multiprocessing.synchronize import Event as EventClass
 from pathlib import Path
-from typing import Any
 
 import av
 
-_IMAGE_QUEUES: dict[str, mp.Queue[Any]] = {}
+_IMAGE_QUEUES: dict[str, mp.Queue] = {}
 _STOP_EVENT: EventClass
 
 
 def initialize_decoder(
-    image_queues: dict[str, mp.Queue[Any]], stop_event: EventClass
+    image_queues: dict[str, mp.Queue], stop_event: EventClass
 ) -> None:
     """Receive shared queues and the stop event when each worker starts."""
     global _IMAGE_QUEUES, _STOP_EVENT

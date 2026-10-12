@@ -19,6 +19,9 @@ dependencies = [
     "tyro>=1.0.16",
 ]
 
+[project.scripts]
+dexjoco-convert = "dexjoco_data_converter.convert_zarr_to_lerobot:cli"
+
 [build-system]
 requires = ["uv_build>=0.12.18,<0.13.0"]
 build-backend = "uv_build"

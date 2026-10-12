@@ -1,18 +1,18 @@
 import json
 import multiprocessing as mp
-import queue
-from concurrent.futures import Future, ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from multiprocessing.synchronize import Event as EventClass
 from pathlib import Path
 from typing import Any
 
 import av
 import numpy as np
+import tyro
 from lerobot.datasets import LeRobotDataset
 from numpy.typing import NDArray
 from tqdm import tqdm
 
+from .task_presets import TASK_PRESETS, TaskName
 from .video_loader import decode_video, initialize_decoder
 from .zarr_loader import load_zarr_episode
 
@@ -88,7 +88,7 @@ def convert_one_episode(
     epi_path: Path,
     camera_names: list[str],
     executor: ProcessPoolExecutor,
-    image_ques: dict[str, mp.Queue[Any]],
+    image_ques: dict[str, mp.Queue],
 ):
     for camera_name in camera_names:
         # for each camera
@@ -134,7 +134,7 @@ def convert_one_episode(
     dataset.save_episode()
 
 
-def convert_one_dataset(cfg: DatasetConfig):
+def convert_one_dataset(cfg: DatasetConfig, progress_position: int = 0):
     ctx = mp.get_context("spawn")
 
     zarr_episodes = [p for p in cfg.zarr_dataset_dir.iterdir()]
@@ -142,9 +142,9 @@ def convert_one_dataset(cfg: DatasetConfig):
 
     camera_names = sorted(p.stem for p in (zarr_episodes[0] / "videos").glob("*.mp4"))
 
-    replay_info = []
+    replay_info: list[dict[str, Any]] = []
 
-    image_ques: dict[str, mp.Queue[Any]] = {
+    image_ques: dict[str, mp.Queue] = {
         camera_name: ctx.Queue(maxsize=100) for camera_name in camera_names
     }
     stop_event = ctx.Event()
@@ -168,8 +168,13 @@ def convert_one_dataset(cfg: DatasetConfig):
             initargs=(image_ques, stop_event),
         ) as executor:
             try:
-                for epi_path in zarr_episodes:
-                    # for each episode
+                for epi_path in tqdm(
+                    zarr_episodes,
+                    desc=cfg.zarr_dataset_dir.name,
+                    unit="episode",
+                    position=progress_position,
+                    dynamic_ncols=True,
+                ):
                     convert_one_episode(
                         cfg, dataset, replay_info, epi_path, camera_names, executor, image_ques
                     )
@@ -179,3 +184,35 @@ def convert_one_dataset(cfg: DatasetConfig):
         dataset.finalize()
         with open(cfg.output_dir / "replay_initial_values.jsonl", "w", encoding="utf-8") as f:
             f.writelines(json.dumps(item, ensure_ascii=False) + "\n" for item in replay_info)
+
+
+def main(
+    task: TaskName,
+    zarr_dataset_dir: Path,
+    output_dir: Path,
+) -> None:
+    """Convert one Zarr dataset using a task's robot and replay-field preset.
+
+    Args:
+        task: Task preset matching the recorded dataset.
+        zarr_dataset_dir: Directory containing the Zarr episode directories.
+        output_dir: Output directory for the LeRobot dataset.
+        task_description: Override the preset prompt stored in each frame.
+    """
+    preset = TASK_PRESETS[task]
+    cfg = DatasetConfig(
+        zarr_dataset_dir=zarr_dataset_dir,
+        output_dir=output_dir,
+        is_bimanual=preset.is_bimanual,
+        task_description=preset.prompt,
+        replay_initial_position_fields=preset.replay_initial_position_fields,
+    )
+    convert_one_dataset(cfg)
+
+
+def cli() -> None:
+    tyro.cli(main)
+
+
+if __name__ == "__main__":
+    cli()
