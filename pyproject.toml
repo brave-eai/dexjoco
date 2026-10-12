@@ -38,5 +38,6 @@ python_version = "3.12"
 ignore_missing_imports = true
 
 [tool.ruff]
+line-length = 100
 # Only lint the package sources, so `uv run ruff check` needs no path argument.
 include = ["src/**/*.py", "pyproject.toml"]

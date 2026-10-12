@@ -2,11 +2,30 @@ import multiprocessing as mp
 import queue
 from multiprocessing.synchronize import Event as EventClass
 from pathlib import Path
+from typing import Any
 
 import av
 
+_IMAGE_QUEUES: dict[str, mp.Queue[Any]] = {}
+_STOP_EVENT: EventClass
 
-def decode_video(video_path: Path, stop_event: EventClass, image_queue: mp.Queue):
+
+def initialize_decoder(
+    image_queues: dict[str, mp.Queue[Any]], stop_event: EventClass
+) -> None:
+    """Receive shared queues and the stop event when each worker starts."""
+    global _IMAGE_QUEUES, _STOP_EVENT
+    _IMAGE_QUEUES = image_queues
+    _STOP_EVENT = stop_event
+
+    for q in image_queues.values():
+        q.cancel_join_thread()
+
+
+def decode_video(video_path: Path, camera_name: str):
+    image_queue = _IMAGE_QUEUES[camera_name]
+    stop_event = _STOP_EVENT
+
     def put(item):
         while not stop_event.is_set():
             try:

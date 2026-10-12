@@ -1,3 +1,4 @@
+import json
 import multiprocessing as mp
 import queue
 from concurrent.futures import Future, ProcessPoolExecutor
@@ -12,7 +13,7 @@ from lerobot.datasets import LeRobotDataset
 from numpy.typing import NDArray
 from tqdm import tqdm
 
-from .video_loader import decode_video
+from .video_loader import decode_video, initialize_decoder
 from .zarr_loader import load_zarr_episode
 
 
@@ -39,8 +40,7 @@ class DatasetConfig:
         expected_dim = sum(size for _, size in self.replay_initial_position_fields)
         if positions.shape != (expected_dim,):
             raise ValueError(
-                f"Expected replay initial positions shape {(expected_dim,)}, "
-                f"got {positions.shape}"
+                f"Expected replay initial positions shape {(expected_dim,)}, got {positions.shape}"
             )
 
         fields: dict[str, list[float]] = {}
@@ -81,6 +81,59 @@ def build_features(
     return features
 
 
+def convert_one_episode(
+    cfg: DatasetConfig,
+    dataset: LeRobotDataset,
+    replay_info: list,
+    epi_path: Path,
+    camera_names: list[str],
+    executor: ProcessPoolExecutor,
+    image_ques: dict[str, mp.Queue[Any]],
+):
+    for camera_name in camera_names:
+        # for each camera
+        executor.submit(
+            decode_video,
+            epi_path / "videos" / f"{camera_name}.mp4",
+            camera_name,
+        )
+
+    state, action, replay_initial_positions = load_zarr_episode(
+        epi_path, cfg.action_dim, cfg.state_dim
+    )
+
+    episode_index = dataset.meta.total_episodes
+    replay_initial_fields = cfg.split_replay_initial_positions(replay_initial_positions)
+    replay_info.append({
+        "episode_index": episode_index,
+        "replay_initial_values": replay_initial_fields,
+        "orig_episode_path": str(epi_path),
+    })
+
+    for t in range(state.shape[0]):
+        frame = {
+            "action": np.asarray(action[t], np.float32),
+            "observation.state": np.asarray(state[t], np.float32),
+            "task": cfg.task_description,
+        }
+        for camera_name in camera_names:
+            frame_msg = image_ques[camera_name].get()
+            if isinstance(frame_msg, Exception):
+                raise frame_msg
+
+            if frame_msg is None:
+                raise ValueError(f"episode {epi_path} camera {camera_name}: Frame length mismatch.")
+
+            image, idx = frame_msg
+            assert idx == t, f"episode {epi_path} camera {camera_name}: Frame index mismatch."
+            frame[f"observation.images.{camera_name}"] = image
+        dataset.add_frame(frame)
+    for camera_name in camera_names:
+        if image_ques[camera_name].get() is not None:
+            raise ValueError(f"episode {epi_path} camera {camera_name}: Frame length mismatch.")
+    dataset.save_episode()
+
+
 def convert_one_dataset(cfg: DatasetConfig):
     ctx = mp.get_context("spawn")
 
@@ -88,6 +141,13 @@ def convert_one_dataset(cfg: DatasetConfig):
     zarr_episodes.sort()
 
     camera_names = sorted(p.stem for p in (zarr_episodes[0] / "videos").glob("*.mp4"))
+
+    replay_info = []
+
+    image_ques: dict[str, mp.Queue[Any]] = {
+        camera_name: ctx.Queue(maxsize=100) for camera_name in camera_names
+    }
+    stop_event = ctx.Event()
 
     dataset = LeRobotDataset.create(
         repo_id="local_repo",
@@ -100,67 +160,22 @@ def convert_one_dataset(cfg: DatasetConfig):
         encoder_queue_maxsize=0,
     )
 
-    replay_info = []
-
-    with ProcessPoolExecutor(max_workers=len(camera_names), mp_context=ctx) as executor:
-        image_ques = {
-            camera_name: mp.Queue(maxsize=100) for camera_name in camera_names
-        }
-        stop_event = ctx.Event()
-
-        try:
-            for epi_path in zarr_episodes:
-                # for each episode
-                for camera_name in camera_names:
-                    # for each camera
-                    executor.submit(
-                        decode_video,
-                        epi_path / "videos" / f"{camera_name}.mp4",
-                        stop_event,
-                        image_ques[camera_name],
+    try:
+        with ProcessPoolExecutor(
+            max_workers=len(camera_names),
+            mp_context=ctx,
+            initializer=initialize_decoder,
+            initargs=(image_ques, stop_event),
+        ) as executor:
+            try:
+                for epi_path in zarr_episodes:
+                    # for each episode
+                    convert_one_episode(
+                        cfg, dataset, replay_info, epi_path, camera_names, executor, image_ques
                     )
-
-                state, action, replay_initial_positions = load_zarr_episode(
-                    epi_path, cfg.action_dim, cfg.state_dim
-                )
-
-                episode_index = dataset.meta.total_episodes
-                replay_initial_fields = cfg.split_replay_initial_positions(
-                    replay_initial_positions
-                )
-                replay_info.append({
-                    "episode_index": episode_index,
-                    "replay_initial_values": replay_initial_fields,
-                    "orig_episode_path": str(epi_path)
-                })
-
-                for t in range(state.shape[0]):
-                    frame = {
-                        "action": action[t],
-                        "observation.state": state[t],
-                        "task": cfg.task_description,
-                    }
-                    for camera_name in camera_names:
-                        frame_msg = image_ques[camera_name].get()
-                        if isinstance(frame_msg, Exception):
-                            raise frame_msg
-                        elif frame_msg is None:
-                            raise ValueError(
-                                f"episode {epi_path} camera {camera_name}: Frame length mismatch."
-                            )
-                        else:
-                            image, idx = frame_msg
-                            assert idx == t, (
-                                f"episode {epi_path} camera {camera_name}: Frame index mismatch."
-                            )
-                            frame[f"observation.images.{camera_name}"] = image
-                    dataset.add_frame(frame)
-                for camera_name in camera_names:
-                    assert image_ques[camera_name].get() is None, (
-                        f"episode {epi_path} camera {camera_name}: Frame index mismatch."
-                    )
-                dataset.save_episode()
-            
-        finally:
-            stop_event.set()
-            dataset.finalize()
+            finally:
+                stop_event.set()
+    finally:
+        dataset.finalize()
+        with open(cfg.output_dir / "replay_initial_values.jsonl", "w", encoding="utf-8") as f:
+            f.writelines(json.dumps(item, ensure_ascii=False) + "\n" for item in replay_info)
