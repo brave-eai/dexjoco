@@ -105,13 +105,10 @@ class WaterPlantEnv(gym.Env):
             "XML timestep must match PHYSICS_TIMESTEP"
         )
         self.data = mujoco.MjData(self.model)  # pyright: ignore[reportAttributeAccessIssue]
-        # Offscreen renderer for pixel observations; not needed when rendering is off.
-        if render_mode != "none":
-            self.renderer = mujoco.Renderer(
-                self.model, height=render_height, width=render_width
-            )
-        else:
-            self.renderer = None
+        # Create graphics resources only when pixel observations are requested.
+        self.render_width = render_width
+        self.render_height = render_height
+        self.renderer: mujoco.Renderer | None = None
         self.human_viewer = None
         self.state_machine = WaterPlantStateMachine()
 
@@ -432,7 +429,13 @@ class WaterPlantEnv(gym.Env):
         self.human_viewer.sync()
 
     def render_camera(self, camera):
-        assert self.renderer is not None
+        assert self.render_mode != "none", (
+            "Rendering is disabled because render_mode='none'."
+        )
+        if self.renderer is None:
+            self.renderer = mujoco.Renderer(
+                self.model, height=self.render_height, width=self.render_width
+            )
         self.renderer.update_scene(self.data, camera=camera)
         return self.renderer.render().copy()
 
