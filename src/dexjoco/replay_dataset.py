@@ -8,9 +8,10 @@ import gymnasium as gym
 import numpy as np
 import tyro
 from lerobot.datasets import LeRobotDataset
+from lerobot.envs import make_env
 from numpy.typing import NDArray
 
-from dexjoco.envhub import make_env
+from dexjoco.configs import DexJoCoEnvConfig
 
 
 @dataclass
@@ -108,7 +109,9 @@ def main(
     # All first-pass episodes complete before the second pass begins.
     passes: list[dict[int, ReplayResult]] = []
     for pass_index in range(2):
-        env = make_env(n_envs=1, use_async_envs=False, render_mode="none")["dexjoco"][0]
+        env = make_env(
+            DexJoCoEnvConfig(render_mode="none"), n_envs=1, use_async_envs=False
+        )["dexjoco"][0]
         results = {}
         try:
             for episode_index, (actions, _) in trajectories.items():

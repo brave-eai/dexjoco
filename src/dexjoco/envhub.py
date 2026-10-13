@@ -2,10 +2,11 @@
 
 from collections.abc import Callable
 from functools import partial
-from typing import Any, Literal
+from typing import Any
 
 import gymnasium as gym
 
+from dexjoco.configs import DexJoCoEnvConfig
 from dexjoco.envs.water_plant import WaterPlantEnv
 
 # Stable task IDs mapped to constructors of fresh environments.
@@ -15,19 +16,21 @@ TASKS: dict[int, Callable[..., gym.Env]] = {0: WaterPlantEnv}
 def make_env(
     n_envs: int = 1,
     use_async_envs: bool = False,
-    randomize: bool = False,
-    randomize_dynamics: bool = False,
-    render_mode: Literal["rgb_array", "human", "none"] = "rgb_array",
+    cfg: DexJoCoEnvConfig | None = None,
 ) -> dict[str, dict[int, gym.vector.VectorEnv]]:
     """Create n_envs independent instances of each implemented task.
 
     The caller owns the returned vector environments and must close each one.
     Task constructors must defer graphics initialization until rendering.
     Async callers must use an ``if __name__ == "__main__":`` entry point.
-    ``randomize`` enables paper rand-full; ``randomize_dynamics`` enables
+    ``cfg.randomize`` enables paper rand-full; ``cfg.randomize_dynamics`` enables
     spray joint friction, stiffness, and body mass randomization.
-    ``render_mode="none"`` disables image observations and graphics resources.
+    ``cfg.render_mode="none"`` disables image observations and graphics resources.
+    Omitting ``cfg`` uses the default DexJoCo configuration.
     """
+    if cfg is None:
+        cfg = DexJoCoEnvConfig()
+
     if n_envs < 1:
         raise ValueError("`n_envs` must be at least 1")
 
@@ -40,9 +43,9 @@ def make_env(
             tasks[task_id] = vector_cls(
                 [partial(
                     constructor,
-                    randomize=randomize,
-                    randomize_dynamics=randomize_dynamics,
-                    render_mode=render_mode,
+                    randomize=cfg.randomize,
+                    randomize_dynamics=cfg.randomize_dynamics,
+                    render_mode=cfg.render_mode,
                 ) for _ in range(n_envs)],
                 **vector_kwargs,
             )
