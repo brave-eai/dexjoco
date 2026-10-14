@@ -14,7 +14,7 @@ from lerobot.datasets.dataset_tools import delete_episodes
 from numpy.typing import NDArray
 from tqdm import tqdm
 
-from dexjoco.replay_dataset import replay_dataset
+from dexjoco.replay_dataset import check_replay_success
 
 from .task_presets import TASK_PRESETS, TaskName
 from .video_loader import decode_video, initialize_decoder
@@ -200,12 +200,11 @@ def convert_one_dataset(cfg: DatasetConfig, progress_position: int = 0):
 
 def replay_and_filter_dataset(cfg: DatasetConfig, replay_info: list[dict[str, Any]]) -> None:
     """Replay once and replace the output with successful episodes when requested."""
-    success, _ = replay_dataset(
+    success = check_replay_success(
         cfg.output_dir,
         n_envs=cfg.n_envs,
         use_async_envs=cfg.use_async_envs,
         extend_steps=cfg.extend_steps,
-        check_consistency=False,
     )
     failed = np.flatnonzero(~success).tolist()
     if not failed:

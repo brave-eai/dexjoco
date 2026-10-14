@@ -11,7 +11,7 @@
   <visual>
     <headlight diffuse=".4 .4 .4" ambient=".5 .5 .5" />
     <global azimuth="160" elevation="-20" offheight="2048" offwidth="2048" />
-    <quality offsamples="8" />
+    <quality offsamples="0" />
   </visual>
   <asset>
     <texture type="skybox" builtin="gradient" rgb1=".3 .5 .7" rgb2="0 0 0" width="32" height="512" />

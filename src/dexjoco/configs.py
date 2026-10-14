@@ -15,6 +15,8 @@ class DexJoCoEnvConfig(HubEnvConfig):
     render_mode: Literal["rgb_array", "human", "none"] = "rgb_array"
     randomize: bool = False
     randomize_dynamics: bool = False
+    # offsamples > 0 may cause pixels unreproducible
+    offsamples: int | None = None  # None uses the XML setting.
 
     @property
     def gym_kwargs(self) -> dict:
@@ -22,6 +24,7 @@ class DexJoCoEnvConfig(HubEnvConfig):
             "render_mode": self.render_mode,
             "randomize": self.randomize,
             "randomize_dynamics": self.randomize_dynamics,
+            "offsamples": self.offsamples,
         }
 
     def create_envs(

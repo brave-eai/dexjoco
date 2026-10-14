@@ -87,6 +87,7 @@ class WaterPlantEnv(gym.Env):
         render_width: int = 640,
         render_height: int = 480,
         seed: int | None = None,
+        offsamples: int | None = None,
     ):
         assert render_mode in ("rgb_array", "human", "none"), (
             f"Unsupported render mode: {render_mode}"
@@ -101,6 +102,8 @@ class WaterPlantEnv(gym.Env):
         self.render_mode: Literal["rgb_array", "human", "none"] = render_mode
         # MuJoCo simulation.
         self.model = mujoco.MjModel.from_xml_path(str(XML_PATH))  # pyright: ignore[reportAttributeAccessIssue]
+        if offsamples is not None:
+            self.model.vis.quality.offsamples = offsamples
         assert self.model.opt.timestep == PHYSICS_TIMESTEP, (
             "XML timestep must match PHYSICS_TIMESTEP"
         )

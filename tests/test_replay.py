@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 import dexjoco.envs
-from dexjoco.replay_dataset import replay_dataset
+from dexjoco.replay_dataset import check_replay_consistency
 
 DATASETS_DIR = Path(__file__).resolve().parents[1] / "datasets"
 
@@ -26,16 +26,15 @@ def test_dataset_replay(dataset_dir: Path) -> None:
         f"Datasets must match environments. Missing: {sorted(env_names - dataset_names)}; "
         f"unexpected: {sorted(dataset_names - env_names)}"
     )
-    success, consistent = replay_dataset(
+    consistent, success = check_replay_consistency(
         dataset_dir=dataset_dir,
         n_envs=10,
         use_async_envs=True,
         extend_steps=30,
-        check_consistency=True,
+        check_images=True
     )
 
     assert success.all(), f"Replay failed for episodes: {np.flatnonzero(~success).tolist()}"
-    assert consistent is not None
     assert consistent.all(), (
         f"Replay differed between passes for episodes: {np.flatnonzero(~consistent).tolist()}"
     )

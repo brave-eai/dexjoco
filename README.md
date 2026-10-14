@@ -15,3 +15,7 @@ uv run dexjoco-convert \
 ```bash
 uv run pytest
 ```
+
+经过转换筛选之后，剩余的episode数量可能不足100
+
+抗锯齿的bug：只能保证环境里的图片是确定的，但是数据集里的图片是有损压缩的
