@@ -43,10 +43,13 @@ class DatasetConfig:
                 f"Expected replay initial positions shape {(expected_dim,)}, got {positions.shape}"
             )
 
-        fields: dict[str, list[float]] = {}
+        fields: dict = {}
         offset = 0
         for name, size in self.replay_initial_position_fields:
-            fields[name] = positions[offset : offset + size].tolist()
+            if size == 1:
+                fields[name] = float(positions[offset])
+            else:
+                fields[name] = positions[offset : offset + size].tolist()
             offset += size
         return fields
 

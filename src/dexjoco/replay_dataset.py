@@ -1,5 +1,3 @@
-"""Replay converted water_plant data twice using the local EnvHub interface."""
-
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,45 +14,86 @@ from dexjoco.configs import DexJoCoEnvConfig
 
 @dataclass
 class ReplayResult:
-    states: NDArray[np.float64]
-    success: bool
-    reason: str
+    states: list[NDArray]
+    success: NDArray[np.bool]
 
 
-def replay_episode(
+def batch_env_reset(env: gym.vector.VectorEnv, initial_states: list[dict | None]):
+    for i, initial_state in enumerate(initial_states):
+        mask = np.zeros(env.num_envs, dtype=bool)
+        mask[i] = True
+
+        obs, _ = env.reset(
+            options={
+                "reset_mask": mask,
+                "initial_state": initial_state,
+            }
+        )
+    return obs
+
+
+def batch_replay_episode(
     env: gym.vector.VectorEnv,
     actions: NDArray[np.float64],
-    initial: dict,
+    initial_states: list,
+    episodes_lengths: NDArray[np.int64],
+    extend_steps: int = 30,
 ) -> ReplayResult:
-    obs, _ = env.reset(options={
-        "initial_state": {
-            "table_delta_height": initial["table_delta_height"][0],
-            "orig_spray_pose": initial["spray_ori_pose"],
-            "orig_plant_pose": initial["plant_ori_pose"],
-        },
-    })
+    """
+    shape of actions: (num_episodes, max_episode_length, action_dim)
+    """
+    NUM_EPISODES = len(episodes_lengths)
+    MAX_STEPS = int(episodes_lengths[:NUM_EPISODES].max()) + extend_steps
+    assert NUM_EPISODES <= env.num_envs, (
+        f"Number of episodes {NUM_EPISODES} exceeds number of vector envs {env.num_envs}"
+    )
+    if NUM_EPISODES < env.num_envs:
+        # Fill the remaining envs with dummy actions and initial states.
+        dummy_actions = np.zeros(
+            (env.num_envs - NUM_EPISODES, *actions.shape[1:]), dtype=np.float64
+        )
+        actions = np.concatenate([actions, dummy_actions], axis=0)
+        dummy_initials = [None] * (env.num_envs - NUM_EPISODES)
+        initial_states = initial_states + dummy_initials
+        # Fill the remaining envs with dummy episode lengths
+        episodes_lengths = np.concatenate(
+            [episodes_lengths, np.ones(env.num_envs - NUM_EPISODES, dtype=np.int64)], axis=0
+        )
+
+    obs = batch_env_reset(env, initial_states)
     states = []
-    success = False
-    reason = "extension exhausted"
-    for step in range(len(actions) + 10):
+    done = np.arange(env.num_envs) >= NUM_EPISODES
+    success = np.zeros(env.num_envs, dtype=bool)
+    replay_lengths = np.zeros(env.num_envs, dtype=np.int64)
+    for step in range(MAX_STEPS):
         # Stored state[t] precedes action[t], matching the original recorder.
-        states.append(np.asarray(obs["proprio"][0], dtype=np.float64).copy())
-        action = actions[min(step, len(actions) - 1)]
-        obs, _, terminated, truncated, info = env.step(action[None, :])
-        if bool(info["is_success"][0]):
-            success = True
-            reason = "success"
+        states.append(np.asarray(obs["proprio"], dtype=np.float64).copy())
+        action_indices = np.minimum(step, episodes_lengths - 1)
+        action = actions[np.arange(env.num_envs), action_indices]
+        obs, _, terminated, truncated, info = env.step(action)
+
+        current_success = ~done & np.asarray(info["is_success"], dtype=bool)
+        success |= current_success
+
+        # Mark episodes done on success, termination, truncation, or their step limit.
+        # Success on the final allowed step has already been recorded above.
+        newly_done = ~done & (
+            current_success | terminated | truncated | (step + 1 >= episodes_lengths + extend_steps)
+        )
+        replay_lengths[newly_done] = step + 1
+        done |= newly_done
+
+        if done.all():
             break
-        if bool(terminated[0] or truncated[0]):
-            # NEXT_STEP would reset on the next call, losing the recorded scene.
-            reason = "terminated" if terminated[0] else "truncated"
-            break
-    return ReplayResult(np.asarray(states), success, reason)
+
+    states_array = np.asarray(states)  # (steps, envs, state_dim)
+    episode_states = [states_array[: replay_lengths[i], i].copy() for i in range(NUM_EPISODES)]
+    episode_success = success[:NUM_EPISODES]
+
+    return ReplayResult(episode_states, episode_success)
 
 
-def state_errors(
-    actual: NDArray[np.float64], expected: NDArray[np.float64]
-) -> NDArray[np.float64]:
+def state_errors(actual: NDArray[np.float64], expected: NDArray[np.float64]) -> NDArray[np.float64]:
     count = min(len(actual), len(expected))
     aligned = actual[:count].copy()
     expected = expected[:count]
@@ -68,7 +107,7 @@ def report_errors(label: str, errors: NDArray[np.float64], atol: float) -> None:
     print(
         f"{label}: compared_frames={len(errors)}, bad_frames={bad}, "
         f"mae={errors.mean():.8g}, max_abs={errors.max():.8g}, "
-        f"rmse={np.sqrt(np.mean(errors ** 2)):.8g}, "
+        f"rmse={np.sqrt(np.mean(errors**2)):.8g}, "
         f"xyz_max_m={errors[:, :3].max():.8g}, "
         f"quat_max={errors[:, 3:7].max():.8g}, "
         f"finger_max_rad={errors[:, 7:].max():.8g}",
@@ -109,9 +148,9 @@ def main(
     # All first-pass episodes complete before the second pass begins.
     passes: list[dict[int, ReplayResult]] = []
     for pass_index in range(2):
-        env = make_env(
-            DexJoCoEnvConfig(render_mode="none"), n_envs=1, use_async_envs=False
-        )["dexjoco"][0]
+        env = make_env(DexJoCoEnvConfig(render_mode="none"), n_envs=1, use_async_envs=False)[
+            "dexjoco"
+        ][0]
         results = {}
         try:
             for episode_index, (actions, _) in trajectories.items():
@@ -128,8 +167,11 @@ def main(
         finally:
             env.close()
         passes.append(results)
-        print(f"Pass {pass_index + 1}: {sum(r.success for r in results.values())}"
-              f"/{len(results)} episodes succeeded.", flush=True)
+        print(
+            f"Pass {pass_index + 1}: {sum(r.success for r in results.values())}"
+            f"/{len(results)} episodes succeeded.",
+            flush=True,
+        )
 
     original_errors = []
     repeat_errors = []
