@@ -37,8 +37,8 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
         is_bimanual=False,
         prompt="Grasp the watering can and apply water to the plant.",
         replay_initial_position_fields=(
-            ("spray_ori_pose", 7),
-            ("plant_ori_pose", 7),
+            ("orig_spray_pose", 7),
+            ("orig_plant_pose", 7),
             ("table_delta_height", 1),
         ),
     ),
@@ -46,7 +46,7 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
         is_bimanual=False,
         prompt="Move the mouse to the purple mouse pad and click the left mouse button.",
         replay_initial_position_fields=(
-            ("mouse_ori_pose", 7),
+            ("orig_mouse_pose", 7),
             ("table_delta_height", 1),
         ),
     ),
@@ -54,7 +54,7 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
         is_bimanual=False,
         prompt="Grasp the tongs and perform three consecutive open-close motions.",
         replay_initial_position_fields=(
-            ("tongs_ori_pose", 7),
+            ("orig_tongs_pose", 7),
             ("table_delta_height", 1),
         ),
     ),
@@ -62,8 +62,8 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
         is_bimanual=False,
         prompt="Fold the glasses and place them into the case.",
         replay_initial_position_fields=(
-            ("glass_ori_pose", 7),
-            ("box_ori_pose", 7),
+            ("orig_glass_pose", 7),
+            ("orig_box_pose", 7),
             ("table_delta_height", 1),
         ),
     ),
@@ -71,8 +71,8 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
         is_bimanual=False,
         prompt="Use the hammer to drive the nail into the wooden board.",
         replay_initial_position_fields=(
-            ("hammer_ori_pose", 7),
-            ("nail_ori_pose", 7),
+            ("orig_hammer_pose", 7),
+            ("orig_nail_pose", 7),
             ("table_delta_height", 1),
         ),
     ),
@@ -80,8 +80,8 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
         is_bimanual=False,
         prompt="Place the boxed food into the bucket and then lift the bucket.",
         replay_initial_position_fields=(
-            ("bucket_ori_pose", 7),
-            ("boxed_food_ori_pose", 7),
+            ("orig_bucket_pose", 7),
+            ("orig_boxed_food_pose", 7),
             ("table_delta_height", 1),
         ),
     ),
@@ -92,8 +92,8 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
             "then insert the peg into the hole."
         ),
         replay_initial_position_fields=(
-            ("socket_ori_pose", 7),
-            ("peg_ori_pose", 7),
+            ("orig_socket_pose", 7),
+            ("orig_peg_pose", 7),
             ("table_delta_height", 1),
         ),
     ),
@@ -105,7 +105,7 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
             "then move the small disk from the left peg to the right peg with the left hand."
         ),
         replay_initial_position_fields=(
-            ("hanoi_base_ori_pos", 3),
+            ("orig_hanoi_base_pos", 3),
             ("table_delta_height", 1),
         ),
     ),
@@ -116,8 +116,8 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
             "close the door, and press the start button."
         ),
         replay_initial_position_fields=(
-            ("hot_dog_ori_pose", 7),
-            ("microwave_ori_pose", 7),
+            ("orig_hot_dog_pose", 7),
+            ("orig_microwave_pose", 7),
             ("table_delta_height", 1),
         ),
     ),
@@ -128,8 +128,8 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
             "and press the shutter button with the right hand."
         ),
         replay_initial_position_fields=(
-            ("camera_ori_pose", 7),
-            ("logo_ori_pose", 7),
+            ("orig_camera_pose", 7),
+            ("orig_logo_pose", 7),
             ("table_delta_height", 1),
         ),
     ),
@@ -137,8 +137,8 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
         is_bimanual=True,
         prompt="Grasp the iPad and enter the password 123 to unlock the device.",
         replay_initial_position_fields=(
-            ("stand_ori_pose", 7),
-            ("ipad_ori_pose", 7),
+            ("orig_stand_pose", 7),
+            ("orig_ipad_pose", 7),
             ("table_delta_height", 1),
         ),
     ),

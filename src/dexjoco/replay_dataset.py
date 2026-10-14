@@ -93,107 +93,87 @@ def batch_replay_episode(
     return ReplayResult(episode_states, episode_success)
 
 
-def state_errors(actual: NDArray[np.float64], expected: NDArray[np.float64]) -> NDArray[np.float64]:
-    count = min(len(actual), len(expected))
-    aligned = actual[:count].copy()
-    expected = expected[:count]
-    signs = np.sum(aligned[:, 3:7] * expected[:, 3:7], axis=1) < 0
-    aligned[signs, 3:7] *= -1
-    return np.abs(aligned - expected)
+def replay_batches(
+    actions_by_episode: list[NDArray[np.float64]],
+    initial_states: list[dict],
+    n_envs: int = 10,
+    use_async_envs: bool = True,
+    extend_steps: int = 30,
+) -> ReplayResult:
+    """Replay one pass, returning states and success in episode order."""
+    if n_envs < 1 or extend_steps < 0:
+        raise ValueError("n_envs must be positive and extend_steps must be nonnegative")
+    if not actions_by_episode:
+        raise ValueError("No episodes to replay")
+    if len(actions_by_episode) != len(initial_states):
+        raise ValueError("Each episode must have an initial state")
+    if any(len(actions) == 0 for actions in actions_by_episode):
+        raise ValueError("Cannot replay an episode with no actions")
+
+    env = make_env(
+        DexJoCoEnvConfig(render_mode="none"),
+        n_envs=n_envs,
+        use_async_envs=use_async_envs,
+    )["dexjoco"][0]  # TODO: only support water_plant for now
+    results = ReplayResult([], np.zeros(len(actions_by_episode), dtype=bool))
+    try:
+        for start in range(0, len(actions_by_episode), n_envs):
+            batch_actions = actions_by_episode[start : start + n_envs]
+            lengths = np.asarray([len(actions) for actions in batch_actions], dtype=np.int64)
+            # pad actions to the max length
+            action_dim = batch_actions[0].shape[1]
+            actions = np.zeros(
+                (len(batch_actions), int(lengths.max()), action_dim), dtype=np.float64
+            )
+            for slot, episode_actions in enumerate(batch_actions):
+                actions[slot, : lengths[slot]] = episode_actions
+            result = batch_replay_episode(
+                env, actions, initial_states[start : start + n_envs], lengths, extend_steps
+            )
+            results.states.extend(result.states)
+            results.success[start : start + len(batch_actions)] = result.success
+    finally:
+        env.close()
+    return results
 
 
-def report_errors(label: str, errors: NDArray[np.float64], atol: float) -> None:
-    bad = np.count_nonzero(np.any(~np.isfinite(errors) | (errors > atol), axis=1))
-    print(
-        f"{label}: compared_frames={len(errors)}, bad_frames={bad}, "
-        f"mae={errors.mean():.8g}, max_abs={errors.max():.8g}, "
-        f"rmse={np.sqrt(np.mean(errors**2)):.8g}, "
-        f"xyz_max_m={errors[:, :3].max():.8g}, "
-        f"quat_max={errors[:, 3:7].max():.8g}, "
-        f"finger_max_rad={errors[:, 7:].max():.8g}",
-        flush=True,
-    )
+def replay_dataset(
+    dataset_dir: Path,
+    n_envs: int = 10,
+    use_async_envs: bool = True,
+    extend_steps: int = 30,
+) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
+    """Replay all episodes twice, returning success and exact state consistency.
 
-
-def main(
-    dataset_dir: Path = Path("datasets/water_plant"),
-    episodes: list[int] | None = None,
-    atol: float = 1e-4,
-) -> None:
-    """Replay every selected episode twice and compare states in memory.
-
-    Args:
-        dataset_dir: Converted water_plant LeRobot dataset directory.
-        episodes: Episode indices; defaults to all episodes.
-        atol: Absolute per-component tolerance, with no relative tolerance.
+    Both arrays follow episode index order. Success flags must match between
+    passes; state consistency requires matching trajectory shapes and values.
     """
-    dataset = LeRobotDataset(
-        repo_id="local_repo", root=dataset_dir, episodes=episodes, download_videos=False
-    )
-    rows = dataset.select_columns(["episode_index", "action", "observation.state"])
+    dataset = LeRobotDataset(repo_id="local_repo", root=dataset_dir, download_videos=False)
+    rows = dataset.select_columns(["episode_index", "action"])
     episode_indices = np.asarray(rows["episode_index"], dtype=np.int64).reshape(-1)
     with (dataset_dir / "replay_initial_values.jsonl").open() as f:
-        initial_values = {
-            entry["episode_index"]: entry["replay_initial_values"]
-            for entry in (json.loads(line) for line in f)
-        }
-    trajectories = {}
-    for episode_index in np.unique(episode_indices):
-        episode_rows = rows.select(np.flatnonzero(episode_indices == episode_index).tolist())
-        trajectories[int(episode_index)] = (
-            np.asarray(episode_rows["action"], dtype=np.float64),
-            np.asarray(episode_rows["observation.state"], dtype=np.float64),
-        )
+        entries = sorted((json.loads(line) for line in f), key=lambda entry: entry["episode_index"])
+    if [entry["episode_index"] for entry in entries] != list(range(dataset.meta.total_episodes)):
+        raise ValueError("Initial-state records must cover every episode exactly once")
+    initial_states = [entry["replay_initial_values"] for entry in entries]
+    actions_by_episode = []
+    for episode_index in range(dataset.meta.total_episodes):
+        episode_rows = rows.select(np.flatnonzero(episode_indices == episode_index))
+        actions_by_episode.append(np.asarray(episode_rows["action"], dtype=np.float64))
 
-    # All first-pass episodes complete before the second pass begins.
-    passes: list[dict[int, ReplayResult]] = []
-    for pass_index in range(2):
-        env = make_env(DexJoCoEnvConfig(render_mode="none"), n_envs=1, use_async_envs=False)[
-            "dexjoco"
-        ][0]
-        results = {}
-        try:
-            for episode_index, (actions, _) in trajectories.items():
-                result = replay_episode(env, actions, initial_values[episode_index])
-                results[episode_index] = result
-                print(
-                    f"pass={pass_index + 1} episode={episode_index}: "
-                    f"success={result.success}, steps={len(result.states)}, "
-                    f"recorded_steps={len(actions)}, "
-                    f"extra_steps={max(0, len(result.states) - len(actions))}, "
-                    f"reason={result.reason}",
-                    flush=True,
-                )
-        finally:
-            env.close()
-        passes.append(results)
-        print(
-            f"Pass {pass_index + 1}: {sum(r.success for r in results.values())}"
-            f"/{len(results)} episodes succeeded.",
-            flush=True,
-        )
-
-    original_errors = []
-    repeat_errors = []
-    for episode_index, (_, expected) in trajectories.items():
-        first = passes[0][episode_index]
-        second = passes[1][episode_index]
-        print(
-            f"episode={episode_index}: recorded_frames={len(expected)}, "
-            f"pass1_frames={len(first.states)}, pass2_frames={len(second.states)}, "
-            f"same_length={len(first.states) == len(second.states)}, "
-            f"same_success={first.success == second.success}",
-            flush=True,
-        )
-        original = state_errors(first.states, expected)
-        repeat = state_errors(second.states, first.states)
-        original_errors.append(original)
-        repeat_errors.append(repeat)
-        report_errors("  pass1 vs dataset", original, atol)
-        report_errors("  pass2 vs pass1", repeat, atol)
-    report_errors("Overall pass1 vs dataset", np.concatenate(original_errors), atol)
-    report_errors("Overall pass2 vs pass1", np.concatenate(repeat_errors), atol)
+    # Each pass creates fresh environments and finishes before the next begins.
+    first = replay_batches(actions_by_episode, initial_states, n_envs, use_async_envs, extend_steps)
+    second = replay_batches(actions_by_episode, initial_states, n_envs, use_async_envs, extend_steps)
+    assert np.array_equal(first.success, second.success), (
+        "Replay success differs between passes for episodes "
+        f"{np.flatnonzero(first.success != second.success).tolist()}"
+    )
+    consistent = np.asarray(
+        [np.array_equal(a, b) for a, b in zip(first.states, second.states, strict=True)],
+        dtype=bool,
+    )
+    return first.success, consistent
 
 
 if __name__ == "__main__":
-    tyro.cli(main)
+    tyro.cli(replay_dataset)

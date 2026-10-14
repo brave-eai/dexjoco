@@ -30,12 +30,11 @@ class DatasetConfig:
 
     def split_replay_initial_positions(
         self, positions: NDArray[np.float64]
-    ) -> dict[str, list[float]]:
-        """Split one episode's initial state into JSON-serializable arrays.
+    ) -> dict[str, float | list[float]]:
+        """Split initial state into JSON fields using the environment reset schema.
 
         Offsets start at zero in the tail returned by load_zarr_episode.
-        Keep table_delta_height as a one-element list, matching the legacy
-        state restorers.
+        Single-value fields are scalars; poses and positions are lists.
         """
         expected_dim = sum(size for _, size in self.replay_initial_position_fields)
         if positions.shape != (expected_dim,):
@@ -43,7 +42,7 @@ class DatasetConfig:
                 f"Expected replay initial positions shape {(expected_dim,)}, got {positions.shape}"
             )
 
-        fields: dict = {}
+        fields: dict[str, float | list[float]] = {}
         offset = 0
         for name, size in self.replay_initial_position_fields:
             if size == 1:
