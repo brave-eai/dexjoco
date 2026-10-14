@@ -142,11 +142,13 @@ def replay_dataset(
     n_envs: int = 10,
     use_async_envs: bool = True,
     extend_steps: int = 30,
-) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
-    """Replay all episodes twice, returning success and exact state consistency.
+    check_consistency: bool = True,
+) -> tuple[NDArray[np.bool_], NDArray[np.bool_] | None]:
+    """Replay all episodes, optionally checking exact consistency in a second pass.
 
-    Both arrays follow episode index order. Success flags must match between
-    passes; state consistency requires matching trajectory shapes and values.
+    Both arrays follow episode index order. With consistency checking enabled,
+    success flags must match between passes and states are compared exactly.
+    Otherwise only one pass runs and the consistency result is None.
     """
     dataset = LeRobotDataset(repo_id="local_repo", root=dataset_dir, download_videos=False)
     rows = dataset.select_columns(["episode_index", "action"])
@@ -163,6 +165,8 @@ def replay_dataset(
 
     # Each pass creates fresh environments and finishes before the next begins.
     first = replay_batches(actions_by_episode, initial_states, n_envs, use_async_envs, extend_steps)
+    if not check_consistency:
+        return first.success, None
     second = replay_batches(actions_by_episode, initial_states, n_envs, use_async_envs, extend_steps)
     assert np.array_equal(first.success, second.success), (
         "Replay success differs between passes for episodes "

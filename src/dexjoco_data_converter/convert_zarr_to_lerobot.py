@@ -1,5 +1,6 @@
 import json
 import multiprocessing as mp
+import shutil
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,8 +10,11 @@ import av
 import numpy as np
 import tyro
 from lerobot.datasets import LeRobotDataset
+from lerobot.datasets.dataset_tools import delete_episodes
 from numpy.typing import NDArray
 from tqdm import tqdm
+
+from dexjoco.replay_dataset import replay_dataset
 
 from .task_presets import TASK_PRESETS, TaskName
 from .video_loader import decode_video, initialize_decoder
@@ -27,6 +31,10 @@ class DatasetConfig:
     # Ordered like proprio_keys after tcp_pose and gripper_pose.
     # Each pair contains the field name and its size in the state tail.
     replay_initial_position_fields: tuple[tuple[str, int], ...]
+    delete_failed_episodes: bool = True
+    n_envs: int = 10
+    use_async_envs: bool = True
+    extend_steps: int = 30
 
     def split_replay_initial_positions(
         self, positions: NDArray[np.float64]
@@ -187,11 +195,62 @@ def convert_one_dataset(cfg: DatasetConfig, progress_position: int = 0):
         with open(cfg.output_dir / "replay_initial_values.jsonl", "w", encoding="utf-8") as f:
             f.writelines(json.dumps(item, ensure_ascii=False) + "\n" for item in replay_info)
 
+    replay_and_filter_dataset(cfg, replay_info)
+
+
+def replay_and_filter_dataset(cfg: DatasetConfig, replay_info: list[dict[str, Any]]) -> None:
+    """Replay once and replace the output with successful episodes when requested."""
+    success, _ = replay_dataset(
+        cfg.output_dir,
+        n_envs=cfg.n_envs,
+        use_async_envs=cfg.use_async_envs,
+        extend_steps=cfg.extend_steps,
+        check_consistency=False,
+    )
+    failed = np.flatnonzero(~success).tolist()
+    if not failed:
+        print(f"All {len(success)} episodes successfully replayed; no filtering needed")
+        return
+    elif not cfg.delete_failed_episodes:
+        print(f"{failed} episodes failed replay; keeping all episodes as requested")
+        return
+    if not success.any():
+        raise ValueError("All episodes failed replay; the unfiltered dataset was preserved")
+
+    filtered_dir = cfg.output_dir.with_name(cfg.output_dir.name + "_filtered")
+    backup_dir = cfg.output_dir.with_name(cfg.output_dir.name + "_unfiltered")
+    if filtered_dir.exists() or backup_dir.exists():
+        raise FileExistsError(f"Filtering requires unused paths: {filtered_dir}, {backup_dir}")
+    dataset = LeRobotDataset(repo_id="local_repo", root=cfg.output_dir)
+    delete_episodes(dataset, failed, output_dir=filtered_dir, repo_id=dataset.repo_id)
+    kept_entries = [
+        {**replay_info[old_index], "episode_index": new_index}
+        for new_index, old_index in enumerate(np.flatnonzero(success))
+    ]
+    with (filtered_dir / "replay_initial_values.jsonl").open("w", encoding="utf-8") as f:
+        f.writelines(json.dumps(entry, ensure_ascii=False) + "\n" for entry in kept_entries)
+
+    cfg.output_dir.rename(backup_dir)
+    try:
+        filtered_dir.rename(cfg.output_dir)
+    except OSError:
+        backup_dir.rename(cfg.output_dir)
+        raise
+    shutil.rmtree(backup_dir)
+
+    print(
+        f"Filtered {len(failed)} failed episodes; kept {len(success) - len(failed)} successful episodes"
+    )
+
 
 def main(
     task: TaskName,
     zarr_dataset_dir: Path,
     output_dir: Path,
+    delete_failed_episodes: bool = True,
+    n_envs: int = 10,
+    use_async_envs: bool = True,
+    extend_steps: int = 30,
 ) -> None:
     """Convert one Zarr dataset using a task's robot and replay-field preset.
 
@@ -199,8 +258,15 @@ def main(
         task: Task preset matching the recorded dataset.
         zarr_dataset_dir: Directory containing the Zarr episode directories.
         output_dir: Output directory for the LeRobot dataset.
-        task_description: Override the preset prompt stored in each frame.
+        delete_failed_episodes: Keep only successful episodes; otherwise keep all episodes.
+        n_envs: Number of parallel replay environments.
+        use_async_envs: Run replay environments in separate processes.
+        extend_steps: Maximum extra steps repeating the last action.
     """
+    if task != "water_plant":
+        raise ValueError("Post-conversion replay currently supports only water_plant")
+    if n_envs < 1 or extend_steps < 0:
+        raise ValueError("n_envs must be positive and extend_steps must be nonnegative")
     preset = TASK_PRESETS[task]
     cfg = DatasetConfig(
         zarr_dataset_dir=zarr_dataset_dir,
@@ -208,6 +274,10 @@ def main(
         is_bimanual=preset.is_bimanual,
         task_description=preset.prompt,
         replay_initial_position_fields=preset.replay_initial_position_fields,
+        delete_failed_episodes=delete_failed_episodes,
+        n_envs=n_envs,
+        use_async_envs=use_async_envs,
+        extend_steps=extend_steps,
     )
     convert_one_dataset(cfg)
 
