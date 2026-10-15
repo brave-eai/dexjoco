@@ -47,6 +47,8 @@ def make_env(
                     randomize_dynamics=cfg.randomize_dynamics,
                     render_mode=cfg.render_mode,
                     offsamples=cfg.offsamples,
+                    render_width=cfg.render_width,
+                    render_height=cfg.render_height,
                 ) for _ in range(n_envs)],
                 **vector_kwargs,
             )

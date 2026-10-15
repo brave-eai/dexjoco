@@ -18,6 +18,9 @@ class DexJoCoEnvConfig(HubEnvConfig):
     # offsamples > 0 may cause pixels unreproducible
     offsamples: int | None = None  # None uses the XML setting.
 
+    render_width: int = 640
+    render_height: int = 640
+
     @property
     def gym_kwargs(self) -> dict:
         return {
@@ -25,6 +28,8 @@ class DexJoCoEnvConfig(HubEnvConfig):
             "randomize": self.randomize,
             "randomize_dynamics": self.randomize_dynamics,
             "offsamples": self.offsamples,
+            "render_width": self.render_width,
+            "render_height": self.render_height,
         }
 
     def create_envs(

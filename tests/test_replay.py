@@ -29,7 +29,6 @@ def test_dataset_replay(env_name: str) -> None:
             dataset_dir=dataset_dir,
             n_envs=10,
             use_async_envs=True,
-            extend_steps=30,
             check_images=True,
         )
 

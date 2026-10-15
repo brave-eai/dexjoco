@@ -85,7 +85,7 @@ class WaterPlantEnv(gym.Env):
         randomize: bool = False,
         randomize_dynamics: bool = False,
         render_width: int = 640,
-        render_height: int = 480,
+        render_height: int = 640,
         seed: int | None = None,
         offsamples: int | None = None,
     ):

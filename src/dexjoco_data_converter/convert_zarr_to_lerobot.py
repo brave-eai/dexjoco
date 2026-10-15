@@ -34,7 +34,6 @@ class DatasetConfig:
     delete_failed_episodes: bool = True
     n_envs: int = 10
     use_async_envs: bool = True
-    extend_steps: int = 30
 
     def split_replay_initial_positions(
         self, positions: NDArray[np.float64]
@@ -204,7 +203,6 @@ def replay_and_filter_dataset(cfg: DatasetConfig, replay_info: list[dict[str, An
         cfg.output_dir,
         n_envs=cfg.n_envs,
         use_async_envs=cfg.use_async_envs,
-        extend_steps=cfg.extend_steps,
     )
     failed = np.flatnonzero(~success).tolist()
     if not failed:
@@ -249,7 +247,6 @@ def main(
     delete_failed_episodes: bool = True,
     n_envs: int = 10,
     use_async_envs: bool = True,
-    extend_steps: int = 30,
 ) -> None:
     """Convert one Zarr dataset using a task's robot and replay-field preset.
 
@@ -260,12 +257,11 @@ def main(
         delete_failed_episodes: Keep only successful episodes; otherwise keep all episodes.
         n_envs: Number of parallel replay environments.
         use_async_envs: Run replay environments in separate processes.
-        extend_steps: Maximum extra steps repeating the last action.
     """
     if task != "water_plant":
         raise ValueError("Post-conversion replay currently supports only water_plant")
-    if n_envs < 1 or extend_steps < 0:
-        raise ValueError("n_envs must be positive and extend_steps must be nonnegative")
+    if n_envs < 1:
+        raise ValueError("n_envs must be positive")
     preset = TASK_PRESETS[task]
     cfg = DatasetConfig(
         zarr_dataset_dir=zarr_dataset_dir,
@@ -276,7 +272,6 @@ def main(
         delete_failed_episodes=delete_failed_episodes,
         n_envs=n_envs,
         use_async_envs=use_async_envs,
-        extend_steps=extend_steps,
     )
     convert_one_dataset(cfg)
 

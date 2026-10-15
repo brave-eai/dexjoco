@@ -18,6 +18,7 @@ from dexjoco.configs import DexJoCoEnvConfig
 class ReplayResult:
     states: list[NDArray]
     success: NDArray[np.bool]
+    actions: list[NDArray]
     images: list[dict[str, NDArray[np.uint8]]] | None = None
 
 
@@ -66,6 +67,7 @@ def batch_replay_episode(
 
     obs = batch_env_reset(env, initial_states)
     states = []
+    executed_actions = []
     image_frames: list[dict[str, list[NDArray[np.uint8]]]] = (
         [{camera: [] for camera in obs["images"]} for _ in range(NUM_EPISODES)]
         if return_images
@@ -84,6 +86,7 @@ def batch_replay_episode(
                         frames.append(obs["images"][camera][i].copy())
         action_indices = np.minimum(step, episodes_lengths - 1)
         action = actions[np.arange(env.num_envs), action_indices]
+        executed_actions.append(action.copy())
         obs, _, terminated, truncated, info = env.step(action)
 
         current_success = ~done & np.asarray(info["is_success"], dtype=bool)
@@ -102,6 +105,8 @@ def batch_replay_episode(
 
     states_array = np.asarray(states)  # (steps, envs, state_dim)
     episode_states = [states_array[: replay_lengths[i], i].copy() for i in range(NUM_EPISODES)]
+    actions_array = np.asarray(executed_actions)  # (steps, envs, action_dim)
+    episode_actions = [actions_array[: replay_lengths[i], i].copy() for i in range(NUM_EPISODES)]
     episode_success = success[:NUM_EPISODES]
 
     episode_images = (
@@ -112,7 +117,7 @@ def batch_replay_episode(
         if return_images
         else None
     )
-    return ReplayResult(episode_states, episode_success, episode_images)
+    return ReplayResult(episode_states, episode_success, episode_actions, episode_images)
 
 
 def replay_batches(
@@ -120,10 +125,15 @@ def replay_batches(
     initial_states: list[dict],
     n_envs: int,
     use_async_envs: bool,
-    extend_steps: int,
+    extend_steps: int = 60,
     return_images: bool = False,
+    randomize: bool = False,
+    render_hw: tuple[int, int] | None = None,
 ) -> Generator[ReplayResult, None, None]:
-    """Yield each batch in episode order; exhaust or close to release environments."""
+    """Yield each batch in episode order; exhaust or close to release environments.
+
+    render_hw specifies (height, width); None uses the environment default.
+    """
     if n_envs < 1 or extend_steps < 0:
         raise ValueError("n_envs must be positive and extend_steps must be nonnegative")
     if not actions_by_episode:
@@ -133,8 +143,11 @@ def replay_batches(
     if any(len(actions) == 0 for actions in actions_by_episode):
         raise ValueError("Cannot replay an episode with no actions")
 
+    env_cfg = DexJoCoEnvConfig(render_mode="rgb_array" if return_images else "none", randomize=randomize)
+    if render_hw is not None:
+        env_cfg.render_height, env_cfg.render_width = render_hw
     env = make_env(
-        DexJoCoEnvConfig(render_mode="rgb_array" if return_images else "none"),
+        env_cfg,
         n_envs=n_envs,
         use_async_envs=use_async_envs,
     )["dexjoco"][0]  # TODO: only support water_plant for now
@@ -187,7 +200,7 @@ def check_replay_success(
     dataset_dir: Path,
     n_envs: int = 10,
     use_async_envs: bool = True,
-    extend_steps: int = 30,
+    extend_steps: int = 60,
 ) -> NDArray[np.bool_]:
     """Replay once without rendering, returning success in episode index order."""
     actions, initial_states = load_replay_data(dataset_dir)
@@ -208,7 +221,7 @@ def check_replay_consistency(
     dataset_dir: Path,
     n_envs: int = 10,
     use_async_envs: bool = True,
-    extend_steps: int = 30,
+    extend_steps: int = 60,
     check_images: bool = False,
 ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
     """Return exact consistency and first-pass success in episode index order.
