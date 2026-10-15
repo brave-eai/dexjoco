@@ -1,5 +1,7 @@
 # 测试流程
 
+环境迁移步骤与 water plant 示例见 [迁移指南](docs/迁移指南.md)。
+
 先下载原始数据，然后转换成lerobot数据放在./datasets里面
 
 参考
