@@ -7,6 +7,7 @@ from typing import Any
 import gymnasium as gym
 
 from dexjoco.configs import DexJoCoEnvConfig
+from dexjoco.envs.bimanual_assembly import BimanualAssemblyEnv
 from dexjoco.envs.bimanual_hanoi import BimanualHanoiEnv
 from dexjoco.envs.bimanual_microwave_cook import BimanualMicrowaveCookEnv
 from dexjoco.envs.click_mouse import ClickMouseEnv
@@ -27,6 +28,7 @@ TASKS: dict[int, Callable[..., gym.Env]] = {
     5: HammerNailEnv,
     6: BimanualMicrowaveCookEnv,
     8: BimanualHanoiEnv,
+    9: BimanualAssemblyEnv,
 }
 TASK_IDS = {
     "water_plant": 0,
@@ -37,6 +39,7 @@ TASK_IDS = {
     "hammer_nail": 5,
     "bimanual_microwave_cook": 6,
     "bimanual_hanoi": 8,
+    "bimanual_assembly": 9,
 }
 
 

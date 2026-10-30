@@ -12,7 +12,8 @@ assets/
     ├── pinch_tongs/      # Scene and articulated tongs meshes
     ├── pick_bucket/      # Scene, articulated bucket, and boxed food
     ├── hammer_nail/      # Scene, hammer, mocap nail, and wooden board
-    └── bimanual_microwave_cook/ # Scene, microwave, and hot dog
+    ├── bimanual_microwave_cook/ # Scene, microwave, and hot dog
+    └── bimanual_assembly/   # Scene, round peg, and handheld socket
 ```
 
 ## Path Rules

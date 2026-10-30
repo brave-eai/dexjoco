@@ -1,0 +1,70 @@
+"""Exercise assembly restoration, action layouts, and sustained contact."""
+
+import numpy as np
+import pytest
+from scipy.spatial.transform import Rotation
+
+from dexjoco.envs.bimanual_assembly import (
+    MAX_EPISODE_STEPS,
+    SUCCESS_STEPS,
+    BimanualAssemblyEnv,
+    BimanualAssemblyStateMachine,
+)
+
+
+@pytest.mark.parametrize("randomize", [False, True])
+def test_reset_and_action_formats(randomize: bool) -> None:
+    rotvec = BimanualAssemblyEnv(render_mode="none", randomize=randomize, randomize_dynamics=True)
+    quaternion = BimanualAssemblyEnv(render_mode="none", action_format="quaternion", randomize=randomize, randomize_dynamics=True)
+    try:
+        obs, info = quaternion.reset(seed=12)
+        original_qpos = quaternion.data.qpos.copy()
+        restored, restored_info = rotvec.reset(
+            seed=12, options={"initial_state": info["initial_state"], "unrelated_option": True}
+        )
+        np.testing.assert_array_equal(restored["agent_pos"], obs["agent_pos"])
+        np.testing.assert_array_equal(rotvec.data.qpos, original_qpos)
+        assert set(restored_info["initial_state"]) == {"orig_socket_pose", "orig_peg_pose", "table_delta_height"}
+        np.testing.assert_array_equal(rotvec.model.body_pos, quaternion.model.body_pos)
+        np.testing.assert_array_equal(rotvec.model.body_quat, quaternion.model.body_quat)
+        np.testing.assert_array_equal(rotvec.model.body_mass, quaternion.model.body_mass)
+        np.testing.assert_array_equal(rotvec.model.dof_frictionloss, quaternion.model.dof_frictionloss)
+        np.testing.assert_array_equal(rotvec.model.cam_pos, quaternion.model.cam_pos)
+        np.testing.assert_array_equal(rotvec.model.geom_pos, quaternion.model.geom_pos)
+        np.testing.assert_array_equal(rotvec.model.geom_size, quaternion.model.geom_size)
+        assert set(obs) == {"agent_pos"}
+        assert quaternion.renderer is None and rotvec.renderer is None
+        action_quat = obs["agent_pos"].astype(np.float64)
+        action_rotvec = np.concatenate((
+            action_quat[:3],
+            Rotation.from_quat(action_quat[3:7], scalar_first=True).as_rotvec(),
+            action_quat[14:30],
+            action_quat[7:10],
+            Rotation.from_quat(action_quat[10:14], scalar_first=True).as_rotvec(),
+            action_quat[30:46],
+        ))
+        assert rotvec.action_space.contains(action_rotvec.astype(np.float32))
+        assert quaternion.action_space.contains(action_quat.astype(np.float32))
+        a = rotvec.step(action_rotvec)
+        b = quaternion.step(action_quat)
+        np.testing.assert_allclose(a[0]["agent_pos"], b[0]["agent_pos"], atol=1e-7)
+        assert a[1:] == b[1:]
+    finally:
+        rotvec.close()
+        quaternion.close()
+
+
+def test_sustained_bottom_contact() -> None:
+    machine = BimanualAssemblyStateMachine()
+    for _ in range(SUCCESS_STEPS - 1):
+        assert machine.update(True) == (False, False, False)
+    assert machine.update(False) == (False, False, False)
+    assert machine.success_steps == 0
+    for _ in range(SUCCESS_STEPS - 1):
+        assert machine.update(True) == (False, False, False)
+    assert machine.update(True) == (True, True, False)
+    machine.reset()
+    assert machine.success_steps == machine.step_count == 0
+    for _ in range(MAX_EPISODE_STEPS - 1):
+        assert machine.update(False) == (False, False, False)
+    assert machine.update(False) == (False, False, True)
