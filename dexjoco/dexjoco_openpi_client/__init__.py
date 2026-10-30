@@ -1,1 +1,0 @@
-from .eval_dexjoco_openpi import main as evaluate_dexjoco_openpi

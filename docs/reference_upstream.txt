@@ -1,0 +1,5 @@
+Repository: git@github.com:brave-eai/dexjoco.git
+Commit: 8d23b0fab23b17a58c4b55f3942e17013aaf8267
+Submodule dexjoco-data-converter/src/3rd/diffusion_policy: 5ba07ac6661db573af695b419a7947ecb704690f
+Local directory: dexjoco_ref/ (ignored by Git)
+Local change: removed per-step wall-clock pacing from all task environments; simulation timesteps are unchanged.

@@ -5,3 +5,4 @@ __pycache__/
 .vscode/
 /datasets/*
 /DexJoCo.pdf
+/dexjoco_ref/

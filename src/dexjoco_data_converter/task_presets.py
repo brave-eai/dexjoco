@@ -1,6 +1,6 @@
-"""Conversion presets matching dexjoco/dexjoco/tasks/*/config.py.
+"""Conversion presets matching dexjoco_ref/dexjoco/dexjoco/tasks/*/config.py.
 
-Prompts match configs/rand_obj/*.yaml.
+Prompts match dexjoco_ref/configs/rand_obj/*.yaml.
 
 Replay fields follow proprio_keys after tcp_pose and gripper_pose. Sizes
 come from the corresponding simulation environments: poses have 7 values

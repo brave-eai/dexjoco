@@ -1,1 +1,0 @@
-from .mappings import CONFIG_MAPPING
