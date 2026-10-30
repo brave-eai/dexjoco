@@ -60,6 +60,11 @@ def record_replay(
         raise FileExistsError(f"Output directory already exists: {output_dir}")
     metadata = LeRobotDatasetMetadata(repo_id="local_repo", root=dataset_dir)
     assert metadata.episodes is not None
+    cameras = [
+        key.removeprefix("observation.images.")
+        for key in metadata.features
+        if key.startswith("observation.images.")
+    ]
     actions, initial_states = load_replay_data(dataset_dir)
     dataset: LeRobotDataset | None = None
     source_index = 0
@@ -82,6 +87,10 @@ def record_replay(
         ):
             for result in batches:
                 assert result.images is not None
+                # Preserve the source camera set, which can vary between datasets.
+                result.images = [
+                    {camera: images[camera] for camera in cameras} for images in result.images
+                ]
                 if not save_failed and np.any(~result.success):
                     raise RuntimeError(
                         f"Replay failed for source episodes: "

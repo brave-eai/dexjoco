@@ -45,6 +45,9 @@ python_version = "3.12"
 # Third-party packages are not checked; mujoco ships no type stubs.
 ignore_missing_imports = true
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.pyright]
 include = ["."]
 exclude = ["dexjoco_ref", ".venv", "datasets", "build", "dist", "**/__pycache__", "**/node_modules"]

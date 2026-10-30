@@ -35,8 +35,13 @@ class DexJoCoEnvConfig(HubEnvConfig):
             "agent_pos": "observation.state",
         }
         if self.render_mode != "none":
+            from dexjoco.envhub import TASK_IDS, TASKS
+
+            constructor = TASKS[TASK_IDS[self.task]]
             cameras = (
-                ("ego", "wrist_left", "wrist_right") if self.bimanual else ("ego", "wrist")
+                "ego",
+                *getattr(constructor, "side_cameras", ()),
+                *(("wrist_left", "wrist_right") if self.bimanual else ("wrist",)),
             )
             for camera in cameras:
                 key = f"pixels/{camera}"

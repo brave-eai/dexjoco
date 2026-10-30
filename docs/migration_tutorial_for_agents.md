@@ -141,6 +141,14 @@ NumPy、SciPy 和底层 BLAS 的版本或构建不同，以及四元数与旋转
 - 转换和重新录制保持既定数据集 features。
 - 环境关闭后释放其资源。
 
+如果任一组完整数据的迁移版回放成功率低于 95%，必须在 `conda dexjoco`
+环境中调用 `dexjoco_ref/scripts/replay_demos_zarr.py`，回放对应的完整原始数据，
+核对参考代码的成功率是否也大约同样低。比较时记录两边的原始轨迹数、成功数、
+成功率和回放设置；迁移版使用转换后筛选前的成功率，不能用筛选后的成功率比较。
+可以临时删除参考仿真环境中的 `sleep` 调用以加速验证，不改变控制时间步、
+动力学参数或成功条件；验证结束后恢复这些临时改动并清理临时输出。
+如果两者成功率存在无法解释的明显差异，停止并向用户提供结果，不以筛选失败轨迹代替调查。
+
 ### GPU 渲染与沙箱
 
 无窗口渲染使用 `MUJOCO_GL=egl`，例如：
@@ -152,6 +160,34 @@ MUJOCO_GL=egl uv run pytest tests/test_replay.py --replay-n-envs=4
 EGL 启动成功不代表使用了 GPU。本机普通沙箱执行上述渲染时会使用 Mesa 的 `llvmpipe` 软件渲染；需要 GPU 时，通过执行工具的 `sandbox_permissions="require_escalated"` 在沙箱外运行命令，才能访问本机 NVIDIA GPU。使用 `GL_VENDOR`、`GL_RENDERER` 确认实际渲染后端。当前实现中 GPU 用于渲染，MuJoCo 物理模拟仍在 CPU 上运行。
 
 如果受执行权限限制而无法运行，直接把完整命令交给用户运行。
+
+### 数据转换与 Hugging Face 缓存权限
+
+当前沙箱中，`uv run dexjoco-convert` 可以向仓库内的 `datasets/` 写入转换结果，
+但转换后的回放筛选会通过 LeRobot 读取数据集。Hugging Face Datasets 在读取
+Parquet 数据及元数据时也会向默认的 `~/.cache/huggingface/datasets/` 创建缓存锁；
+该目录在普通沙箱中只读，因此可能在全部轨迹转换完成后报
+`OSError: [Errno 30] Read-only file system`，路径以缓存目录中的 `.lock` 结尾。
+
+使用默认缓存路径执行完整转换及回放筛选时，通过执行工具的
+`sandbox_permissions="require_escalated"` 在沙箱外运行，例如：
+
+```bash
+uv run dexjoco-convert \
+  --task pinch_tongs \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets/pinch_tongs \
+  --output-dir datasets/rand_obj/pinch_tongs \
+  --n-envs 4
+```
+
+这里的额外权限用于访问用户缓存，不是写入转换数据或物理回放本身的要求。
+无需 GPU 的转换和成功率筛选，也可将 `HF_DATASETS_CACHE` 指向沙箱内可写目录后运行；
+`uv` 自身的默认缓存目录只读时，同样用 `UV_CACHE_DIR` 指向可写目录。
+临时缓存使用完毕后清理。需要 NVIDIA 图像渲染时仍按上一节在沙箱外运行。
+
+如果转换已完成，仅在后续读取缓存锁时报错，保留转换结果和
+`replay_initial_values.jsonl`，修正执行权限或缓存位置后调用现有的
+`replay_and_filter_dataset` 继续筛选，不必重复解码和转换全部原始视频。
 
 ### 检查命令
 

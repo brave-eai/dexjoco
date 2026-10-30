@@ -39,7 +39,9 @@ def test_official_cli_discovers_plugin() -> None:
     assert "DexJoCoEnvConfig" in result.stdout
 
 
-@pytest.mark.parametrize("task,bimanual", [("water_plant", False), ("bimanual_hanoi", True)])
+@pytest.mark.parametrize(
+    "task,bimanual", [("water_plant", False), ("pinch_tongs", False), ("bimanual_hanoi", True)]
+)
 @pytest.mark.parametrize("use_async_envs", [False, True])
 def test_batch_replay_initial_states(task: str, bimanual: bool, use_async_envs: bool) -> None:
     cfg = DexJoCoEnvConfig(task=task, bimanual=bimanual, render_mode="none")
@@ -63,7 +65,9 @@ def test_batch_replay_initial_states(task: str, bimanual: bool, use_async_envs: 
         env.close()
 
 
-@pytest.mark.parametrize("task,bimanual", [("water_plant", False), ("bimanual_hanoi", True)])
+@pytest.mark.parametrize(
+    "task,bimanual", [("water_plant", False), ("pinch_tongs", False), ("bimanual_hanoi", True)]
+)
 @pytest.mark.parametrize("use_async_envs", [False, True])
 @pytest.mark.parametrize("with_images", [False, True])
 def test_official_rollout_and_video(

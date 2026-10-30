@@ -6,7 +6,8 @@ assets/
 ├── common/              # Shared scene resources, such as textures
 └── tasks/
     ├── water_plant/      # Task scene, object models, meshes, and textures
-    └── bimanual_hanoi/   # Scene, base, and three disks
+    ├── bimanual_hanoi/   # Scene, base, and three disks
+    └── pinch_tongs/      # Scene and articulated tongs meshes
 ```
 
 ## Path Rules

@@ -4,13 +4,15 @@
 `dexjoco_data_converter`，原有转换、回放命令不变。LeRobot 0.6.1 的官方 CLI
 会自动导入 `lerobot_env_dexjoco`，注册 `--env.type=dexjoco`。
 
-必须使用 `--env.task=water_plant` 或 `--env.task=bimanual_hanoi` 明确选择任务。
+必须使用 `--env.task=water_plant`、`--env.task=pinch_tongs` 或
+`--env.task=bimanual_hanoi` 明确选择任务。
 双臂任务同时设置 `--env.bimanual=true`；`bimanual` 独立决定状态、动作和腕部相机特征。
-任务 ID 按论文任务概览图逐行排列，water_plant 为 0，bimanual_hanoi 为 8。
+任务 ID 按论文任务概览图逐行排列，water_plant 为 0，pinch_tongs 为 3，bimanual_hanoi 为 8。
 
 | 任务 | agent_pos | 动作 | pixels 相机 |
 | --- | --- | --- | --- |
 | water_plant | 23 维 | 22 维 | ego、wrist |
+| pinch_tongs | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
 | bimanual_hanoi | 46 维 | 44 维 | ego、wrist_left、wrist_right |
 
 图像为 HWC uint8。官方预处理将观测转换为 `observation.state` 和
@@ -88,6 +90,43 @@ MUJOCO_GL=egl uv run dexjoco-convert \
 重新录制使用 `observation.images.ego` 主视角和对应任务的腕部相机。
 Hanoi 的恢复信息单独保存底座位置 `orig_hanoi_base_pos` 和 `table_delta_height`；
 盘片按原始环境的最后两步局面恢复：小盘在 A，中盘在 B，大盘在 C。
+
+Pinch Tongs 的两组完整数据转换方式如下：
+
+```bash
+uv run dexjoco-convert \
+  --task pinch_tongs \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets/pinch_tongs \
+  --output-dir datasets/rand_obj/pinch_tongs \
+  --n-envs 4
+uv run dexjoco-convert \
+  --task pinch_tongs \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets_rand_full/pinch_tongs \
+  --output-dir datasets/rand_full/pinch_tongs \
+  --n-envs 4
+```
+
+回放和重新录制均使用 `--task pinch_tongs`。恢复信息单独保存夹钳位姿
+`orig_tongs_pose` 和 `table_delta_height`。夹钳初始关节角保持为 0.3，
+累计三次开合并在桌面上方至少 0.1 米持续保持 30 个控制步后成功。
+原始 `rand_obj` 数据包含四个相机，`rand_full` 只包含主视角和腕部相机；
+转换和重新录制均保留源数据集的相机集合。
+
+2026-10-30 的完整数据回放结果如下，成功率均以筛选前的 100 条原始轨迹为分母：
+
+| 数据组 | 迁移版 | conda dexjoco 参考版 |
+| --- | --- | --- |
+| rand_obj | 84/100（84%） | 86/100（86%） |
+| rand_full | 85/100（85%） | 86/100（86%） |
+
+参考验证调用 `dexjoco_ref/scripts/replay_demos_zarr.py`，使用
+`--randomize=False --restore_state=True --extend_steps=60 --seed=0`。
+迁移版同样恢复记录的初始场景，关闭视觉及动力学随机化，延长回放 60 步。
+两边均为 MuJoCo 3.4.0；迁移环境使用 NumPy 2.2.6、SciPy 1.18.1，
+参考环境使用 NumPy 1.26.4、SciPy 1.17.1。
+筛选后保留的 169 条轨迹全部通过重复状态和图像一致性测试；
+`rand_full` 的全部 85 条轨迹也完成视觉随机化重新录制，features、相机集合、
+帧率及 float64 动作前缀均与源数据一致。
 
 经过转换筛选之后，剩余的episode数量可能不足100
 
