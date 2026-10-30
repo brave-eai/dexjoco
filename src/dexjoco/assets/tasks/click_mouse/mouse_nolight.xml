@@ -1,0 +1,70 @@
+<mujoco model="mouse">
+
+
+
+
+
+
+
+
+
+  <default>
+   <default class="mouse">
+    <mesh scale="0.12 0.12 0.12" />
+    <joint limited="true" damping="0.01" armature="0.01" frictionloss="0.01" />
+    <motor ctrllimited="true" />
+    <equality solref="0.001 2" />
+    <default class="mouse/visual">
+      <geom condim="1" contype="0" conaffinity="0" group="2" />
+    </default>
+    <default class="mouse/collision">
+      <geom condim="4" contype="1" conaffinity="14" solimp="0.9 0.95 0.001" friction= "0.15 0.01 0.0001" solref="0.01 1" group="3" />
+
+    </default>
+   </default>
+  </default>
+  <asset>
+    <material name="original-5_material_0_0" specular="0.06666666666666667" shininess="0.03" rgba="0.3176470588235294 0.3176470588235294 0.3176470588235294 1" />
+    <mesh file="tasks/click_mouse/mouse/textured_objs_thickness/original-5/original-5.obj" name="original-5" scale="0.12 0.12 0.12" />
+    <material name="original-2_material_0_0" specular="0.06666666666666667" shininess="0.03" rgba="0.13333333333333333 0.13333333333333333 0.13333333333333333 1" />
+    <mesh file="tasks/click_mouse/mouse/textured_objs_thickness/original-2/original-2.obj" name="original-2" scale="0.12 0.12 0.12" />
+    <material name="original-1_material_0_0" specular="0.06666666666666667" shininess="0.03" rgba="0.3176470588235294 0.3176470588235294 0.3176470588235294 1" />
+    <mesh file="tasks/click_mouse/mouse/textured_objs_thickness/original-1/original-1.obj" name="original-1" scale="0.12 0.12 0.12" />
+    <material name="original-4_material_0_0" specular="0.06666666666666667" shininess="0.03" rgba="0.7529411764705882 0.7529411764705882 0.7529411764705882 1" />
+    <mesh file="tasks/click_mouse/mouse/textured_objs_thickness/original-4/original-4.obj" name="original-4" scale="0.12 0.12 0.12" />
+    <material name="original-3_material_0_0" specular="0.06666666666666667" shininess="0.03" rgba="0.7529411764705882 0.7529411764705882 0.7529411764705882 1" />
+    <mesh file="tasks/click_mouse/mouse/textured_objs_thickness/original-3/original-3.obj" name="original-3" scale="0.12 0.12 0.12" />
+  </asset>
+  <worldbody>
+    <body name="link_3" pos="0.6 0.0 0.05" quat="0.5 0.5 0.5 0.5" childclass="mouse">
+
+    <freejoint name="mouse_root" />
+      <geom name="mouse" pos="0.0 0.0 0.0" quat="1 0 0 0" type="mesh" mesh="original-2" material="original-2_material_0_0" density="0" class="mouse/visual" />
+      <geom pos="0.0 0.0 0.0" quat="1 0 0 0" type="mesh" mesh="original-1" material="original-1_material_0_0" density="0" class="mouse/visual" />
+      <geom pos="0.0 0.0 0.0" quat="1 0 0 0" type="mesh" mesh="original-2" material="original-2_material_0_0" class="mouse/collision" />
+      <geom pos="0.0 0.0 0.0" quat="1 0 0 0" type="mesh" mesh="original-1" material="original-1_material_0_0" class="mouse/collision" />
+      <body name="link_0" pos="0.01946052337734874 0.0173107458098297 0.05022304669571423">
+
+        <joint name="mouse_joint_0" pos="0 0 0" axis="-0.2207561414986594 -0.935076664159537 -0.27730553210294306" range="-0.008 0.008" type="slide" stiffness="1000" springref="0" damping="100" />
+        <geom pos="-0.01946052337734874 -0.0173107458098297 -0.05022304669571423" quat="1 0 0 0" type="mesh" mesh="original-3" material="original-3_material_0_0" density="0" class="mouse/visual" />
+        <geom pos="-0.01946052337734874 -0.0173107458098297 -0.05022304669571423" quat="1 0 0 0" type="mesh" mesh="original-3" material="original-3_material_0_0" class="mouse/collision" />
+      </body>
+      <body name="link_1" pos="-0.018636053511937044 0.017034204392511798 0.05214668552679713">
+        <joint name="mouse_joint_1" pos="0 0 0" axis="0.2207537368040033 -0.9350768739328008 -0.27730673905105435" range="-0.008 0.008" type="slide" stiffness="1000" springref="0" damping="100" />
+        <geom pos="0.018636053511937044 -0.017034204392511798 -0.05214668552679713" quat="1 0 0 0" type="mesh" mesh="original-4" material="original-4_material_0_0" density="0" class="mouse/visual" />
+        <geom pos="0.018636053511937044 -0.017034204392511798 -0.05214668552679713" quat="1 0 0 0" type="mesh" mesh="original-4" material="original-4_material_0_0" class="mouse/collision" />
+      </body>
+      <body name="link_2" pos="0.0 0.005000000000000001 0.050600000000000006">
+
+        <geom pos="0.0 -0.005000000000000001 -0.050600000000000006" quat="1 0 0 0" type="mesh" mesh="original-5" material="original-5_material_0_0" density="0" class="mouse/visual" />
+        <geom pos="0.0 -0.005000000000000001 -0.050600000000000006" quat="1 0 0 0" type="mesh" mesh="original-5" material="original-5_material_0_0" class="mouse/collision" />
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+
+  </actuator>
+
+
+
+</mujoco>

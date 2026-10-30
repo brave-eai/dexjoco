@@ -3,6 +3,8 @@ name = "lerobot_env_dexjoco"
 version = "0.2.0"
 description = "DexJoCo simulation environments for LeRobot EnvHub"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Weizhi Zhao", email = "zhaoweizhi2025@ia.ac.cn" }
 ]

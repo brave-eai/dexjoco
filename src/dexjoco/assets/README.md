@@ -7,6 +7,7 @@ assets/
 └── tasks/
     ├── water_plant/      # Task scene, object models, meshes, and textures
     ├── bimanual_hanoi/   # Scene, base, and three disks
+    ├── click_mouse/      # Scene, mouse, and articulated display meshes
     └── pinch_tongs/      # Scene and articulated tongs meshes
 ```
 
@@ -45,5 +46,7 @@ in `tasks/water_plant/` includes:
 Keep compiler settings in the scene entry XML. Included robot and object XMLs
 are fragments of that scene, not independently configured models.
 
-Preserve upstream license files alongside reused assets. When moving or
-renaming resources, update their XML references.
+Keep the DexJoCo license only in the repository root `LICENSE`; the wheel includes
+that file once. Preserve independent upstream licenses alongside third-party
+assets, such as the Franka and Allegro models. When moving or renaming resources,
+update their XML references.

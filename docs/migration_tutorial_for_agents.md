@@ -43,6 +43,9 @@
 - 机器人模型放入 `src/dexjoco/assets/robots/`。
 - 当前任务的场景和物体放入 `src/dexjoco/assets/tasks/<task>/`。
 - 保留复用资产的许可证文件。
+- DexJoCo 许可证在整个仓库中只保留根目录的 `LICENSE` 一份，不向各任务或资产目录
+  重复复制；构建产物统一从根目录包含这份许可证。Franka、Allegro 等第三方资产
+  自带的独立许可证仍须保留。
 
 沿用现有 XML 规则：
 
