@@ -6,10 +6,10 @@
 
 必须使用 `--env.task=water_plant`、`--env.task=fold_glasses`、`--env.task=click_mouse`、
 `--env.task=pinch_tongs`、`--env.task=pick_bucket`、`--env.task=hammer_nail` 或
-`--env.task=bimanual_hanoi` 明确选择任务。
+`--env.task=bimanual_hanoi`、`--env.task=bimanual_microwave_cook` 明确选择任务。
 双臂任务同时设置 `--env.bimanual=true`；`bimanual` 独立决定状态、动作和腕部相机特征。
 任务 ID 按论文任务概览图逐行排列，water_plant 为 0，fold_glasses 为 1，click_mouse 为 2，
-pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_hanoi 为 8。
+pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_microwave_cook 为 6，bimanual_hanoi 为 8。
 
 | 任务 | agent_pos | 动作 | pixels 相机 |
 | --- | --- | --- | --- |
@@ -19,6 +19,7 @@ pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_hanoi 为 8
 | pinch_tongs | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
 | pick_bucket | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
 | hammer_nail | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
+| bimanual_microwave_cook | 46 维 | 44 维 | ego、wrist_left、wrist_right |
 | bimanual_hanoi | 46 维 | 44 维 | ego、wrist_left、wrist_right |
 
 图像为 HWC uint8。官方预处理将观测转换为 `observation.state` 和
@@ -280,6 +281,43 @@ uv run dexjoco-convert \
 动作、状态与对应原始 Zarr 逐值一致，相机集合按源数据保留。`rand_full` 全部
 100 条完成视觉随机化重新录制，features、相机集合、帧率、初始状态记录及 float64
 回放动作均通过核对。
+
+Bimanual Microwave Cook 使用 `--env.task=bimanual_microwave_cook --env.bimanual=true`。
+两组完整数据转换方式如下：
+
+```bash
+uv run dexjoco-convert \
+  --task bimanual_microwave_cook \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets/bimanual_microwave_cook \
+  --output-dir datasets/rand_obj/bimanual_microwave_cook \
+  --n-envs 4
+uv run dexjoco-convert \
+  --task bimanual_microwave_cook \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets_rand_full/bimanual_microwave_cook \
+  --output-dir datasets/rand_full/bimanual_microwave_cook \
+  --n-envs 4
+```
+
+回放和重新录制使用 `--task bimanual_microwave_cook`。恢复信息单独保存
+`orig_hot_dog_pose`、`orig_microwave_pose` 和 `table_delta_height`。
+食物参考点位于微波炉局部坐标系的内部包围盒内（边界向外放宽 0.01 米）、
+门关节角绝对值小于 0.01，且启动按钮存在距离不大于零的接触时立即成功。
+超时为 1100 个控制步。桌腿中心下降桌高增量的一半、半长增加同样数值；
+动力学随机化独立扰动门摩擦、微波炉质量及食物质量，各为基准值的 0.75–1.25 倍。
+微波炉 OBJ 的两条无效材质文件引用已删除，仍使用原 XML 指定的 `Oven` 材质和纹理。
+
+2026-10-30 的完整数据回放结果如下，分母均为筛选前的全部原始轨迹：
+
+| 数据组 | 回放成功 | 筛选后保留 |
+| --- | --- | --- |
+| rand_obj | 97/100（97%） | 97 |
+| rand_full | 100/100（100%） | 100 |
+
+两组均未触发低于 95% 时的参考回放验证规则。保留的 197 条转换数据的 float64
+动作、状态与对应原始 Zarr 逐值一致；三相机集合按源数据保留。全部 197 条轨迹
+通过重复状态、图像一致性及 float64 动作读取精度测试。
+`rand_full` 全部 100 条轨迹完成视觉随机化重新录制，features、相机集合、帧率、
+初始状态记录及 float64 回放动作均通过核对。
 
 经过转换筛选之后，剩余的episode数量可能不足100
 

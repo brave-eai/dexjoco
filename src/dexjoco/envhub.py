@@ -8,6 +8,7 @@ import gymnasium as gym
 
 from dexjoco.configs import DexJoCoEnvConfig
 from dexjoco.envs.bimanual_hanoi import BimanualHanoiEnv
+from dexjoco.envs.bimanual_microwave_cook import BimanualMicrowaveCookEnv
 from dexjoco.envs.click_mouse import ClickMouseEnv
 from dexjoco.envs.fold_glasses import FoldGlassesEnv
 from dexjoco.envs.hammer_nail import HammerNailEnv
@@ -24,6 +25,7 @@ TASKS: dict[int, Callable[..., gym.Env]] = {
     3: PinchTongsEnv,
     4: PickBucketEnv,
     5: HammerNailEnv,
+    6: BimanualMicrowaveCookEnv,
     8: BimanualHanoiEnv,
 }
 TASK_IDS = {
@@ -33,6 +35,7 @@ TASK_IDS = {
     "pinch_tongs": 3,
     "pick_bucket": 4,
     "hammer_nail": 5,
+    "bimanual_microwave_cook": 6,
     "bimanual_hanoi": 8,
 }
 
