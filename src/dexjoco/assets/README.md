@@ -8,6 +8,7 @@ assets/
     ├── water_plant/      # Task scene, object models, meshes, and textures
     ├── bimanual_hanoi/   # Scene, base, and three disks
     ├── click_mouse/      # Scene, mouse, and articulated display meshes
+    ├── fold_glasses/     # Scene, articulated glasses, and case
     └── pinch_tongs/      # Scene and articulated tongs meshes
 ```
 

@@ -9,15 +9,26 @@ import gymnasium as gym
 from dexjoco.configs import DexJoCoEnvConfig
 from dexjoco.envs.bimanual_hanoi import BimanualHanoiEnv
 from dexjoco.envs.click_mouse import ClickMouseEnv
+from dexjoco.envs.fold_glasses import FoldGlassesEnv
 from dexjoco.envs.pinch_tongs import PinchTongsEnv
 from dexjoco.envs.water_plant import WaterPlantEnv
 
 # Stable task IDs mapped to constructors of fresh environments.
 # IDs follow the task overview figure in DexJoCo.pdf, reading each row left to right.
 TASKS: dict[int, Callable[..., gym.Env]] = {
-    0: WaterPlantEnv, 2: ClickMouseEnv, 3: PinchTongsEnv, 8: BimanualHanoiEnv,
+    0: WaterPlantEnv,
+    1: FoldGlassesEnv,
+    2: ClickMouseEnv,
+    3: PinchTongsEnv,
+    8: BimanualHanoiEnv,
 }
-TASK_IDS = {"water_plant": 0, "click_mouse": 2, "pinch_tongs": 3, "bimanual_hanoi": 8}
+TASK_IDS = {
+    "water_plant": 0,
+    "fold_glasses": 1,
+    "click_mouse": 2,
+    "pinch_tongs": 3,
+    "bimanual_hanoi": 8,
+}
 
 
 def make_env(

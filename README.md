@@ -4,15 +4,17 @@
 `dexjoco_data_converter`，原有转换、回放命令不变。LeRobot 0.6.1 的官方 CLI
 会自动导入 `lerobot_env_dexjoco`，注册 `--env.type=dexjoco`。
 
-必须使用 `--env.task=water_plant`、`--env.task=click_mouse`、`--env.task=pinch_tongs` 或
+必须使用 `--env.task=water_plant`、`--env.task=fold_glasses`、`--env.task=click_mouse`、
+`--env.task=pinch_tongs` 或
 `--env.task=bimanual_hanoi` 明确选择任务。
 双臂任务同时设置 `--env.bimanual=true`；`bimanual` 独立决定状态、动作和腕部相机特征。
-任务 ID 按论文任务概览图逐行排列，water_plant 为 0，click_mouse 为 2，
+任务 ID 按论文任务概览图逐行排列，water_plant 为 0，fold_glasses 为 1，click_mouse 为 2，
 pinch_tongs 为 3，bimanual_hanoi 为 8。
 
 | 任务 | agent_pos | 动作 | pixels 相机 |
 | --- | --- | --- | --- |
 | water_plant | 23 维 | 22 维 | ego、wrist |
+| fold_glasses | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
 | click_mouse | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
 | pinch_tongs | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
 | bimanual_hanoi | 46 维 | 44 维 | ego、wrist_left、wrist_right |
@@ -161,6 +163,46 @@ uv run dexjoco-convert \
 两组均未触发低于 95% 时的参考回放验证规则。保留的 199 条轨迹全部通过
 重复状态、图像一致性及 float64 动作读取精度测试。`rand_full` 全部 100 条轨迹
 也完成视觉随机化重新录制；features、相机集合、帧率和初始状态记录保持一致，
+float64 回放动作通过逐条精确比较。
+
+Fold Glasses 的两组完整数据转换方式如下：
+
+```bash
+uv run dexjoco-convert \
+  --task fold_glasses \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets/fold_glasses \
+  --output-dir datasets/rand_obj/fold_glasses \
+  --n-envs 4
+uv run dexjoco-convert \
+  --task fold_glasses \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets_rand_full/fold_glasses \
+  --output-dir datasets/rand_full/fold_glasses \
+  --n-envs 4
+```
+
+回放和重新录制使用 `--task fold_glasses`。恢复信息单独保存 `orig_glass_pose`、
+`orig_box_pose` 和 `table_delta_height`。两侧镜腿角度均大于 1.1，且眼镜在盒内
+连续保持 50 个控制步后成功；超时为 1200 个控制步。盒内判定保留原实现的
+世界坐标轴边界，不随盒子偏航旋转。动力学随机化保留原参考代码的实际作用范围：
+眼镜自由关节的 Y/Z 摩擦、两侧镜腿的刚度和眼镜主体质量。
+原始 `rand_obj` 包含四个相机，`rand_full` 只包含主视角和腕部相机；
+转换及重新录制均保留源数据集的相机集合。
+
+2026-10-30 的完整数据回放结果如下，成功率均以筛选前的 100 条原始轨迹为分母：
+
+| 数据组 | 迁移版 | conda dexjoco 参考版 |
+| --- | --- | --- |
+| rand_obj | 89/100（89%） | 92/100（92%） |
+| rand_full | 91/100（91%） | 92/100（92%） |
+
+参考验证直接调用 `dexjoco_ref/scripts/replay_demos_zarr.py` 的
+`_replay_single_demo`，通过原环境已有的 `image_obs=False` 关闭逐帧图像观测。
+两组均回放全部 100 条原始轨迹，恢复记录的初始场景，关闭视觉及动力学随机化，
+延长最后动作 60 步；基准 seed 为 0，按排序后的轨迹使用 1–100 的环境 seed。
+参考代码的动作处理、状态恢复、控制时间步、动力学和成功条件均保持原样。
+筛选保留的 180 条轨迹全部通过重复状态、图像一致性及 float64 动作读取精度测试，
+转换后的动作和状态也与对应原始 Zarr 逐值一致。`rand_full` 全部 91 条保留轨迹
+完成视觉随机化重新录制，features、相机集合、帧率和初始状态记录保持一致，
 float64 回放动作通过逐条精确比较。
 
 经过转换筛选之后，剩余的episode数量可能不足100

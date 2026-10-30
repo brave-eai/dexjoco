@@ -41,7 +41,10 @@ def test_official_cli_discovers_plugin() -> None:
 
 @pytest.mark.parametrize(
     "task,bimanual",
-    [("water_plant", False), ("click_mouse", False), ("pinch_tongs", False), ("bimanual_hanoi", True)],
+    [
+        ("water_plant", False), ("fold_glasses", False), ("click_mouse", False),
+        ("pinch_tongs", False), ("bimanual_hanoi", True),
+    ],
 )
 @pytest.mark.parametrize("use_async_envs", [False, True])
 def test_batch_replay_initial_states(task: str, bimanual: bool, use_async_envs: bool) -> None:
@@ -68,7 +71,10 @@ def test_batch_replay_initial_states(task: str, bimanual: bool, use_async_envs: 
 
 @pytest.mark.parametrize(
     "task,bimanual",
-    [("water_plant", False), ("click_mouse", False), ("pinch_tongs", False), ("bimanual_hanoi", True)],
+    [
+        ("water_plant", False), ("fold_glasses", False), ("click_mouse", False),
+        ("pinch_tongs", False), ("bimanual_hanoi", True),
+    ],
 )
 @pytest.mark.parametrize("use_async_envs", [False, True])
 @pytest.mark.parametrize("with_images", [False, True])
