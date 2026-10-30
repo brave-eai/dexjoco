@@ -10,7 +10,8 @@ assets/
     ├── click_mouse/      # Scene, mouse, and articulated display meshes
     ├── fold_glasses/     # Scene, articulated glasses, and case
     ├── pinch_tongs/      # Scene and articulated tongs meshes
-    └── pick_bucket/      # Scene, articulated bucket, and boxed food
+    ├── pick_bucket/      # Scene, articulated bucket, and boxed food
+    └── hammer_nail/      # Scene, hammer, mocap nail, and wooden board
 ```
 
 ## Path Rules

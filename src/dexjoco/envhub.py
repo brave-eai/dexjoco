@@ -10,6 +10,7 @@ from dexjoco.configs import DexJoCoEnvConfig
 from dexjoco.envs.bimanual_hanoi import BimanualHanoiEnv
 from dexjoco.envs.click_mouse import ClickMouseEnv
 from dexjoco.envs.fold_glasses import FoldGlassesEnv
+from dexjoco.envs.hammer_nail import HammerNailEnv
 from dexjoco.envs.pick_bucket import PickBucketEnv
 from dexjoco.envs.pinch_tongs import PinchTongsEnv
 from dexjoco.envs.water_plant import WaterPlantEnv
@@ -22,6 +23,7 @@ TASKS: dict[int, Callable[..., gym.Env]] = {
     2: ClickMouseEnv,
     3: PinchTongsEnv,
     4: PickBucketEnv,
+    5: HammerNailEnv,
     8: BimanualHanoiEnv,
 }
 TASK_IDS = {
@@ -30,6 +32,7 @@ TASK_IDS = {
     "click_mouse": 2,
     "pinch_tongs": 3,
     "pick_bucket": 4,
+    "hammer_nail": 5,
     "bimanual_hanoi": 8,
 }
 
