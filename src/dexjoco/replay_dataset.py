@@ -69,7 +69,7 @@ def batch_replay_episode(
     states = []
     executed_actions = []
     image_frames: list[dict[str, list[NDArray[np.uint8]]]] = (
-        [{camera: [] for camera in obs["images"]} for _ in range(NUM_EPISODES)]
+        [{camera: [] for camera in obs["pixels"]} for _ in range(NUM_EPISODES)]
         if return_images
         else []
     )
@@ -78,12 +78,12 @@ def batch_replay_episode(
     replay_lengths = np.zeros(env.num_envs, dtype=np.int64)
     for step in range(MAX_STEPS):
         # Stored state[t] precedes action[t], matching the original recorder.
-        states.append(np.asarray(obs["proprio"], dtype=np.float64).copy())
+        states.append(np.asarray(obs["agent_pos"], dtype=np.float64).copy())
         if return_images:
             for i in range(NUM_EPISODES):
                 if not done[i]:
                     for camera, frames in image_frames[i].items():
-                        frames.append(obs["images"][camera][i].copy())
+                        frames.append(obs["pixels"][camera][i].copy())
         action_indices = np.minimum(step, episodes_lengths - 1)
         action = actions[np.arange(env.num_envs), action_indices]
         executed_actions.append(action.copy())
@@ -143,9 +143,13 @@ def replay_batches(
     if any(len(actions) == 0 for actions in actions_by_episode):
         raise ValueError("Cannot replay an episode with no actions")
 
-    env_cfg = DexJoCoEnvConfig(render_mode="rgb_array" if return_images else "none", randomize=randomize)
-    if render_hw is not None:
-        env_cfg.render_height, env_cfg.render_width = render_hw
+    height, width = render_hw if render_hw is not None else (640, 640)
+    env_cfg = DexJoCoEnvConfig(
+        render_mode="rgb_array" if return_images else "none",
+        randomize=randomize,
+        render_height=height,
+        render_width=width,
+    )
     env = make_env(
         env_cfg,
         n_envs=n_envs,

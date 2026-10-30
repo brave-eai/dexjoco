@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 import gymnasium as gym
+from lerobot.configs import FeatureType, PolicyFeature
 from lerobot.envs.configs import EnvConfig, HubEnvConfig
 
 
@@ -20,6 +21,24 @@ class DexJoCoEnvConfig(HubEnvConfig):
 
     render_width: int = 640
     render_height: int = 640
+
+    def __post_init__(self) -> None:
+        self.features = {
+            "action": PolicyFeature(type=FeatureType.ACTION, shape=(22,)),
+            "agent_pos": PolicyFeature(type=FeatureType.STATE, shape=(23,)),
+        }
+        self.features_map = {
+            "action": "action",
+            "agent_pos": "observation.state",
+        }
+        if self.render_mode != "none":
+            for camera in ("front", "wrist"):
+                key = f"pixels/{camera}"
+                self.features[key] = PolicyFeature(
+                    type=FeatureType.VISUAL,
+                    shape=(self.render_height, self.render_width, 3),
+                )
+                self.features_map[key] = f"observation.images.{camera}"
 
     @property
     def gym_kwargs(self) -> dict:

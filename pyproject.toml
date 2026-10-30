@@ -1,5 +1,5 @@
 [project]
-name = "dexjoco"
+name = "lerobot_env_dexjoco"
 version = "0.2.0"
 description = "DexJoCo simulation environments for LeRobot EnvHub"
 readme = "README.md"
@@ -26,6 +26,9 @@ dexjoco-record-replay = "dexjoco.record_replay:cli"
 [build-system]
 requires = ["uv_build>=0.12.18,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = ["dexjoco", "dexjoco_data_converter", "lerobot_env_dexjoco"]
 
 [dependency-groups]
 dev = [

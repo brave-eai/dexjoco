@@ -621,51 +621,6 @@ wheels = [
 ]
 
 [[package]]
-name = "dexjoco"
-version = "0.2.0"
-source = { editable = "." }
-dependencies = [
-    { name = "dm-robotics-transformations" },
-    { name = "gymnasium" },
-    { name = "huggingface-hub" },
-    { name = "lerobot", extra = ["dataset"] },
-    { name = "mujoco" },
-    { name = "numpy" },
-    { name = "scipy" },
-    { name = "tqdm" },
-    { name = "tyro" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "ruff" },
-    { name = "zarr" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "dm-robotics-transformations", specifier = ">=0.10.0" },
-    { name = "gymnasium", specifier = ">=1.3.0" },
-    { name = "huggingface-hub", specifier = ">=1.32.0" },
-    { name = "lerobot", extras = ["dataset"], specifier = "==0.6.1" },
-    { name = "mujoco", specifier = "==3.4.0" },
-    { name = "numpy", specifier = ">=2.0.0,<2.3.0" },
-    { name = "scipy", specifier = ">=1.18.1" },
-    { name = "tqdm", specifier = ">=4.70.1" },
-    { name = "tyro", specifier = ">=1.0.16" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = ">=2.3.1" },
-    { name = "pytest", specifier = ">=9.1.1" },
-    { name = "ruff", specifier = ">=0.16.8" },
-    { name = "zarr", specifier = ">=2,<3" },
-]
-
-[[package]]
 name = "dill"
 version = "0.4.1"
 source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" }
@@ -1108,6 +1063,51 @@ dataset = [
     { name = "pandas" },
     { name = "pyarrow" },
     { name = "torchcodec", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or (platform_machine == 'AMD64' and sys_platform == 'linux') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'arm64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or sys_platform == 'win32'" },
+]
+
+[[package]]
+name = "lerobot-env-dexjoco"
+version = "0.2.0"
+source = { editable = "." }
+dependencies = [
+    { name = "dm-robotics-transformations" },
+    { name = "gymnasium" },
+    { name = "huggingface-hub" },
+    { name = "lerobot", extra = ["dataset"] },
+    { name = "mujoco" },
+    { name = "numpy" },
+    { name = "scipy" },
+    { name = "tqdm" },
+    { name = "tyro" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "ruff" },
+    { name = "zarr" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "dm-robotics-transformations", specifier = ">=0.10.0" },
+    { name = "gymnasium", specifier = ">=1.3.0" },
+    { name = "huggingface-hub", specifier = ">=1.32.0" },
+    { name = "lerobot", extras = ["dataset"], specifier = "==0.6.1" },
+    { name = "mujoco", specifier = "==3.4.0" },
+    { name = "numpy", specifier = ">=2.0.0,<2.3.0" },
+    { name = "scipy", specifier = ">=1.18.1" },
+    { name = "tqdm", specifier = ">=4.70.1" },
+    { name = "tyro", specifier = ">=1.0.16" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = ">=2.3.1" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "ruff", specifier = ">=0.16.8" },
+    { name = "zarr", specifier = ">=2,<3" },
 ]
 
 [[package]]

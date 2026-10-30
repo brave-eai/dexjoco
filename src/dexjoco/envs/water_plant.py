@@ -192,7 +192,7 @@ class WaterPlantEnv(gym.Env):
             #   [11:15] middle finger joints mfj0-mfj3
             #   [15:19] ring finger joints rfj0-rfj3
             #   [19:23] thumb joints thj0-thj3
-            "proprio": spaces.Box(
+            "agent_pos": spaces.Box(
                 np.concatenate((
                     TCP_LOW,
                     np.full(4, -1.0),
@@ -207,7 +207,7 @@ class WaterPlantEnv(gym.Env):
             ),
         }
         if render_mode != "none":
-            observation_spaces["images"] = spaces.Dict({
+            observation_spaces["pixels"] = spaces.Dict({
                 name: spaces.Box(
                     0, 255, shape=(render_height, render_width, 3), dtype=np.uint8
                 )
@@ -221,9 +221,6 @@ class WaterPlantEnv(gym.Env):
             self.reset_rng.seed(seed)
             self.dynamics_rng.seed(seed)
             self.visual_rng.seed(seed)
-        assert not options or "initial_state" in options, (
-            "Unsupported reset options; expected 'initial_state'."
-        )
         initial_state = options.get("initial_state") if options is not None else None
         mujoco.mj_resetData(self.model, self.data)  # pyright: ignore[reportAttributeAccessIssue]
 
@@ -405,10 +402,10 @@ class WaterPlantEnv(gym.Env):
             dtype=np.float32,
         )
         observation: dict[str, Any] = {
-            "proprio": np.concatenate((position, rotation, fingers)).astype(np.float32)
+            "agent_pos": np.concatenate((position, rotation, fingers)).astype(np.float32)
         }
         if self.render_mode != "none":
-            observation["images"] = {
+            observation["pixels"] = {
                 "front": self.render_camera("front"),
                 "wrist": self.render_camera("handcam_rgb"),
             }
