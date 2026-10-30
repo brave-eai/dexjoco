@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco model="panda_allegro_bimanual">
+  <include file="panda_allegro_right.xml" />
+  <include file="panda_allegro_left.xml" />
+</mujoco>

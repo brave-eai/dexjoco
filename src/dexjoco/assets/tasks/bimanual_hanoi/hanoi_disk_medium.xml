@@ -1,0 +1,46 @@
+<mujoco model="hanoi_disk_medium">
+  <asset>
+    <material name="hanoi_disk_medium_mat" rgba="0.82 0.18 0.20 1" specular="0.35" shininess="0.18"/>
+    <material name="hanoi_disk_medium_collision_mat" rgba="0.55 0.55 0.55 1" specular="0.0" shininess="0.0" reflectance="0.0"/>
+  </asset>
+
+  <worldbody>
+    <body name="hanoi_disk_medium" pos="-0.10 0.13 1.03950">
+      <freejoint name="hanoi_disk_medium_joint"/>
+
+      <!-- Parameters:
+           inner_half = 0.01748
+           outer_half = 0.03885
+           pos = 0.028165
+           thickness = 0.010685 -->
+
+      <!-- Y-direction plates -->
+      <geom name="hanoi_disk_medium_visual_pos_y" type="box" pos="0 0.028165 0" size="0.01748 0.010685 0.02475"
+            material="hanoi_disk_medium_mat" contype="0" conaffinity="0" density="0" group="1"/>
+      <geom name="hanoi_disk_medium_visual_neg_y" type="box" pos="0 -0.028165 0" size="0.01748 0.010685 0.02475"
+            material="hanoi_disk_medium_mat" contype="0" conaffinity="0" density="0" group="1"/>
+
+      <!-- X-direction plates -->
+      <geom name="hanoi_disk_medium_visual_pos_x" type="box" pos="0.028165 0 0" size="0.010685 0.03885 0.02475"
+            material="hanoi_disk_medium_mat" contype="0" conaffinity="0" density="0" group="1"/>
+      <geom name="hanoi_disk_medium_visual_neg_x" type="box" pos="-0.028165 0 0" size="0.010685 0.03885 0.02475"
+            material="hanoi_disk_medium_mat" contype="0" conaffinity="0" density="0" group="1"/>
+
+      <!-- Collision geometry (identical to visual geometry) -->
+      <geom name="hanoi_disk_medium_collision_pos_y" type="box" pos="0 0.028165 0" size="0.01748 0.010685 0.02475"
+            material="hanoi_disk_medium_collision_mat" density="100" mass="0.025" friction="1.1 0.02 0.002" group="3"/>
+      <geom name="hanoi_disk_medium_collision_neg_y" type="box" pos="0 -0.028165 0" size="0.01748 0.010685 0.02475"
+            material="hanoi_disk_medium_collision_mat" density="100" mass="0.025" friction="1.1 0.02 0.002" group="3"/>
+      <geom name="hanoi_disk_medium_collision_pos_x" type="box" pos="0.028165 0 0" size="0.010685 0.03885 0.02475"
+            material="hanoi_disk_medium_collision_mat" density="100" mass="0.025" friction="1.1 0.02 0.002" group="3"/>
+      <geom name="hanoi_disk_medium_collision_neg_x" type="box" pos="-0.028165 0 0" size="0.010685 0.03885 0.02475"
+            material="hanoi_disk_medium_collision_mat" density="100" mass="0.025" friction="1.1 0.02 0.002" group="3"/>
+
+      <!-- Reference sites -->
+      <site name="hanoi_disk_medium_center_site" pos="0 0 0" size="0.004" rgba="0 0 0 0"/>
+      <site name="hanoi_disk_medium_top_site" pos="0 0 0.02475" size="0.004" rgba="0 0 0 0"/>
+      <site name="hanoi_disk_medium_bottom_site" pos="0 0 -0.02475" size="0.004" rgba="0 0 0 0"/>
+
+    </body>
+  </worldbody>
+</mujoco>

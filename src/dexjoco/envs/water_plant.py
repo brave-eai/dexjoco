@@ -99,7 +99,7 @@ class WaterPlantEnv(gym.Env):
         self.action_format = action_format
         self.randomize = randomize
         self.randomize_dynamics = randomize_dynamics
-        self.render_mode: Literal["rgb_array", "human", "none"] = render_mode
+        self.render_mode = render_mode
         # MuJoCo simulation.
         self.model = mujoco.MjModel.from_xml_path(str(XML_PATH))  # pyright: ignore[reportAttributeAccessIssue]
         if offsamples is not None:
@@ -211,7 +211,7 @@ class WaterPlantEnv(gym.Env):
                 name: spaces.Box(
                     0, 255, shape=(render_height, render_width, 3), dtype=np.uint8
                 )
-                for name in ("front", "wrist")
+                for name in ("ego", "wrist")
             })
         self.observation_space = spaces.Dict(observation_spaces)
 
@@ -406,7 +406,7 @@ class WaterPlantEnv(gym.Env):
         }
         if self.render_mode != "none":
             observation["pixels"] = {
-                "front": self.render_camera("front"),
+                "ego": self.render_camera("front"),
                 "wrist": self.render_camera("handcam_rgb"),
             }
         return observation

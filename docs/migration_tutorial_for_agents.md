@@ -6,6 +6,7 @@
 - 遇到错误可以直接向用户求助。说明当前操作、错误和已有证据，不要盲目尝试各种修改。
 - 一切代码以当前 `water_plant` 为参考。将它作为模板，填入当前任务对应的实现；环境、资产、配置、数据转换、回放和测试均沿用这个范例的组织方式。
 - 代码风格以 `water_plant` 为准。不要使用 AI 式的超级防御性代码风格，不添加无实际需要的检查、兼容分支、异常吞噬、回退逻辑或复杂抽象。
+- 公共流程通过环境属性或调用方配置表达差异，不按具体任务名硬编码行为。例如，单双臂由 `bimanual` 属性声明；回放并行数 `n_envs` 属于资源配置，由调用方设置，不与任务名或单双臂绑定。
 - 所有代码注释和 docstring 使用英文。
 - 不允许出现“契约”这个词。本文件中这条禁用说明是唯一例外，其他文件和新增内容不得使用。
 - 使用 uv 管理依赖和运行命令。遵守仓库的 `AGENTS.md`。
@@ -28,7 +29,7 @@
 | `src/dexjoco/replay_dataset.py`、`src/dexjoco/record_replay.py` | 数据集回放和重新录制方式 |
 | `tests/test_replay.py`、`tests/test_lerobot_interface.py` | 完整数据集验证和官方接口测试 |
 
-随后阅读待迁移任务在 `dexjoco/dexjoco/sim/envs/` 中的原始环境、对应 XML、`dexjoco/dexjoco/tasks/<task>/config.py` 以及原始状态恢复和动作处理代码，查找需要填入模板的任务逻辑和参数。
+原始参考仓库已迁移到 `dexjoco_ref/`，来源和版本见 [reference_upstream.txt](reference_upstream.txt)。随后阅读待迁移任务在 `dexjoco_ref/dexjoco/dexjoco/sim/envs/` 中的原始环境、对应 XML、`dexjoco_ref/dexjoco/dexjoco/tasks/<task>/config.py` 以及原始状态恢复和动作处理代码，查找需要填入模板的任务逻辑和参数。原始数据回放入口为 `dexjoco_ref/scripts/replay_demos_zarr.py`。
 
 任务与 ID 的排列顺序参考仓库中的 [DexJoCo.pdf](../DexJoCo.pdf)。如果论文中的顺序、当前注册方式或任务名称不能明确对应，停止并询问用户。
 
@@ -60,6 +61,7 @@
 ### 初始化与资源管理
 
 - 按名称查找当前任务使用的关节、执行器、传感器、物体和相机索引。
+- 双臂的左右关节、执行器名称在 `src/dexjoco/common.py` 中独立定义，不复用单臂名称再重排或补后缀。
 - 参照 `water_plant` 保存 reset 和随机化需要的基准值。
 - 构造函数不创建 renderer 或 GUI，首次使用时再创建。
 - 实现 `rgb_array`、`human` 和 `none` 模式，行为参考 `water_plant`。
@@ -86,6 +88,7 @@
 
 - 机器人状态通过 `agent_pos` 返回。
 - 图像通过 `pixels` 相机字典返回，图像格式为 HWC、uint8。
+- 主视角统一命名为 `ego`，不随单双臂或视觉随机化改变；其他侧视角和腕部相机名称保持原样。
 - `observation_space` 和 `action_space` 与实际返回及接收的数据一致。
 - `render_mode="none"` 时不返回图像，也不创建图形资源。
 - 提供 `task`、`task_description` 和 `_max_episode_steps`。
@@ -100,6 +103,8 @@
 ### 任务注册与配置
 
 - 在 `src/dexjoco/envhub.py` 注册任务，任务与 ID 的排列参考论文。
+- 配置中的 `task` 必须由调用方明确指定，不设置默认任务名；环境创建、转换、回放和重新录制入口遵循同一规则。
+- `DexJoCoEnvConfig.bimanual` 是独立属性，用于声明单双臂对应的状态、动作和腕部相机特征，不通过某个任务名判断单双臂。
 - 在配置中支持选择当前任务，并向构造函数传递对应参数。
 - 按任务的状态、动作和相机声明 `features`、`features_map`。
 - 图像特征尺寸跟随配置，`render_mode="none"` 时不声明图像特征。
@@ -111,16 +116,20 @@
 
 - 参考 water_plant 的转换预设，接入当前任务的动作、状态、任务描述及初始场景字段。
 - 数据集继续使用 `action`、`observation.state`、`observation.images.<camera>` 等现有 features，维数和相机按当前任务填写。
-- 环境字段名的调整不能改变既定数据集 schema。
+- 环境和所有已有、新生成的数据集主视角均使用 `ego` 和 `observation.images.ego`。转换原始数据时，将 `front`、`random_camera` 主视角映射为 `ego`；其他相机名称保持原样。
+- 除上述主视角名称统一外，保持既定数据集 schema、数值类型和维数。更新已有数据时可重新生成转换数据集，不删除原始数据。
 - 恢复信息继续单独保存为 `replay_initial_values.jsonl`。
 - 任务选择应贯穿环境创建、转换后回放筛选、数据集回放、重新录制和测试，不能仍固定使用 water_plant 或任务 ID 0。
 - 正常的数据筛选沿用 water_plant 现有流程。
+- 回放读取须保留数据集存储的动作精度。读取 float64 动作时关闭 LeRobot 默认的 float32 tensor transform，避免先量化再转回 float64，改变接触动力学和筛选结果。
 
 ## 验证与错误处理
 
 直接使用当前任务的完整数据集完成转换与回放验证，不增加小样本验证阶段。数据位置、数据版本或运行条件不明确时，先向用户询问。
 
 测试当前环境功能和实际接口，不为已删除的代码或过去的 bug 保留专门的兼容测试。测试代码同样参考 water_plant 的现有测试组织方式。
+
+NumPy、SciPy 和底层 BLAS 的版本或构建不同，以及四元数与旋转向量转换中的细微浮点误差，都可能改变接触仿真的轨迹和成功率。由这类细微数值差异引起的成功率变化是正常且可以容忍的，不要求迁移版与原版的成功率或逐条成败完全相同，也不为对齐结果调整动力学参数或成功条件。
 
 检查以下行为：
 
@@ -132,13 +141,32 @@
 - 转换和重新录制保持既定数据集 features。
 - 环境关闭后释放其资源。
 
+### GPU 渲染与沙箱
+
+无窗口渲染使用 `MUJOCO_GL=egl`，例如：
+
+```bash
+MUJOCO_GL=egl uv run pytest tests/test_replay.py --replay-n-envs=4
+```
+
+EGL 启动成功不代表使用了 GPU。本机普通沙箱执行上述渲染时会使用 Mesa 的 `llvmpipe` 软件渲染；需要 GPU 时，通过执行工具的 `sandbox_permissions="require_escalated"` 在沙箱外运行命令，才能访问本机 NVIDIA GPU。使用 `GL_VENDOR`、`GL_RENDERER` 确认实际渲染后端。当前实现中 GPU 用于渲染，MuJoCo 物理模拟仍在 CPU 上运行。
+
+如果受执行权限限制而无法运行，直接把完整命令交给用户运行。
+
+### 检查命令
+
 使用 uv 执行检查：
 
 ```bash
 uv run ruff check
 uv run mypy
+uv run pyright
 uv run pytest
 ```
+
+Pyright 与 Pylance 共用类型检查核心，用于批量检测编辑器中的类型错误；检查范围、Python 版本和虚拟环境在 `pyproject.toml` 的 `[tool.pyright]` 中配置，排除 `dexjoco_ref/` 和生成目录。
+
+数据集回放测试通过 `--replay-n-envs` 设置并行数，所有任务共用此配置，默认值为 4。例如：`uv run pytest tests/test_replay.py --replay-n-envs=4`。
 
 遵循 `AGENTS.md` 中对暂存区测试的要求；提交前，确保测试覆盖最终准备提交的代码。
 
@@ -146,6 +174,6 @@ uv run pytest
 
 ## 提交要求
 
-由 Codex 自动迁移的环境，在提交说明中明确注明该环境由 Codex 辅助生成。
+只有用户明确要求时才创建 Git 提交。由 Codex 自动迁移的环境，在提交说明中明确注明该环境由 Codex 辅助生成。
 
 提交前清理自己生成的临时文件，包括不再需要的 `plan`。

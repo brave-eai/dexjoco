@@ -4,12 +4,16 @@ import subprocess
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import cast
 
 import av
+import gymnasium as gym
+import numpy as np
 import pytest
 import torch
 from lerobot.envs import make_env
 from lerobot.envs.utils import env_to_policy_features, preprocess_observation
+from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.processor import (
     PolicyProcessorPipeline,
     policy_action_to_transition,
@@ -19,6 +23,8 @@ from lerobot.scripts.lerobot_eval import rollout
 from lerobot.utils.io_utils import write_video
 
 from dexjoco.configs import DexJoCoEnvConfig
+from dexjoco.envhub import TASK_IDS, TASKS
+from dexjoco.replay_dataset import batch_replay_episode
 
 
 def test_official_cli_discovers_plugin() -> None:
@@ -33,10 +39,39 @@ def test_official_cli_discovers_plugin() -> None:
     assert "DexJoCoEnvConfig" in result.stdout
 
 
+@pytest.mark.parametrize("task,bimanual", [("water_plant", False), ("bimanual_hanoi", True)])
+@pytest.mark.parametrize("use_async_envs", [False, True])
+def test_batch_replay_initial_states(task: str, bimanual: bool, use_async_envs: bool) -> None:
+    cfg = DexJoCoEnvConfig(task=task, bimanual=bimanual, render_mode="none")
+    reference = TASKS[TASK_IDS[task]](render_mode="none")
+    try:
+        initial_states = [reference.reset(seed=seed)[1]["initial_state"] for seed in (1, 2)]
+    finally:
+        reference.close()
+    env = make_env(cfg, n_envs=2, use_async_envs=use_async_envs)["dexjoco"][TASK_IDS[task]]
+    try:
+        result = batch_replay_episode(
+            env,
+            np.zeros((2, 1, *cfg.features["action"].shape), dtype=np.float64),
+            initial_states,
+            np.ones(2, dtype=np.int64),
+            extend_steps=0,
+        )
+        assert len(result.states) == 2
+        assert all(state.shape == (1, *cfg.features["agent_pos"].shape) for state in result.states)
+    finally:
+        env.close()
+
+
+@pytest.mark.parametrize("task,bimanual", [("water_plant", False), ("bimanual_hanoi", True)])
 @pytest.mark.parametrize("use_async_envs", [False, True])
 @pytest.mark.parametrize("with_images", [False, True])
-def test_official_rollout_and_video(use_async_envs: bool, with_images: bool) -> None:
+def test_official_rollout_and_video(
+    task: str, bimanual: bool, use_async_envs: bool, with_images: bool,
+) -> None:
     cfg = DexJoCoEnvConfig(
+        task=task,
+        bimanual=bimanual,
         render_mode="rgb_array" if with_images else "none",
         render_height=48,
         render_width=64,
@@ -56,8 +91,10 @@ def test_official_rollout_and_video(use_async_envs: bool, with_images: bool) -> 
                 assert observation[key].dtype == torch.float32
             return torch.zeros((2, *features["action"].shape))
 
-    env = make_env(cfg, n_envs=2, use_async_envs=use_async_envs)["dexjoco"][0]
+    env = make_env(cfg, n_envs=2, use_async_envs=use_async_envs)["dexjoco"][TASK_IDS[task]]
     try:
+        assert isinstance(env, (gym.vector.SyncVectorEnv, gym.vector.AsyncVectorEnv))
+        obs: dict
         obs, _ = env.reset(seed=[1, 2])
         single_obs = {"agent_pos": obs["agent_pos"][0]}
         if with_images:
@@ -68,7 +105,7 @@ def test_official_rollout_and_video(use_async_envs: bool, with_images: bool) -> 
         processed = preprocess_observation(obs)
         assert set(processed) == expected_inputs
         if with_images:
-            for camera in ("front", "wrist"):
+            for camera in obs["pixels"]:
                 expected = torch.from_numpy(obs["pixels"][camera]).permute(0, 3, 1, 2).float() / 255
                 torch.testing.assert_close(processed[f"observation.images.{camera}"], expected)
         env.call("set_wrapper_attr", "_max_episode_steps", 2)
@@ -79,7 +116,8 @@ def test_official_rollout_and_video(use_async_envs: bool, with_images: bool) -> 
 
         result = rollout(
             env=env,
-            policy=HoldPolicy(),
+            # rollout accepts nn.Module policies with reset() and select_action().
+            policy=cast(PreTrainedPolicy, HoldPolicy()),
             env_preprocessor=env_preprocessor,
             env_postprocessor=env_postprocessor,
             preprocessor=PolicyProcessorPipeline(steps=[]),
@@ -92,9 +130,9 @@ def test_official_rollout_and_video(use_async_envs: bool, with_images: bool) -> 
             return_observations=True,
             render_callback=capture_frame if with_images else None,
         )
-        assert result["action"].shape == (2, 2, 22)
+        assert result["action"].shape == (2, 2, *features["action"].shape)
         assert result["done"][:, -1].all()
-        assert result["observation"]["observation.state"].shape == (2, 3, 23)
+        assert result["observation"]["observation.state"].shape == (2, 3, *features["observation.state"].shape)
         if with_images:
             with TemporaryDirectory(prefix="dexjoco-video-test-") as directory:
                 path = Path(directory) / "rollout.mp4"
@@ -102,7 +140,7 @@ def test_official_rollout_and_video(use_async_envs: bool, with_images: bool) -> 
                 with av.open(str(path)) as container:
                     assert container.streams.video[0].average_rate == 30
                     decoded = list(container.decode(video=0))
-                assert len(decoded) == 3
-                assert (decoded[0].height, decoded[0].width) == (48, 64)
+                    assert len(decoded) == 3
+                    assert (decoded[0].height, decoded[0].width) == (48, 64)
     finally:
         env.close()

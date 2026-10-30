@@ -58,3 +58,21 @@ FINGER_ACTUATORS = (
     "rfa0", "rfa1", "rfa2", "rfa3",
     "tha0", "tha1", "tha2", "tha3",
 )
+
+# Bimanual model names and recorded order for each side.
+RIGHT_ARM_JOINTS = tuple(f"joint{i}_right" for i in range(1, 8))
+LEFT_ARM_JOINTS = tuple(f"joint{i}_left" for i in range(1, 8))
+RIGHT_ARM_ACTUATORS = tuple(f"actuator{i}_right" for i in range(1, 8))
+LEFT_ARM_ACTUATORS = tuple(f"actuator{i}_left" for i in range(1, 8))
+RIGHT_FINGER_JOINTS = tuple(
+    f"{finger}j{i}_right" for finger in ("ff", "mf", "rf", "th") for i in range(4)
+)
+LEFT_FINGER_JOINTS = tuple(
+    f"{finger}j{i}_left" for finger in ("rf", "mf", "ff", "th") for i in range(4)
+)
+RIGHT_FINGER_ACTUATORS = tuple(
+    f"{finger}a{i}_right" for finger in ("ff", "mf", "rf", "th") for i in range(4)
+)
+LEFT_FINGER_ACTUATORS = tuple(
+    f"{finger}a{i}_left" for finger in ("rf", "mf", "ff", "th") for i in range(4)
+)

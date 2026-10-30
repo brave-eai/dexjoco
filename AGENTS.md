@@ -2,7 +2,7 @@
 
 Use uv.
 
-Use ruff and mypy to check your edits.
+Use ruff, pyright and mypy to check your edits.
 
 Use pytest to test the staging area.
 

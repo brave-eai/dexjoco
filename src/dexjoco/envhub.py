@@ -7,30 +7,30 @@ from typing import Any
 import gymnasium as gym
 
 from dexjoco.configs import DexJoCoEnvConfig
+from dexjoco.envs.bimanual_hanoi import BimanualHanoiEnv
 from dexjoco.envs.water_plant import WaterPlantEnv
 
 # Stable task IDs mapped to constructors of fresh environments.
-TASKS: dict[int, Callable[..., gym.Env]] = {0: WaterPlantEnv}
+# IDs follow the task overview figure in DexJoCo.pdf, reading each row left to right.
+TASKS: dict[int, Callable[..., gym.Env]] = {0: WaterPlantEnv, 8: BimanualHanoiEnv}
+TASK_IDS = {"water_plant": 0, "bimanual_hanoi": 8}
 
 
 def make_env(
+    cfg: DexJoCoEnvConfig,
     n_envs: int = 1,
     use_async_envs: bool = False,
-    cfg: DexJoCoEnvConfig | None = None,
 ) -> dict[str, dict[int, gym.vector.VectorEnv]]:
-    """Create n_envs independent instances of each implemented task.
+    """Create n_envs independent instances of the selected task.
 
     The caller owns the returned vector environments and must close each one.
     Task constructors must defer graphics initialization until rendering.
     Async callers must use an ``if __name__ == "__main__":`` entry point.
     ``cfg.randomize`` enables paper rand-full; ``cfg.randomize_dynamics`` enables
-    spray joint friction, stiffness, and body mass randomization.
+    task-specific dynamics randomization.
     ``cfg.render_mode="none"`` disables image observations and graphics resources.
-    Omitting ``cfg`` uses the default DexJoCo configuration.
+    The configuration must explicitly select a task.
     """
-    if cfg is None:
-        cfg = DexJoCoEnvConfig()
-
     if n_envs < 1:
         raise ValueError("`n_envs` must be at least 1")
 
@@ -39,19 +39,20 @@ def make_env(
     vector_kwargs: dict[str, Any] = {"context": "spawn"} if use_async_envs else {}
     tasks: dict[int, gym.vector.VectorEnv] = {}
     try:
-        for task_id, constructor in TASKS.items():
-            tasks[task_id] = vector_cls(
-                [partial(
-                    constructor,
-                    randomize=cfg.randomize,
-                    randomize_dynamics=cfg.randomize_dynamics,
-                    render_mode=cfg.render_mode,
-                    offsamples=cfg.offsamples,
-                    render_width=cfg.render_width,
-                    render_height=cfg.render_height,
-                ) for _ in range(n_envs)],
-                **vector_kwargs,
-            )
+        task_id = TASK_IDS[cfg.task]
+        constructor = TASKS[task_id]
+        tasks[task_id] = vector_cls(
+            [partial(
+                constructor,
+                randomize=cfg.randomize,
+                randomize_dynamics=cfg.randomize_dynamics,
+                render_mode=cfg.render_mode,
+                offsamples=cfg.offsamples,
+                render_width=cfg.render_width,
+                render_height=cfg.render_height,
+            ) for _ in range(n_envs)],
+            **vector_kwargs,
+        )
     except Exception:
         for env in tasks.values():
             env.close()

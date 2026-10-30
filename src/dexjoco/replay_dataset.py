@@ -10,8 +10,10 @@ import tyro
 from lerobot.datasets import LeRobotDataset
 from lerobot.envs import make_env
 from numpy.typing import NDArray
+from tqdm import tqdm
 
 from dexjoco.configs import DexJoCoEnvConfig
+from dexjoco.envhub import TASK_IDS
 
 
 @dataclass
@@ -23,16 +25,12 @@ class ReplayResult:
 
 
 def batch_env_reset(env: gym.vector.VectorEnv, initial_states: list[dict | None]):
-    for i, initial_state in enumerate(initial_states):
+    # Initialize every observation before applying individual reset masks.
+    obs, _ = env.reset(options={"initial_state": initial_states[0]})
+    for i, initial_state in enumerate(initial_states[1:], start=1):
         mask = np.zeros(env.num_envs, dtype=bool)
         mask[i] = True
-
-        obs, _ = env.reset(
-            options={
-                "reset_mask": mask,
-                "initial_state": initial_state,
-            }
-        )
+        obs, _ = env.reset(options={"initial_state": initial_state, "reset_mask": mask})
     return obs
 
 
@@ -129,6 +127,8 @@ def replay_batches(
     return_images: bool = False,
     randomize: bool = False,
     render_hw: tuple[int, int] | None = None,
+    *,
+    task: str,
 ) -> Generator[ReplayResult, None, None]:
     """Yield each batch in episode order; exhaust or close to release environments.
 
@@ -145,6 +145,8 @@ def replay_batches(
 
     height, width = render_hw if render_hw is not None else (640, 640)
     env_cfg = DexJoCoEnvConfig(
+        task=task,
+        bimanual=actions_by_episode[0].shape[1] == 44,
         render_mode="rgb_array" if return_images else "none",
         randomize=randomize,
         render_height=height,
@@ -154,7 +156,7 @@ def replay_batches(
         env_cfg,
         n_envs=n_envs,
         use_async_envs=use_async_envs,
-    )["dexjoco"][0]  # TODO: only support water_plant for now
+    )["dexjoco"][TASK_IDS[task]]
     try:
         for start in range(0, len(actions_by_episode), n_envs):
             batch_actions = actions_by_episode[start : start + n_envs]
@@ -185,7 +187,8 @@ def load_replay_data(
 ) -> tuple[list[NDArray[np.float64]], list[dict]]:
     """Load actions and initial states in episode index order."""
     dataset = LeRobotDataset(repo_id="local_repo", root=dataset_dir, download_videos=False)
-    rows = dataset.select_columns(["episode_index", "action"])
+    # Preserve stored float64 actions instead of LeRobot's float32 tensor transform.
+    rows = dataset.select_columns(["episode_index", "action"]).with_format(None)
     episode_indices = np.asarray(rows["episode_index"], dtype=np.int64).reshape(-1)
     with (dataset_dir / "replay_initial_values.jsonl").open() as f:
         entries = sorted((json.loads(line) for line in f), key=lambda entry: entry["episode_index"])
@@ -205,13 +208,15 @@ def check_replay_success(
     n_envs: int = 10,
     use_async_envs: bool = True,
     extend_steps: int = 60,
+    *,
+    task: str,
 ) -> NDArray[np.bool_]:
     """Replay once without rendering, returning success in episode index order."""
     actions, initial_states = load_replay_data(dataset_dir)
     success = np.zeros(len(actions), dtype=bool)
     start = 0
     with closing(
-        replay_batches(actions, initial_states, n_envs, use_async_envs, extend_steps)
+        replay_batches(actions, initial_states, n_envs, use_async_envs, extend_steps, task=task)
     ) as batches:
         for result in batches:
             stop = start + len(result.success)
@@ -227,6 +232,8 @@ def check_replay_consistency(
     use_async_envs: bool = True,
     extend_steps: int = 60,
     check_images: bool = False,
+    *,
+    task: str,
 ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
     """Return exact consistency and first-pass success in episode index order.
 
@@ -246,6 +253,7 @@ def check_replay_consistency(
                 use_async_envs,
                 extend_steps,
                 check_images,
+                task=task,
             )
         ) as first_batches,
         closing(
@@ -256,11 +264,17 @@ def check_replay_consistency(
                 use_async_envs,
                 extend_steps,
                 check_images,
+                task=task,
             )
         ) as second_batches,
     ):
         # Advance separately so zip does not retain the previous pair of results.
-        for first in first_batches:
+        for first in tqdm(
+            first_batches,
+            total=(len(actions) + n_envs - 1) // n_envs,
+            desc=f"Replay consistency: {dataset_dir}",
+            unit="batch",
+        ):
             second = next(second_batches)
             stop = start + len(first.success)
             success[start:stop] = first.success
@@ -271,11 +285,14 @@ def check_replay_consistency(
             )
             if check_images:
                 assert first.images is not None and second.images is not None
-                for i, (a, b) in enumerate(zip(first.images, second.images, strict=True)):
-                    consistent[start + i] &= a.keys() == b.keys() and all(
-                        np.array_equal(a[camera], b[camera]) for camera in a
-                    )
-                del a, b
+                consistent[start:stop] &= np.asarray(
+                    [
+                        a.keys() == b.keys()
+                        and all(np.array_equal(a[camera], b[camera]) for camera in a)
+                        for a, b in zip(first.images, second.images, strict=True)
+                    ],
+                    dtype=bool,
+                )
             start = stop
             del first, second
     return consistent, success

@@ -37,15 +37,17 @@ def build_features(result: ReplayResult) -> dict[str, Any]:
 def record_replay(
     dataset_dir: Path,
     output_dir: Path,
+    task: str,
     randomize: bool = False,
     render_hw: tuple[int, int] | None = None,
     n_envs: int = 10,
     use_async_envs: bool = True,
     save_failed: bool = False,
 ) -> None:
-    """Record water_plant replays, optionally with fresh visual randomization.
+    """Record task replays, optionally with fresh visual randomization.
 
     Args:
+        task: Registered environment task name.
         dataset_dir: Source LeRobot dataset containing replay_initial_values.jsonl.
         output_dir: New output dataset directory; must not already exist.
         n_envs: Number of parallel replay environments.
@@ -68,6 +70,7 @@ def record_replay(
                 replay_batches(
                     actions,
                     initial_states,
+                    task=task,
                     n_envs=n_envs,
                     use_async_envs=use_async_envs,
                     return_images=True,

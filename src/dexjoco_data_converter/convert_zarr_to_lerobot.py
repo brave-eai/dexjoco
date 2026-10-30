@@ -14,6 +14,7 @@ from lerobot.datasets.dataset_tools import delete_episodes
 from numpy.typing import NDArray
 from tqdm import tqdm
 
+from dexjoco.envhub import TASK_IDS
 from dexjoco.replay_dataset import check_replay_success
 
 from .task_presets import TASK_PRESETS, TaskName
@@ -31,6 +32,7 @@ class DatasetConfig:
     # Ordered like proprio_keys after tcp_pose and gripper_pose.
     # Each pair contains the field name and its size in the state tail.
     replay_initial_position_fields: tuple[tuple[str, int], ...]
+    task: str
     delete_failed_episodes: bool = True
     n_envs: int = 10
     use_async_envs: bool = True
@@ -68,6 +70,11 @@ class DatasetConfig:
         return 46 if self.is_bimanual else 23
 
 
+def output_camera_name(camera_name: str) -> str:
+    """Use ego for the main view in every task and randomization mode."""
+    return "ego" if camera_name in ("front", "random_camera", "ego") else camera_name
+
+
 def build_features(
     cfg: DatasetConfig,
     episode_dir: Path,
@@ -82,7 +89,7 @@ def build_features(
         video_path = episode_dir / "videos" / f"{camera_name}.mp4"
         with av.open(str(video_path)) as container:
             codec = container.streams.video[0].codec_context
-            features[f"observation.images.{camera_name}"] = {
+            features[f"observation.images.{output_camera_name(camera_name)}"] = {
                 "dtype": "video",
                 "shape": (codec.height, codec.width, 3),
                 "names": ["height", "width", "channel"],
@@ -135,7 +142,7 @@ def convert_one_episode(
 
             image, idx = frame_msg
             assert idx == t, f"episode {epi_path} camera {camera_name}: Frame index mismatch."
-            frame[f"observation.images.{camera_name}"] = image
+            frame[f"observation.images.{output_camera_name(camera_name)}"] = image
         dataset.add_frame(frame)
     for camera_name in camera_names:
         if image_ques[camera_name].get() is not None:
@@ -201,6 +208,7 @@ def replay_and_filter_dataset(cfg: DatasetConfig, replay_info: list[dict[str, An
     """Replay once and replace the output with successful episodes when requested."""
     success = check_replay_success(
         cfg.output_dir,
+        task=cfg.task,
         n_envs=cfg.n_envs,
         use_async_envs=cfg.use_async_envs,
     )
@@ -258,12 +266,13 @@ def main(
         n_envs: Number of parallel replay environments.
         use_async_envs: Run replay environments in separate processes.
     """
-    if task != "water_plant":
-        raise ValueError("Post-conversion replay currently supports only water_plant")
+    if task not in TASK_IDS:
+        raise ValueError(f"Post-conversion replay does not support {task}")
     if n_envs < 1:
         raise ValueError("n_envs must be positive")
     preset = TASK_PRESETS[task]
     cfg = DatasetConfig(
+        task=task,
         zarr_dataset_dir=zarr_dataset_dir,
         output_dir=output_dir,
         is_bimanual=preset.is_bimanual,
