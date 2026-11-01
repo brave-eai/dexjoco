@@ -10,6 +10,7 @@ from dexjoco.configs import DexJoCoEnvConfig
 from dexjoco.envs.bimanual_assembly import BimanualAssemblyEnv
 from dexjoco.envs.bimanual_hanoi import BimanualHanoiEnv
 from dexjoco.envs.bimanual_microwave_cook import BimanualMicrowaveCookEnv
+from dexjoco.envs.bimanual_unlock_ipad import BimanualUnlockIpadEnv
 from dexjoco.envs.click_mouse import ClickMouseEnv
 from dexjoco.envs.fold_glasses import FoldGlassesEnv
 from dexjoco.envs.hammer_nail import HammerNailEnv
@@ -27,6 +28,7 @@ TASKS: dict[int, Callable[..., gym.Env]] = {
     4: PickBucketEnv,
     5: HammerNailEnv,
     6: BimanualMicrowaveCookEnv,
+    7: BimanualUnlockIpadEnv,
     8: BimanualHanoiEnv,
     9: BimanualAssemblyEnv,
 }
@@ -38,6 +40,7 @@ TASK_IDS = {
     "pick_bucket": 4,
     "hammer_nail": 5,
     "bimanual_microwave_cook": 6,
+    "bimanual_unlock_ipad": 7,
     "bimanual_hanoi": 8,
     "bimanual_assembly": 9,
 }

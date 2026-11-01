@@ -6,10 +6,10 @@
 
 必须使用 `--env.task=water_plant`、`--env.task=fold_glasses`、`--env.task=click_mouse`、
 `--env.task=pinch_tongs`、`--env.task=pick_bucket`、`--env.task=hammer_nail` 或
-`--env.task=bimanual_hanoi`、`--env.task=bimanual_microwave_cook`、`--env.task=bimanual_assembly` 明确选择任务。
+`--env.task=bimanual_hanoi`、`--env.task=bimanual_microwave_cook`、`--env.task=bimanual_assembly`、`--env.task=bimanual_unlock_ipad` 明确选择任务。
 双臂任务同时设置 `--env.bimanual=true`；`bimanual` 独立决定状态、动作和腕部相机特征。
 任务 ID 按论文任务概览图逐行排列，water_plant 为 0，fold_glasses 为 1，click_mouse 为 2，
-pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_microwave_cook 为 6，bimanual_hanoi 为 8，bimanual_assembly 为 9。
+pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_microwave_cook 为 6，bimanual_unlock_ipad 为 7，bimanual_hanoi 为 8，bimanual_assembly 为 9。
 
 | 任务 | agent_pos | 动作 | pixels 相机 |
 | --- | --- | --- | --- |
@@ -20,6 +20,7 @@ pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_microwave_c
 | pick_bucket | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
 | hammer_nail | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
 | bimanual_microwave_cook | 46 维 | 44 维 | ego、wrist_left、wrist_right |
+| bimanual_unlock_ipad | 46 维 | 44 维 | ego、wrist_left、wrist_right |
 | bimanual_hanoi | 46 维 | 44 维 | ego、wrist_left、wrist_right |
 | bimanual_assembly | 46 维 | 44 维 | ego、wrist_left、wrist_right |
 
@@ -358,6 +359,63 @@ uv run dexjoco-convert \
 重复状态、图像一致性及 float64 动作读取精度测试。
 `rand_full` 的全部 94 条保留轨迹完成视觉随机化重新录制，features、相机集合、
 帧率、初始状态记录及 float64 回放动作均通过核对。
+
+Bimanual Unlock iPad 使用 `--env.task=bimanual_unlock_ipad --env.bimanual=true`，任务 ID 为 7。
+两组完整数据转换方式如下：
+
+```bash
+uv run dexjoco-convert \
+  --task bimanual_unlock_ipad \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets/bimanual_unlock_ipad \
+  --output-dir datasets/rand_obj/bimanual_unlock_ipad \
+  --n-envs 4
+uv run dexjoco-convert \
+  --task bimanual_unlock_ipad \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets_rand_full/bimanual_unlock_ipad \
+  --output-dir datasets/rand_full/bimanual_unlock_ipad \
+  --n-envs 4
+```
+
+回放和重新录制使用 `--task bimanual_unlock_ipad`。恢复信息单独保存 `orig_stand_pose`、
+`orig_ipad_pose` 和 `table_delta_height`，分别恢复支架、iPad 完整位姿和桌高。
+动力学随机化只扰动 iPad 质量，范围为基准值的 0.75–1.25 倍。
+主视角统一为 `ego`，左右腕部相机按源数据保留。
+
+解锁使用 `ENTERING`、`ANIMATING`、`CONFIRMING`、`SUCCEEDED`、`FAILED` 五个明确状态。
+只有右手指尖与按钮的新接触计为输入，持续按住不重复计数；同一步的新按键沿用
+原几何体 ID 顺序，密码完成或输错后立即结束本步输入处理。输错即失败，本轮不允许重试。
+默认密码为 123，关闭动画；直接构造 `BimanualUnlockIpadEnv` 时可传入 `password`
+和 `ipad_screen_effect`，例如 `password=[1, 1, 0], ipad_screen_effect=True`。
+非空密码允许重复数字及 0–9 中的任意数字。
+
+关闭动画时，最后一位正确输入当步进入确认并计为第一次检测，累计 10 个控制步检测即成功。
+开启动画时，保留原来的 12 次延迟更新和 18 次渐变更新，再确认成功；最后一位匹配当步
+计为第一次动画更新，动画完成当步计为第一次确认。动画进度由控制步推进，与是否创建
+renderer 无关。`get_unlock_status()` 只读取状态，不推进计数。
+成功与输错通过 `terminated` 结束，1200 步超时按现有环境模板通过 `truncated` 结束，
+同时记录 `failure_reason="timeout"`；所有结束状态保持不变，直到 reset。
+
+2026-11-01 的完整数据回放结果如下，分母均为筛选前的全部原始轨迹：
+
+| 数据组 | 迁移版 | conda dexjoco 参考版 | 筛选后保留 |
+| --- | --- | --- | --- |
+| rand_obj | 58/100（58%） | 58/100（58%） | 58 |
+| rand_full | 100/100（100%） | 未触发低于 95% 的验证规则 | 100 |
+
+`rand_obj` 按低于 95% 的规则调用原始 `dexjoco_ref/scripts/replay_demos_zarr.py`
+的 `_replay_single_demo`，在 `conda dexjoco` 环境回放全部 100 条原始轨迹。
+通过原环境已有的 `image_obs=False` 关闭逐帧图像观测，恢复记录的初始场景，
+使用默认密码 123、关闭屏幕动画及视觉/动力学随机化，延长最后动作 60 步。
+基准 seed 为 0，按排序后的轨迹使用 1–100 的环境 seed；控制时间步、动力学和
+成功条件保持原样。两边不仅成功率相同，成功的 58 条轨迹集合也完全一致。
+参考环境为 MuJoCo 3.4.0、NumPy 1.26.4、SciPy 1.17.1。
+保留的 158 条转换数据的动作、机器人状态及初始场景字段与对应原始 Zarr 逐值一致，
+动作读取保持 float64 精度。
+
+`rand_full` 的全部 100 条轨迹完成视觉随机化重新录制，features、相机集合、帧率、
+初始场景记录、float64 动作及帧数均通过核对；三路相机的 13 个视频文件均可读取。
+
+全部 158 条保留轨迹通过重复回放的状态及三相机图像逐像素一致性测试。
 
 经过转换筛选之后，剩余的episode数量可能不足100
 
