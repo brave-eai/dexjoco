@@ -43,7 +43,7 @@ def test_official_cli_discovers_plugin() -> None:
     "task,bimanual",
     [
         ("water_plant", False), ("fold_glasses", False), ("click_mouse", False),
-        ("pinch_tongs", False), ("pick_bucket", False), ("hammer_nail", False), ("bimanual_unlock_ipad", True), ("bimanual_hanoi", True), ("bimanual_assembly", True), ("bimanual_microwave_cook", True),
+        ("pinch_tongs", False), ("pick_bucket", False), ("hammer_nail", False), ("bimanual_unlock_ipad", True), ("bimanual_hanoi", True), ("bimanual_assembly", True), ("bimanual_photograph", True), ("bimanual_microwave_cook", True),
     ],
 )
 @pytest.mark.parametrize("use_async_envs", [False, True])
@@ -73,7 +73,7 @@ def test_batch_replay_initial_states(task: str, bimanual: bool, use_async_envs: 
     "task,bimanual",
     [
         ("water_plant", False), ("fold_glasses", False), ("click_mouse", False),
-        ("pinch_tongs", False), ("pick_bucket", False), ("hammer_nail", False), ("bimanual_unlock_ipad", True), ("bimanual_hanoi", True), ("bimanual_assembly", True), ("bimanual_microwave_cook", True),
+        ("pinch_tongs", False), ("pick_bucket", False), ("hammer_nail", False), ("bimanual_unlock_ipad", True), ("bimanual_hanoi", True), ("bimanual_assembly", True), ("bimanual_photograph", True), ("bimanual_microwave_cook", True),
     ],
 )
 @pytest.mark.parametrize("use_async_envs", [False, True])

@@ -10,6 +10,7 @@ from dexjoco.configs import DexJoCoEnvConfig
 from dexjoco.envs.bimanual_assembly import BimanualAssemblyEnv
 from dexjoco.envs.bimanual_hanoi import BimanualHanoiEnv
 from dexjoco.envs.bimanual_microwave_cook import BimanualMicrowaveCookEnv
+from dexjoco.envs.bimanual_photograph import BimanualPhotographEnv
 from dexjoco.envs.bimanual_unlock_ipad import BimanualUnlockIpadEnv
 from dexjoco.envs.click_mouse import ClickMouseEnv
 from dexjoco.envs.fold_glasses import FoldGlassesEnv
@@ -31,6 +32,7 @@ TASKS: dict[int, Callable[..., gym.Env]] = {
     7: BimanualUnlockIpadEnv,
     8: BimanualHanoiEnv,
     9: BimanualAssemblyEnv,
+    10: BimanualPhotographEnv,
 }
 TASK_IDS = {
     "water_plant": 0,
@@ -43,6 +45,7 @@ TASK_IDS = {
     "bimanual_unlock_ipad": 7,
     "bimanual_hanoi": 8,
     "bimanual_assembly": 9,
+    "bimanual_photograph": 10,
 }
 
 

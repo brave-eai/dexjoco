@@ -14,7 +14,8 @@ assets/
     ├── hammer_nail/      # Scene, hammer, mocap nail, and wooden board
     ├── bimanual_microwave_cook/ # Scene, microwave, and hot dog
     ├── bimanual_unlock_ipad/ # Scene, iPad, keypad textures, and stand
-    └── bimanual_assembly/   # Scene, round peg, and handheld socket
+    ├── bimanual_assembly/   # Scene, round peg, and handheld socket
+    └── bimanual_photograph/ # Scene, camera meshes, and target logo
 ```
 
 ## Path Rules

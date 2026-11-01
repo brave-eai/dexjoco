@@ -6,10 +6,10 @@
 
 必须使用 `--env.task=water_plant`、`--env.task=fold_glasses`、`--env.task=click_mouse`、
 `--env.task=pinch_tongs`、`--env.task=pick_bucket`、`--env.task=hammer_nail` 或
-`--env.task=bimanual_hanoi`、`--env.task=bimanual_microwave_cook`、`--env.task=bimanual_assembly`、`--env.task=bimanual_unlock_ipad` 明确选择任务。
+`--env.task=bimanual_hanoi`、`--env.task=bimanual_microwave_cook`、`--env.task=bimanual_assembly`、`--env.task=bimanual_unlock_ipad`、`--env.task=bimanual_photograph` 明确选择任务。
 双臂任务同时设置 `--env.bimanual=true`；`bimanual` 独立决定状态、动作和腕部相机特征。
 任务 ID 按论文任务概览图逐行排列，water_plant 为 0，fold_glasses 为 1，click_mouse 为 2，
-pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_microwave_cook 为 6，bimanual_unlock_ipad 为 7，bimanual_hanoi 为 8，bimanual_assembly 为 9。
+pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_microwave_cook 为 6，bimanual_unlock_ipad 为 7，bimanual_hanoi 为 8，bimanual_assembly 为 9，bimanual_photograph 为 10。
 
 | 任务 | agent_pos | 动作 | pixels 相机 |
 | --- | --- | --- | --- |
@@ -23,6 +23,7 @@ pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_microwave_c
 | bimanual_unlock_ipad | 46 维 | 44 维 | ego、wrist_left、wrist_right |
 | bimanual_hanoi | 46 维 | 44 维 | ego、wrist_left、wrist_right |
 | bimanual_assembly | 46 维 | 44 维 | ego、wrist_left、wrist_right |
+| bimanual_photograph | 46 维 | 44 维 | ego、wrist_left、wrist_right |
 
 图像为 HWC uint8。官方预处理将观测转换为 `observation.state` 和
 `observation.images.<camera>`。动作为位置、旋转向量和手指目标。
@@ -416,6 +417,50 @@ renderer 无关。`get_unlock_status()` 只读取状态，不推进计数。
 初始场景记录、float64 动作及帧数均通过核对；三路相机的 13 个视频文件均可读取。
 
 全部 158 条保留轨迹通过重复回放的状态及三相机图像逐像素一致性测试。
+
+Bimanual Photograph 使用 `--env.task=bimanual_photograph --env.bimanual=true`，任务 ID 为 10。
+两组完整数据转换方式如下：
+
+```bash
+uv run dexjoco-convert \
+  --task bimanual_photograph \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets/bimanual_photograph \
+  --output-dir datasets/rand_obj/bimanual_photograph \
+  --n-envs 4
+uv run dexjoco-convert \
+  --task bimanual_photograph \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets/dexjoco_raw_datasets_rand_full/bimanual_photograph \
+  --output-dir datasets/rand_full/bimanual_photograph \
+  --n-envs 4
+```
+
+回放和重新录制使用 `--task bimanual_photograph`。恢复信息单独保存 `orig_camera_pose`、
+`orig_logo_pose` 和 `table_delta_height`，恢复相机完整自由关节位姿、标志局部位姿及桌高。
+目标区域随标志位置更新。动力学随机化只扰动相机主体质量，范围为基准值的 0.75–1.25 倍。
+主视角统一为 `ego`，左右腕部相机按源数据保留。
+
+相机观察点位于目标圆柱区域内（半径 0.16 m、半高 0.10 m）、相机轴与世界 +X 方向
+夹角不超过 10°，且快门与相机自身子树以外的几何体接触时，该控制步即成功。
+不要求连续保持，超时为 1000 个控制步。
+直接构造 `BimanualPhotographEnv` 时可传入 `camera_screen_effect=True`，启用相机背屏的
+实时取景、快门闪光和照片冻结；默认关闭，与原始回放脚本一致。
+`render_mode="none"` 不创建图形资源。窗口同步沿用 water_plant 的延迟创建方式，
+拍照任务额外的纹理更新和视角可视性处理放在独立方法中。
+
+2026-11-01 的完整数据回放结果如下，分母均为筛选前的全部原始轨迹：
+
+| 数据组 | 回放成功 | 筛选后保留 |
+| --- | --- | --- |
+| rand_obj | 99/100（99%） | 99 |
+| rand_full | 99/100（99%） | 99 |
+
+两组均未触发低于 95% 时的参考回放验证规则。保留的 198 条转换数据的动作、
+机器人状态及初始场景字段与对应原始 Zarr 逐值一致，动作读取保持 float64 精度。
+
+`rand_full` 的全部 99 条保留轨迹完成视觉随机化重新录制，features、三相机集合、
+30 fps 帧率、初始场景记录、float64 动作及帧数均通过核对；10 个视频文件均可读取。
+
+全部 198 条保留轨迹通过重复回放的状态、float64 动作读取精度及三相机图像逐像素一致性测试。
 
 经过转换筛选之后，剩余的episode数量可能不足100
 
