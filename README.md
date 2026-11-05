@@ -69,6 +69,11 @@ pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_microwave_c
 状态旋转为 wxyz 四元数。原始 raw 数据的状态仍为双臂位姿在前、双手关节在后，转换时重排。
 `render_mode=none` 时不返回或声明图像。
 
+数据集回放和重新录制支持 `--seed`，默认 `0`，仅控制视觉随机化；第 i 条轨迹使用
+`seed + i`，不随并行环境数量改变。回放通过 `reset(seed=..., options={"initial_state": ...})`
+恢复保存的初始状态，不重新采样场景，也不开启动力学随机化。
+重新录制时通过 `--randomize` 开启视觉随机化。
+
 环境、已有数据集和新输出数据集的主视角统一为 `ego`，不随单双臂或随机化改变。
 转换器将原始数据的 `front`、`random_camera` 映射为 `ego`，其他侧视角和腕部相机保留原名。
 项目的转换、重新录制工具使用以下 features，包括
@@ -136,6 +141,20 @@ MUJOCO_GL=egl uv run dexjoco-convert \
 回放命令 `uv run python -m dexjoco.replay_dataset` 和重新录制命令
 `uv run dexjoco-record-replay` 均使用 `--task bimanual_hanoi` 选择环境。
 重新录制使用 `observation.images.ego` 主视角和对应任务的腕部相机。
+
+在 tmux 中从头批量录制全部 22 组数据（640×640）：
+
+```bash
+tmux new -s dexjoco-record
+cd /home/weizhi_zhao/projects/dexjoco-lerobot
+bash scripts/record_replay_all.sh
+```
+
+脚本逐个任务运行，每个任务默认使用 2 个并行环境。rand_obj 使用固定视角，rand_full
+开启视觉随机化，默认基础种子为 0。可通过 `N_ENVS=4 SEED=0 bash scripts/record_replay_all.sh`
+调整并行环境数和种子。输出到 `datasets/lerobot_v1.1_replay_640`，每个任务的日志保存在其
+`logs/` 下。脚本不跳过任务；输出目录必须不存在，任何任务失败时立即停止。
+
 Hanoi 的恢复信息单独保存底座位置 `orig_hanoi_base_pos` 和 `table_delta_height`；
 盘片按原始环境的最后两步局面恢复：小盘在 A，中盘在 B，大盘在 C。
 

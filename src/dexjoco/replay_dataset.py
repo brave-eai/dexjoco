@@ -25,13 +25,26 @@ class ReplayResult:
     images: list[dict[str, NDArray[np.uint8]]] | None = None
 
 
-def batch_env_reset(env: gym.vector.VectorEnv, initial_states: list[dict | None]):
+def batch_env_reset(
+    env: gym.vector.VectorEnv,
+    initial_states: list[dict | None],
+    *,
+    seed: int = 0,
+    episode_offset: int = 0,
+):
+    """Restore recorded scenes and seed resets by absolute episode index."""
     # Initialize every observation before applying individual reset masks.
-    obs, _ = env.reset(options={"initial_state": initial_states[0]})
+    # Vector environments assign seed + slot to each sub-environment.
+    obs, _ = env.reset(
+        seed=seed + episode_offset, options={"initial_state": initial_states[0]}
+    )
     for i, initial_state in enumerate(initial_states[1:], start=1):
         mask = np.zeros(env.num_envs, dtype=bool)
         mask[i] = True
-        obs, _ = env.reset(options={"initial_state": initial_state, "reset_mask": mask})
+        obs, _ = env.reset(
+            seed=seed + episode_offset,
+            options={"initial_state": initial_state, "reset_mask": mask},
+        )
     return obs
 
 
@@ -42,6 +55,9 @@ def batch_replay_episode(
     episodes_lengths: NDArray[np.int64],
     extend_steps: int,
     return_images: bool = False,
+    *,
+    seed: int = 0,
+    episode_offset: int = 0,
 ) -> ReplayResult:
     """
     shape of actions: (num_episodes, max_episode_length, action_dim)
@@ -64,7 +80,7 @@ def batch_replay_episode(
             [episodes_lengths, np.ones(env.num_envs - NUM_EPISODES, dtype=np.int64)], axis=0
         )
 
-    obs = batch_env_reset(env, initial_states)
+    obs = batch_env_reset(env, initial_states, seed=seed, episode_offset=episode_offset)
     states = []
     executed_actions = []
     image_frames: list[dict[str, list[NDArray[np.uint8]]]] = (
@@ -131,10 +147,12 @@ def replay_batches(
     *,
     task: str,
     action_format: Literal["quaternion", "rotvec"] = "quaternion",
+    seed: int = 0,
 ) -> Generator[ReplayResult, None, None]:
     """Yield each batch in episode order; exhaust or close to release environments.
 
     render_hw specifies (height, width); None uses the environment default.
+    seed controls only visual randomization, using seed + episode index.
     """
     if n_envs < 1 or extend_steps < 0:
         raise ValueError("n_envs must be positive and extend_steps must be nonnegative")
@@ -178,6 +196,8 @@ def replay_batches(
                 lengths,
                 extend_steps,
                 return_images=return_images,
+                seed=seed,
+                episode_offset=start,
             )
             yield result
             del result
@@ -216,6 +236,7 @@ def check_replay_success(
     *,
     task: str,
     action_format: Literal["quaternion", "rotvec"] = "quaternion",
+    seed: int = 0,
 ) -> NDArray[np.bool_]:
     """Replay once without rendering, returning success in episode index order."""
     actions, initial_states = load_replay_data(dataset_dir, action_format)
@@ -230,6 +251,7 @@ def check_replay_success(
             extend_steps,
             task=task,
             action_format=action_format,
+            seed=seed,
         )
     ) as batches:
         for result in batches:
@@ -249,6 +271,7 @@ def check_replay_consistency(
     *,
     task: str,
     action_format: Literal["quaternion", "rotvec"] = "quaternion",
+    seed: int = 0,
 ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
     """Return exact consistency and first-pass success in episode index order.
 
@@ -270,6 +293,7 @@ def check_replay_consistency(
                 check_images,
                 task=task,
                 action_format=action_format,
+                seed=seed,
             )
         ) as first_batches,
         closing(
@@ -282,6 +306,7 @@ def check_replay_consistency(
                 check_images,
                 task=task,
                 action_format=action_format,
+                seed=seed,
             )
         ) as second_batches,
     ):
