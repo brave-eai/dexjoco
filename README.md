@@ -28,7 +28,7 @@ export NPY_DISABLE_CPU_FEATURES="AVX512F,AVX512CD,AVX512_SKX,AVX512_CLX,AVX512_C
 ```
 
 微波炉和拍照任务的原始 `state` 在第 61–92 列保存固定的
-`initial_gripper_pose`（右手 16 维、左手 16 维）。该字段转换后保存在
+`initial_hand_joint`（右手 16 维、左手 16 维）。该字段转换后保存在
 `replay_initial_values.jsonl`，不增加策略机器人观测的维数。
 
 转换和 `dexjoco-record-replay` 同时保存 float64 `action`（原始四元数动作，单臂 23 维、
@@ -65,8 +65,8 @@ pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_microwave_c
 
 图像为 HWC uint8。官方预处理将观测转换为 `observation.state` 和
 `observation.images.<camera>`。默认动作为位置、wxyz 四元数和手指目标。所有环境使用原 dm_robotics 姿态控制器。
-双臂两种动作格式均排列为右臂位姿、右手关节、左臂位姿、左手关节；状态排列为右臂位姿、
-左臂位姿、右手关节、左手关节，旋转为 wxyz 四元数。
+双臂状态和两种动作格式均排列为右臂位姿、右手关节、左臂位姿、左手关节；
+状态旋转为 wxyz 四元数。原始 raw 数据的状态仍为双臂位姿在前、双手关节在后，转换时重排。
 `render_mode=none` 时不返回或声明图像。
 
 环境、已有数据集和新输出数据集的主视角统一为 `ego`，不随单双臂或随机化改变。

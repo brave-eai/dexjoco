@@ -21,6 +21,9 @@ def load_zarr_episode(episode_dir: Path, action_dim: int, state_dim: int):
     action_rotvec = quaternion_to_rotvec(action, bimanual=action_dim == 46)
     recorded_state = arrays["state"].reshape(arrays["state"].shape[0], -1)
     state = recorded_state[:, :state_dim]
+    if state_dim == 46:
+        # Raw recordings store both arm poses before both hands.
+        state = state[:, np.r_[0:7, 14:30, 7:14, 30:46]]
     replay_initial_positions = recorded_state[0, state_dim:]
 
     assert action.shape[0] == state.shape[0]

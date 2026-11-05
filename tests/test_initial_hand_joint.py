@@ -14,10 +14,10 @@ def test_scene_hand_pose_roundtrip(env_class):
         _, info = env.reset(seed=4)
         initial = info["initial_state"]
         pose = np.linspace(0.0, 0.3, 32, dtype=np.float64)
-        initial["initial_gripper_pose"] = pose
+        initial["initial_hand_joint"] = pose
         _, restored = env.reset(options={"initial_state": initial})
         np.testing.assert_array_equal(env.data.qpos[env.finger_qpos_ids], pose)
-        np.testing.assert_array_equal(restored["initial_state"]["initial_gripper_pose"], pose)
+        np.testing.assert_array_equal(restored["initial_state"]["initial_hand_joint"], pose)
         pose[:] = -1
         assert np.all(env.data.qpos[env.finger_qpos_ids] >= 0)
     finally:

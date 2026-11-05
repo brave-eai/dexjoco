@@ -119,7 +119,7 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
             ("orig_hot_dog_pose", 7),
             ("orig_microwave_pose", 7),
             ("table_delta_height", 1),
-            ("initial_gripper_pose", 32),
+            ("initial_hand_joint", 32),
         ),
     ),
     "bimanual_photograph": TaskPreset(
@@ -132,7 +132,7 @@ TASK_PRESETS: dict[TaskName, TaskPreset] = {
             ("orig_camera_pose", 7),
             ("orig_logo_pose", 7),
             ("table_delta_height", 1),
-            ("initial_gripper_pose", 32),
+            ("initial_hand_joint", 32),
         ),
     ),
     "bimanual_unlock_ipad": TaskPreset(

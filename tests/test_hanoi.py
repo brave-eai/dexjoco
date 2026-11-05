@@ -20,19 +20,39 @@ def test_reset_and_action_formats() -> None:
         assert set(restored_info["initial_state"]) == {"orig_hanoi_base_pos", "table_delta_height"}
         assert set(obs) == {"agent_pos"}
         assert quaternion.renderer is None and rotvec.renderer is None
+        assert quaternion.observation_space.contains(obs)
+        for i, side in enumerate(("right", "left")):
+            offset = i * 23
+            np.testing.assert_array_equal(
+                obs["agent_pos"][offset : offset + 3],
+                quaternion.data.sensor(f"franka/flange_pos_{side}").data.astype(np.float32),
+            )
+            np.testing.assert_array_equal(
+                obs["agent_pos"][offset + 3 : offset + 7],
+                quaternion.data.sensor(f"franka/flange_quat_{side}").data.astype(np.float32),
+            )
+            np.testing.assert_array_equal(
+                obs["agent_pos"][offset + 7 : offset + 23],
+                np.array(
+                    [
+                        quaternion.data.sensor(sensor).data[0]
+                        for sensor in quaternion.finger_sensor_ids[i * 16 : (i + 1) * 16]
+                    ],
+                    dtype=np.float32,
+                ),
+            )
         action_quat = obs["agent_pos"].astype(np.float64)
-        action_rotvec = np.concatenate((
-            action_quat[:3],
-            Rotation.from_quat(action_quat[3:7], scalar_first=True).as_rotvec(),
-            action_quat[14:30],
-            action_quat[7:10],
-            Rotation.from_quat(action_quat[10:14], scalar_first=True).as_rotvec(),
-            action_quat[30:46],
-        ))
+        action_rotvec = np.concatenate(
+            (
+                action_quat[:3],
+                Rotation.from_quat(action_quat[3:7], scalar_first=True).as_rotvec(),
+                action_quat[7:23],
+                action_quat[23:26],
+                Rotation.from_quat(action_quat[26:30], scalar_first=True).as_rotvec(),
+                action_quat[30:46],
+            )
+        )
         assert rotvec.action_space.contains(action_rotvec.astype(np.float32))
-        action_quat = np.concatenate((
-            action_quat[:7], action_quat[14:30], action_quat[7:14], action_quat[30:46],
-        ))
         assert quaternion.action_space.contains(action_quat.astype(np.float32))
         a = rotvec.step(action_rotvec)
         b = quaternion.step(action_quat)

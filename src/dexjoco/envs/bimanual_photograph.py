@@ -205,47 +205,56 @@ class BimanualPhotographEnv(gym.Env):
         rot_dim = 3 if action_format == "rotvec" else 4
         rot_limit = np.pi if action_format == "rotvec" else 1.0
         hand_limits = self.model.actuator_ctrlrange[self.finger_actuator_ids]
-        # Group each arm pose with its hand, matching the original recordings.
-        action_order = (
-            np.r_[0:6, 12:28, 6:12, 28:44]
-            if action_format == "rotvec"
-            else np.r_[0:7, 14:30, 7:14, 30:46]
-        )
+        # Right arm and hand, then left arm and hand.
         self.action_space = spaces.Box(
             low=np.concatenate(
-                (
-                    *[np.concatenate((low, np.full(rot_dim, -rot_limit))) for low in tcp_low],
-                    hand_limits[:, 0],
-                )
-            )[action_order].astype(np.float32),
+                [
+                    np.concatenate(
+                        (
+                            tcp_low[i],
+                            np.full(rot_dim, -rot_limit),
+                            hand_limits[i * 16 : (i + 1) * 16, 0],
+                        )
+                    )
+                    for i in range(2)
+                ]
+            ).astype(np.float32),
             high=np.concatenate(
-                (
-                    *[np.concatenate((high, np.full(rot_dim, rot_limit))) for high in tcp_high],
-                    hand_limits[:, 1],
-                )
-            )[action_order].astype(np.float32),
+                [
+                    np.concatenate(
+                        (
+                            tcp_high[i],
+                            np.full(rot_dim, rot_limit),
+                            hand_limits[i * 16 : (i + 1) * 16, 1],
+                        )
+                    )
+                    for i in range(2)
+                ]
+            ).astype(np.float32),
             dtype=np.float32,
         )
         self.action_dim = 2 * (3 + rot_dim) + 32
         observation_spaces: dict[str, spaces.Space] = {
-            # Right pose, left pose, right fingers, left fingers; quaternions are wxyz.
+            # Right pose, right fingers, left pose, left fingers; quaternions are wxyz.
             "agent_pos": spaces.Box(
                 np.concatenate(
                     (
                         tcp_low[0],
                         np.full(4, -1.0),
+                        self.model.jnt_range[self.finger_joint_ids[:16], 0] - FINGER_QPOS_MARGIN,
                         tcp_low[1],
                         np.full(4, -1.0),
-                        self.model.jnt_range[self.finger_joint_ids, 0] - FINGER_QPOS_MARGIN,
+                        self.model.jnt_range[self.finger_joint_ids[16:], 0] - FINGER_QPOS_MARGIN,
                     )
                 ).astype(np.float32),
                 np.concatenate(
                     (
                         tcp_high[0],
                         np.full(4, 1.0),
+                        self.model.jnt_range[self.finger_joint_ids[:16], 1] + FINGER_QPOS_MARGIN,
                         tcp_high[1],
                         np.full(4, 1.0),
-                        self.model.jnt_range[self.finger_joint_ids, 1] + FINGER_QPOS_MARGIN,
+                        self.model.jnt_range[self.finger_joint_ids[16:], 1] + FINGER_QPOS_MARGIN,
                     )
                 ).astype(np.float32),
                 dtype=np.float32,
@@ -277,13 +286,13 @@ class BimanualPhotographEnv(gym.Env):
             camera_pose = self.orig_camera_pose.copy()
             camera_pose[:2] = self.reset_rng.uniform([-0.30, 0.1], [-0.20, 0.2])
             camera_pose[2] += delta_h + 0.002
-            initial_gripper_pose = np.tile(FINGER_HOME, 2)
+            initial_hand_joint = np.tile(FINGER_HOME, 2)
         else:
             delta_h = float(initial_state["table_delta_height"])
             logo_pose = np.asarray(initial_state["orig_logo_pose"], dtype=np.float64)
             camera_pose = np.asarray(initial_state["orig_camera_pose"], dtype=np.float64)
-            initial_gripper_pose = np.asarray(
-                initial_state["initial_gripper_pose"], dtype=np.float64
+            initial_hand_joint = np.asarray(
+                initial_state["initial_hand_joint"], dtype=np.float64
             )
         self.model.geom_pos[self.logo_geom_id] = logo_pose[:3]
         self.model.geom_quat[self.logo_geom_id] = logo_pose[3:7]
@@ -296,7 +305,7 @@ class BimanualPhotographEnv(gym.Env):
         self.model.body("table").pos[2] = self.orig_table_z + delta_h
         self.model.geom_size[self.leg_ids, 1] = self.leg_half_lengths + delta_h
         self.data.qpos[self.model.jnt_qposadr[self.arm_joint_ids]] = ARM_HOME
-        self.data.qpos[self.finger_qpos_ids] = initial_gripper_pose
+        self.data.qpos[self.finger_qpos_ids] = initial_hand_joint
         if self.randomize:
             self.randomize_lighting()
             self.randomize_camera()
@@ -317,7 +326,7 @@ class BimanualPhotographEnv(gym.Env):
                 "orig_camera_pose": camera_pose.copy(),
                 "orig_logo_pose": logo_pose.copy(),
                 "table_delta_height": float(delta_h),
-                "initial_gripper_pose": initial_gripper_pose.copy(),
+                "initial_hand_joint": initial_hand_joint.copy(),
             },
         }
 
@@ -378,17 +387,20 @@ class BimanualPhotographEnv(gym.Env):
 
     def observation(self) -> dict[str, Any]:
         poses: list[NDArray] = []
-        for side in ("right", "left"):
+        for i, side in enumerate(("right", "left")):
             poses.extend(
                 (
                     self.data.sensor(f"franka/flange_pos_{side}").data,
                     self.data.sensor(f"franka/flange_quat_{side}").data,
+                    np.array(
+                        [
+                            self.data.sensor(sensor).data[0]
+                            for sensor in self.finger_sensor_ids[i * 16 : (i + 1) * 16]
+                        ]
+                    ),
                 )
             )
-        fingers = [self.data.sensor(sensor).data[0] for sensor in self.finger_sensor_ids]
-        observation: dict[str, Any] = {
-            "agent_pos": np.concatenate((*poses, fingers)).astype(np.float32)
-        }
+        observation: dict[str, Any] = {"agent_pos": np.concatenate(poses).astype(np.float32)}
         if self.render_mode != "none":
             self.update_screen_texture()
             observation["pixels"] = {
