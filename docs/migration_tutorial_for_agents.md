@@ -110,6 +110,7 @@
 - `DexJoCoEnvConfig.bimanual` 是独立属性，用于声明单双臂对应的状态、动作和腕部相机特征，不通过某个任务名判断单双臂。
 - 在配置中支持选择当前任务，并向构造函数传递对应参数。
 - 按任务的状态、动作和相机声明 `features`、`features_map`。
+- 所有环境默认 `action_format="quaternion"`，可选 `"rotvec"`；配置和所有入口都要传递该选项。双臂动作统一按右臂位姿、右手关节、左臂位姿、左手关节排列。
 - 图像特征尺寸跟随配置，`render_mode="none"` 时不声明图像特征。
 - `features_map` 用于策略特征名称映射，实际观测仍须符合官方预处理的输入格式。
 - 分发名保持 `lerobot_env_dexjoco`，由同名入口包导入配置，供官方 CLI 自动注册；内部代码沿用 `dexjoco` 包。
@@ -118,7 +119,7 @@
 ### 数据转换、回放和重新录制
 
 - 参考 water_plant 的转换预设，接入当前任务的动作、状态、任务描述及初始场景字段。
-- 数据集继续使用 `action`、`observation.state`、`observation.images.<camera>` 等现有 features，维数和相机按当前任务填写。
+- 转换和重新录制同时保存 float64 `action`（原始四元数动作，单臂 23 维、双臂 46 维）与 `action_rotvec`（单臂 22 维、双臂 44 维），后者由同一份四元数动作生成。另保留 `observation.state` 和 `observation.images.<camera>` 等 features。默认回放读取 `action`，可用 `action_format="rotvec"` 读取 `action_rotvec`。
 - 环境和所有已有、新生成的数据集主视角均使用 `ego` 和 `observation.images.ego`。转换原始数据时，将 `front`、`random_camera` 主视角映射为 `ego`；其他相机名称保持原样。
 - 除上述主视角名称统一外，保持既定数据集 schema、数值类型和维数。更新已有数据时可重新生成转换数据集，不删除原始数据。
 - 恢复信息继续单独保存为 `replay_initial_values.jsonl`。
@@ -157,7 +158,7 @@ NumPy、SciPy 和底层 BLAS 的版本或构建不同，以及四元数与旋转
 无窗口渲染使用 `MUJOCO_GL=egl`，例如：
 
 ```bash
-MUJOCO_GL=egl uv run pytest tests/test_replay.py --replay-n-envs=4
+MUJOCO_GL=egl uv run pytest tests/test_replay.py --replay-dataset-root datasets/lerobot_v1.1 --replay-n-envs=4
 ```
 
 EGL 启动成功不代表使用了 GPU。本机普通沙箱执行上述渲染时会使用 Mesa 的 `llvmpipe` 软件渲染；需要 GPU 时，通过执行工具的 `sandbox_permissions="require_escalated"` 在沙箱外运行命令，才能访问本机 NVIDIA GPU。使用 `GL_VENDOR`、`GL_RENDERER` 确认实际渲染后端。当前实现中 GPU 用于渲染，MuJoCo 物理模拟仍在 CPU 上运行。
@@ -205,7 +206,7 @@ uv run pytest
 
 Pyright 与 Pylance 共用类型检查核心，用于批量检测编辑器中的类型错误；检查范围、Python 版本和虚拟环境在 `pyproject.toml` 的 `[tool.pyright]` 中配置，排除 `dexjoco_ref/` 和生成目录。
 
-数据集回放测试通过 `--replay-n-envs` 设置并行数，所有任务共用此配置，默认值为 4。例如：`uv run pytest tests/test_replay.py --replay-n-envs=4`。
+数据集回放测试默认跳过，仅在显式传入 `--replay-dataset-root` 时运行。通过 `--replay-n-envs` 设置并行数，所有任务共用此配置，默认值为 4。例如：`uv run pytest tests/test_replay.py --replay-dataset-root datasets/lerobot_v1.1 --replay-n-envs=4`。
 
 遵循 `AGENTS.md` 中对暂存区测试的要求；提交前，确保测试覆盖最终准备提交的代码。
 

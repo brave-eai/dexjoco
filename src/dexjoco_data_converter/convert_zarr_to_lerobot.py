@@ -63,6 +63,10 @@ class DatasetConfig:
 
     @property
     def action_dim(self) -> int:
+        return 46 if self.is_bimanual else 23
+
+    @property
+    def rotvec_action_dim(self) -> int:
         return 44 if self.is_bimanual else 22
 
     @property
@@ -83,6 +87,7 @@ def build_features(
     """Build action, robot state, and RGB video features for a dataset."""
     features: dict[str, Any] = {
         "action": {"dtype": "float64", "shape": (cfg.action_dim,)},
+        "action_rotvec": {"dtype": "float64", "shape": (cfg.rotvec_action_dim,)},
         "observation.state": {"dtype": "float64", "shape": (cfg.state_dim,)},
     }
     for camera_name in camera_names:
@@ -114,7 +119,7 @@ def convert_one_episode(
             camera_name,
         )
 
-    state, action, replay_initial_positions = load_zarr_episode(
+    state, action, action_rotvec, replay_initial_positions = load_zarr_episode(
         epi_path, cfg.action_dim, cfg.state_dim
     )
 
@@ -129,6 +134,7 @@ def convert_one_episode(
     for t in range(state.shape[0]):
         frame = {
             "action": np.asarray(action[t], np.float64),
+            "action_rotvec": np.asarray(action_rotvec[t], np.float64),
             "observation.state": np.asarray(state[t], np.float64),
             "task": cfg.task_description,
         }

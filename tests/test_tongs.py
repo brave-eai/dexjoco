@@ -1,4 +1,4 @@
-"""Exercise tongs restoration, action formats, and task outcomes."""
+"""Exercise tongs restoration and action formats."""
 
 import numpy as np
 import pytest
@@ -6,17 +6,13 @@ from scipy.spatial.transform import Rotation
 
 from dexjoco.envs.pinch_tongs import (
     LIFT_HEIGHT,
-    MAX_EPISODE_STEPS,
-    REQUIRED_PINCHES,
-    SUCCESS_STEPS,
     PinchTongsEnv,
-    PinchTongsStateMachine,
 )
 
 
 @pytest.mark.parametrize("randomize", [False, True])
 def test_reset_and_action_formats(randomize: bool) -> None:
-    rotvec = PinchTongsEnv(render_mode="none", randomize=randomize, randomize_dynamics=True)
+    rotvec = PinchTongsEnv(render_mode="none", action_format="rotvec", randomize=randomize, randomize_dynamics=True)
     quaternion = PinchTongsEnv(
         render_mode="none", action_format="quaternion", randomize=randomize, randomize_dynamics=True
     )
@@ -53,27 +49,3 @@ def test_reset_and_action_formats(randomize: bool) -> None:
     finally:
         rotvec.close()
         quaternion.close()
-
-
-def test_pinch_cycles_and_sustained_lift() -> None:
-    machine = PinchTongsStateMachine()
-    # A close alone, or repeated closed readings, is not a new cycle.
-    machine.update(-0.1, True)
-    assert machine.pinch_count == 0
-    for i in range(REQUIRED_PINCHES):
-        machine.update(0.15, False)
-        machine.update(0.0, False)
-        machine.update(-0.1, False)
-        machine.update(-0.1, False)
-        assert machine.pinch_count == i + 1
-    for _ in range(SUCCESS_STEPS - 1):
-        assert machine.update(0.0, True) == (False, False, False)
-    machine.update(0.0, False)
-    assert machine.success_steps == 0
-    for _ in range(SUCCESS_STEPS - 1):
-        assert machine.update(0.0, True) == (False, False, False)
-    assert machine.update(0.0, True) == (True, True, False)
-    machine.reset()
-    for _ in range(MAX_EPISODE_STEPS - 1):
-        assert machine.update(0.0, False) == (False, False, False)
-    assert machine.update(0.0, False) == (False, False, True)

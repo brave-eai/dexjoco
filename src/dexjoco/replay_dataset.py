@@ -3,6 +3,7 @@ from collections.abc import Generator
 from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 import gymnasium as gym
 import numpy as np
@@ -129,6 +130,7 @@ def replay_batches(
     render_hw: tuple[int, int] | None = None,
     *,
     task: str,
+    action_format: Literal["quaternion", "rotvec"] = "quaternion",
 ) -> Generator[ReplayResult, None, None]:
     """Yield each batch in episode order; exhaust or close to release environments.
 
@@ -146,7 +148,8 @@ def replay_batches(
     height, width = render_hw if render_hw is not None else (640, 640)
     env_cfg = DexJoCoEnvConfig(
         task=task,
-        bimanual=actions_by_episode[0].shape[1] == 44,
+        bimanual=actions_by_episode[0].shape[1] == (46 if action_format == "quaternion" else 44),
+        action_format=action_format,
         render_mode="rgb_array" if return_images else "none",
         randomize=randomize,
         render_height=height,
@@ -184,11 +187,13 @@ def replay_batches(
 
 def load_replay_data(
     dataset_dir: Path,
+    action_format: Literal["quaternion", "rotvec"] = "quaternion",
 ) -> tuple[list[NDArray[np.float64]], list[dict]]:
     """Load actions and initial states in episode index order."""
     dataset = LeRobotDataset(repo_id="local_repo", root=dataset_dir, download_videos=False)
     # Preserve stored float64 actions instead of LeRobot's float32 tensor transform.
-    rows = dataset.select_columns(["episode_index", "action"]).with_format(None)
+    action_key = "action" if action_format == "quaternion" else "action_rotvec"
+    rows = dataset.select_columns(["episode_index", action_key]).with_format(None)
     episode_indices = np.asarray(rows["episode_index"], dtype=np.int64).reshape(-1)
     with (dataset_dir / "replay_initial_values.jsonl").open() as f:
         entries = sorted((json.loads(line) for line in f), key=lambda entry: entry["episode_index"])
@@ -198,7 +203,7 @@ def load_replay_data(
     actions_by_episode = []
     for episode_index in range(dataset.meta.total_episodes):
         episode_rows = rows.select(np.flatnonzero(episode_indices == episode_index))
-        actions_by_episode.append(np.asarray(episode_rows["action"], dtype=np.float64))
+        actions_by_episode.append(np.asarray(episode_rows[action_key], dtype=np.float64))
 
     return actions_by_episode, initial_states
 
@@ -210,13 +215,22 @@ def check_replay_success(
     extend_steps: int = 60,
     *,
     task: str,
+    action_format: Literal["quaternion", "rotvec"] = "quaternion",
 ) -> NDArray[np.bool_]:
     """Replay once without rendering, returning success in episode index order."""
-    actions, initial_states = load_replay_data(dataset_dir)
+    actions, initial_states = load_replay_data(dataset_dir, action_format)
     success = np.zeros(len(actions), dtype=bool)
     start = 0
     with closing(
-        replay_batches(actions, initial_states, n_envs, use_async_envs, extend_steps, task=task)
+        replay_batches(
+            actions,
+            initial_states,
+            n_envs,
+            use_async_envs,
+            extend_steps,
+            task=task,
+            action_format=action_format,
+        )
     ) as batches:
         for result in batches:
             stop = start + len(result.success)
@@ -234,13 +248,14 @@ def check_replay_consistency(
     check_images: bool = False,
     *,
     task: str,
+    action_format: Literal["quaternion", "rotvec"] = "quaternion",
 ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
     """Return exact consistency and first-pass success in episode index order.
 
     Success flags and states must match, along with RGB frames when requested.
     Failed episodes can still be consistent. Only the current batch is retained.
     """
-    actions, initial_states = load_replay_data(dataset_dir)
+    actions, initial_states = load_replay_data(dataset_dir, action_format)
     consistent = np.zeros(len(actions), dtype=bool)
     success = np.zeros(len(actions), dtype=bool)
     start = 0
@@ -254,6 +269,7 @@ def check_replay_consistency(
                 extend_steps,
                 check_images,
                 task=task,
+                action_format=action_format,
             )
         ) as first_batches,
         closing(
@@ -265,6 +281,7 @@ def check_replay_consistency(
                 extend_steps,
                 check_images,
                 task=task,
+                action_format=action_format,
             )
         ) as second_batches,
     ):

@@ -77,6 +77,7 @@ def make_env(
         tasks[task_id] = vector_cls(
             [partial(
                 constructor,
+                action_format=cfg.action_format,
                 randomize=cfg.randomize,
                 randomize_dynamics=cfg.randomize_dynamics,
                 render_mode=cfg.render_mode,

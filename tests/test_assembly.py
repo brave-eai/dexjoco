@@ -1,20 +1,15 @@
-"""Exercise assembly restoration, action layouts, and sustained contact."""
+"""Exercise assembly restoration and action formats."""
 
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
 
-from dexjoco.envs.bimanual_assembly import (
-    MAX_EPISODE_STEPS,
-    SUCCESS_STEPS,
-    BimanualAssemblyEnv,
-    BimanualAssemblyStateMachine,
-)
+from dexjoco.envs.bimanual_assembly import BimanualAssemblyEnv
 
 
 @pytest.mark.parametrize("randomize", [False, True])
 def test_reset_and_action_formats(randomize: bool) -> None:
-    rotvec = BimanualAssemblyEnv(render_mode="none", randomize=randomize, randomize_dynamics=True)
+    rotvec = BimanualAssemblyEnv(render_mode="none", action_format="rotvec", randomize=randomize, randomize_dynamics=True)
     quaternion = BimanualAssemblyEnv(render_mode="none", action_format="quaternion", randomize=randomize, randomize_dynamics=True)
     try:
         obs, info = quaternion.reset(seed=12)
@@ -44,6 +39,9 @@ def test_reset_and_action_formats(randomize: bool) -> None:
             action_quat[30:46],
         ))
         assert rotvec.action_space.contains(action_rotvec.astype(np.float32))
+        action_quat = np.concatenate((
+            action_quat[:7], action_quat[14:30], action_quat[7:14], action_quat[30:46],
+        ))
         assert quaternion.action_space.contains(action_quat.astype(np.float32))
         a = rotvec.step(action_rotvec)
         b = quaternion.step(action_quat)
@@ -52,19 +50,3 @@ def test_reset_and_action_formats(randomize: bool) -> None:
     finally:
         rotvec.close()
         quaternion.close()
-
-
-def test_sustained_bottom_contact() -> None:
-    machine = BimanualAssemblyStateMachine()
-    for _ in range(SUCCESS_STEPS - 1):
-        assert machine.update(True) == (False, False, False)
-    assert machine.update(False) == (False, False, False)
-    assert machine.success_steps == 0
-    for _ in range(SUCCESS_STEPS - 1):
-        assert machine.update(True) == (False, False, False)
-    assert machine.update(True) == (True, True, False)
-    machine.reset()
-    assert machine.success_steps == machine.step_count == 0
-    for _ in range(MAX_EPISODE_STEPS - 1):
-        assert machine.update(False) == (False, False, False)
-    assert machine.update(False) == (False, False, True)

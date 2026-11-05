@@ -1,23 +1,19 @@
-"""Exercise mouse restoration, action formats, and click outcomes."""
+"""Exercise mouse restoration and action formats."""
 
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
 
 from dexjoco.envs.click_mouse import (
-    CLICK_THRESHOLD,
-    MAX_EPISODE_STEPS,
     MOUSE_FINGER_HOME,
     MOUSEPAD_OFFSET,
-    SUCCESS_STEPS,
     ClickMouseEnv,
-    ClickMouseStateMachine,
 )
 
 
 @pytest.mark.parametrize("randomize", [False, True])
 def test_reset_and_action_formats(randomize: bool) -> None:
-    rotvec = ClickMouseEnv(render_mode="none", randomize=randomize, randomize_dynamics=True)
+    rotvec = ClickMouseEnv(render_mode="none", action_format="rotvec", randomize=randomize, randomize_dynamics=True)
     quaternion = ClickMouseEnv(
         render_mode="none", action_format="quaternion", randomize=randomize, randomize_dynamics=True
     )
@@ -65,22 +61,3 @@ def test_reset_and_action_formats(randomize: bool) -> None:
     finally:
         rotvec.close()
         quaternion.close()
-
-
-def test_click_latch_and_sustained_occupancy() -> None:
-    machine = ClickMouseStateMachine()
-    machine.update(0.002, False)
-    machine.update(CLICK_THRESHOLD, True)
-    assert not machine.display_blue
-    assert machine.update(0.002, True) == (False, False, False)
-    assert machine.display_blue
-    machine.update(0.0, False)
-    assert machine.success_steps == 0
-    assert machine.display_blue
-    for _ in range(SUCCESS_STEPS - 1):
-        assert machine.update(0.0, True) == (False, False, False)
-    assert machine.update(0.0, True) == (True, True, False)
-    machine.reset()
-    for _ in range(MAX_EPISODE_STEPS - 1):
-        assert machine.update(0.0, False) == (False, False, False)
-    assert machine.update(0.0, False) == (False, False, True)

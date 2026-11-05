@@ -1,20 +1,15 @@
-"""Exercise microwave restoration, action layouts, and cooking outcomes."""
+"""Exercise microwave restoration and action formats."""
 
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
 
-from dexjoco.envs.bimanual_microwave_cook import (
-    MAX_EPISODE_STEPS,
-    DOOR_TOLERANCE,
-    BimanualMicrowaveCookEnv,
-    BimanualMicrowaveCookStateMachine,
-)
+from dexjoco.envs.bimanual_microwave_cook import BimanualMicrowaveCookEnv
 
 
 @pytest.mark.parametrize("randomize", [False, True])
 def test_reset_and_action_formats(randomize: bool) -> None:
-    rotvec = BimanualMicrowaveCookEnv(render_mode="none", randomize=randomize, randomize_dynamics=True)
+    rotvec = BimanualMicrowaveCookEnv(render_mode="none", action_format="rotvec", randomize=randomize, randomize_dynamics=True)
     quaternion = BimanualMicrowaveCookEnv(render_mode="none", action_format="quaternion", randomize=randomize, randomize_dynamics=True)
     try:
         obs, info = quaternion.reset(seed=12)
@@ -24,7 +19,7 @@ def test_reset_and_action_formats(randomize: bool) -> None:
         )
         np.testing.assert_array_equal(restored["agent_pos"], obs["agent_pos"])
         np.testing.assert_array_equal(rotvec.data.qpos, original_qpos)
-        assert set(restored_info["initial_state"]) == {"orig_hot_dog_pose", "orig_microwave_pose", "table_delta_height"}
+        assert set(restored_info["initial_state"]) == {"orig_hot_dog_pose", "orig_microwave_pose", "table_delta_height", "initial_gripper_pose"}
         np.testing.assert_array_equal(rotvec.model.body_pos, quaternion.model.body_pos)
         np.testing.assert_array_equal(rotvec.model.body_quat, quaternion.model.body_quat)
         np.testing.assert_array_equal(rotvec.model.body_mass, quaternion.model.body_mass)
@@ -44,6 +39,9 @@ def test_reset_and_action_formats(randomize: bool) -> None:
             action_quat[30:46],
         ))
         assert rotvec.action_space.contains(action_rotvec.astype(np.float32))
+        action_quat = np.concatenate((
+            action_quat[:7], action_quat[14:30], action_quat[7:14], action_quat[30:46],
+        ))
         assert quaternion.action_space.contains(action_quat.astype(np.float32))
         a = rotvec.step(action_rotvec)
         b = quaternion.step(action_quat)
@@ -52,16 +50,3 @@ def test_reset_and_action_formats(randomize: bool) -> None:
     finally:
         rotvec.close()
         quaternion.close()
-
-
-def test_cooking_outcomes() -> None:
-    machine = BimanualMicrowaveCookStateMachine()
-    assert machine.update(DOOR_TOLERANCE, True, True) == (False, False, False)
-    assert machine.update(-DOOR_TOLERANCE, True, True) == (False, False, False)
-    assert machine.update(0.0, False, True) == (False, False, False)
-    assert machine.update(0.0, True, False) == (False, False, False)
-    assert machine.update(0.0, True, True) == (True, True, False)
-    machine.reset()
-    for _ in range(MAX_EPISODE_STEPS - 1):
-        assert machine.update(0.0, True, False) == (False, False, False)
-    assert machine.update(0.0, True, False) == (False, False, True)

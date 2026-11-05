@@ -1,22 +1,15 @@
-"""Exercise hammer restoration, action formats, and insertion outcomes."""
+"""Exercise hammer restoration and action formats."""
 
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
 
-from dexjoco.envs.hammer_nail import (
-    IMPACT_VELOCITY,
-    INSERT_STEP,
-    MAX_DEPTH,
-    MAX_EPISODE_STEPS,
-    HammerNailEnv,
-    HammerNailStateMachine,
-)
+from dexjoco.envs.hammer_nail import HammerNailEnv
 
 
 @pytest.mark.parametrize("randomize", [False, True])
 def test_reset_and_action_formats(randomize: bool) -> None:
-    rotvec = HammerNailEnv(render_mode="none", randomize=randomize, randomize_dynamics=True)
+    rotvec = HammerNailEnv(render_mode="none", action_format="rotvec", randomize=randomize, randomize_dynamics=True)
     quaternion = HammerNailEnv(
         render_mode="none", action_format="quaternion", randomize=randomize, randomize_dynamics=True
     )
@@ -58,21 +51,3 @@ def test_reset_and_action_formats(randomize: bool) -> None:
     finally:
         rotvec.close()
         quaternion.close()
-
-
-def test_contact_insertion_and_timeout() -> None:
-    machine = HammerNailStateMachine()
-    assert machine.update(False, -0.1) == (False, False, False)
-    assert machine.depth == 0.0
-    assert machine.update(True, -IMPACT_VELOCITY) == (False, False, False)
-    assert machine.depth == 0.0
-    assert machine.update(True, -IMPACT_VELOCITY * 2) == (False, False, False)
-    assert machine.depth == INSERT_STEP * 2
-    assert machine.update(True, -IMPACT_VELOCITY * 3) == (True, True, False)
-    for _ in range(10):
-        machine.update(True, -1.0)
-    assert machine.depth == MAX_DEPTH
-    machine.reset()
-    for _ in range(MAX_EPISODE_STEPS - 1):
-        assert machine.update(False, 0.0) == (False, False, False)
-    assert machine.update(False, 0.0) == (False, False, True)

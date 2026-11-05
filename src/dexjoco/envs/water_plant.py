@@ -75,13 +75,14 @@ class WaterPlantEnv(gym.Env):
         "render_fps": 30,
     }
     task = "water_plant"
+    side_cameras = ("ego_left", "ego_right")
     task_description = "Pick up the spray bottle and water the plant."
     _max_episode_steps = MAX_EPISODE_STEPS
 
     def __init__(
         self,
         render_mode: Literal["rgb_array", "human", "none"] = "rgb_array",
-        action_format: Literal["rotvec", "quaternion"] = "rotvec",
+        action_format: Literal["rotvec", "quaternion"] = "quaternion",
         randomize: bool = False,
         randomize_dynamics: bool = False,
         render_width: int = 640,
@@ -211,7 +212,7 @@ class WaterPlantEnv(gym.Env):
                 name: spaces.Box(
                     0, 255, shape=(render_height, render_width, 3), dtype=np.uint8
                 )
-                for name in ("ego", "wrist")
+                for name in ("ego", *self.side_cameras, "wrist")
             })
         self.observation_space = spaces.Dict(observation_spaces)
 
@@ -407,6 +408,8 @@ class WaterPlantEnv(gym.Env):
         if self.render_mode != "none":
             observation["pixels"] = {
                 "ego": self.render_camera("front"),
+                "ego_left": self.render_camera("left"),
+                "ego_right": self.render_camera("right"),
                 "wrist": self.render_camera("handcam_rgb"),
             }
         return observation
@@ -433,6 +436,8 @@ class WaterPlantEnv(gym.Env):
             "Rendering is disabled because render_mode='none'."
         )
         if self.renderer is None:
+            self.model.vis.global_.offwidth = max(self.model.vis.global_.offwidth, self.render_width)
+            self.model.vis.global_.offheight = max(self.model.vis.global_.offheight, self.render_height)
             self.renderer = mujoco.Renderer(
                 self.model, height=self.render_height, width=self.render_width
             )

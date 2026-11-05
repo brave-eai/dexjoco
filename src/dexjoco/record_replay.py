@@ -7,7 +7,7 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 import shutil
 from contextlib import closing
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import tyro
@@ -15,14 +15,20 @@ from lerobot.datasets import LeRobotDataset
 from lerobot.datasets.lerobot_dataset import LeRobotDatasetMetadata
 from tqdm import tqdm
 
+from dexjoco.actions import quaternion_to_rotvec, rotvec_to_quaternion
 from dexjoco.replay_dataset import ReplayResult, load_replay_data, replay_batches
 
 
 def build_features(result: ReplayResult) -> dict[str, Any]:
     """Build features from the replay's states, actions, and RGB frames."""
     assert result.images is not None
+    state_dim = result.states[0].shape[1]
     features: dict[str, Any] = {
-        "action": {"dtype": "float64", "shape": (result.actions[0].shape[1],)},
+        "action": {"dtype": "float64", "shape": (state_dim,)},
+        "action_rotvec": {
+            "dtype": "float64",
+            "shape": (state_dim - (2 if state_dim == 46 else 1),),
+        },
         "observation.state": {"dtype": "float64", "shape": (result.states[0].shape[1],)},
     }
     for camera, frames in result.images[0].items():
@@ -43,6 +49,7 @@ def record_replay(
     n_envs: int = 10,
     use_async_envs: bool = True,
     save_failed: bool = False,
+    action_format: Literal["quaternion", "rotvec"] = "quaternion",
 ) -> None:
     """Record task replays, optionally with fresh visual randomization.
 
@@ -55,6 +62,7 @@ def record_replay(
         randomize: Randomize cameras, lighting, and table textures.
         render_hw: Image resolution as (height, width); None uses the environment default.
         save_failed: Save failed episodes too; otherwise raise on any failed batch.
+        action_format: Source action representation used for replay; both are saved.
     """
     if output_dir.exists():
         raise FileExistsError(f"Output directory already exists: {output_dir}")
@@ -65,7 +73,7 @@ def record_replay(
         for key in metadata.features
         if key.startswith("observation.images.")
     ]
-    actions, initial_states = load_replay_data(dataset_dir)
+    actions, initial_states = load_replay_data(dataset_dir, action_format)
     dataset: LeRobotDataset | None = None
     source_index = 0
 
@@ -76,6 +84,7 @@ def record_replay(
                     actions,
                     initial_states,
                     task=task,
+                    action_format=action_format,
                     n_envs=n_envs,
                     use_async_envs=use_async_envs,
                     return_images=True,
@@ -112,9 +121,17 @@ def record_replay(
                             f"Source episode {source_index} must have exactly one task prompt"
                         )
                     task_description = episode_tasks[0]
+                    bimanual = result.states[i].shape[1] == 46
+                    if action_format == "quaternion":
+                        quaternion_actions = result.actions[i]
+                        rotvec_actions = quaternion_to_rotvec(quaternion_actions, bimanual=bimanual)
+                    else:
+                        rotvec_actions = result.actions[i]
+                        quaternion_actions = rotvec_to_quaternion(rotvec_actions, bimanual=bimanual)
                     for t in range(len(result.actions[i])):
                         frame = {
-                            "action": result.actions[i][t],
+                            "action": quaternion_actions[t],
+                            "action_rotvec": rotvec_actions[t],
                             "observation.state": result.states[i][t],
                             "task": task_description,
                         }

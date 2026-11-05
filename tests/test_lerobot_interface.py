@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import cast
+from typing import Literal, cast
 
 import av
 import gymnasium as gym
@@ -43,12 +43,73 @@ def test_official_cli_discovers_plugin() -> None:
     "task,bimanual",
     [
         ("water_plant", False), ("fold_glasses", False), ("click_mouse", False),
+        ("pinch_tongs", False), ("pick_bucket", False), ("hammer_nail", False),
+        ("bimanual_unlock_ipad", True), ("bimanual_hanoi", True),
+        ("bimanual_assembly", True), ("bimanual_photograph", True),
+        ("bimanual_microwave_cook", True),
+    ],
+)
+@pytest.mark.parametrize("use_async_envs", [False, True])
+@pytest.mark.parametrize(
+    "width,height", [(640, 480), (640, 640), (1280, 720), (2560, 1440)],
+    ids=["640x480", "640x640", "1280x720", "2560x1440"],
+)
+def test_render_resolution(
+    task: str, bimanual: bool, use_async_envs: bool, width: int, height: int,
+) -> None:
+    cfg = DexJoCoEnvConfig(
+        task=task,
+        bimanual=bimanual,
+        render_width=width,
+        render_height=height,
+    )
+    features = env_to_policy_features(cfg)
+    cameras = {
+        key.removeprefix("pixels/") for key in cfg.features if key.startswith("pixels/")
+    }
+    for camera in cameras:
+        assert cfg.features[f"pixels/{camera}"].shape == (height, width, 3)
+        assert features[f"observation.images.{camera}"].shape == (3, height, width)
+
+    env = make_env(cfg, n_envs=1, use_async_envs=use_async_envs)["dexjoco"][TASK_IDS[task]]
+    try:
+        assert isinstance(env, (gym.vector.SyncVectorEnv, gym.vector.AsyncVectorEnv))
+        obs: dict
+        obs, _ = env.reset(seed=1)
+        for step_index in range(2):
+            assert set(obs["pixels"]) == cameras
+            assert env.observation_space.contains(obs)
+            processed = preprocess_observation(obs)
+            for camera, pixels in obs["pixels"].items():
+                assert pixels.shape == (1, height, width, 3)
+                assert pixels.dtype == np.uint8
+                image = processed[f"observation.images.{camera}"]
+                assert image.shape == (1, 3, height, width)
+                assert image.dtype == torch.float32
+            frame = env.call("render")[0]
+            assert frame.shape == (height, width, 3)
+            assert frame.dtype == np.uint8
+            np.testing.assert_array_equal(frame, obs["pixels"]["ego"][0])
+            if step_index == 0:
+                obs, _, _, _, _ = env.step(np.zeros((1, *cfg.features["action"].shape)))
+    finally:
+        env.close()
+
+
+@pytest.mark.parametrize(
+    "task,bimanual",
+    [
+        ("water_plant", False), ("fold_glasses", False), ("click_mouse", False),
         ("pinch_tongs", False), ("pick_bucket", False), ("hammer_nail", False), ("bimanual_unlock_ipad", True), ("bimanual_hanoi", True), ("bimanual_assembly", True), ("bimanual_photograph", True), ("bimanual_microwave_cook", True),
     ],
 )
 @pytest.mark.parametrize("use_async_envs", [False, True])
-def test_batch_replay_initial_states(task: str, bimanual: bool, use_async_envs: bool) -> None:
-    cfg = DexJoCoEnvConfig(task=task, bimanual=bimanual, render_mode="none")
+@pytest.mark.parametrize("action_format", ["quaternion", "rotvec"])
+def test_batch_replay_initial_states(
+    task: str, bimanual: bool, use_async_envs: bool,
+    action_format: Literal["quaternion", "rotvec"],
+) -> None:
+    cfg = DexJoCoEnvConfig(task=task, bimanual=bimanual, render_mode="none", action_format=action_format)
     reference = TASKS[TASK_IDS[task]](render_mode="none")
     try:
         initial_states = [reference.reset(seed=seed)[1]["initial_state"] for seed in (1, 2)]

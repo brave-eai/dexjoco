@@ -3,3 +3,4 @@ Commit: 8d23b0fab23b17a58c4b55f3942e17013aaf8267
 Submodule dexjoco-data-converter/src/3rd/diffusion_policy: 5ba07ac6661db573af695b419a7947ecb704690f
 Local directory: dexjoco_ref/ (ignored by Git)
 Local change: removed per-step wall-clock pacing from all task environments; simulation timesteps are unchanged.
+Local changes for dataset v1.1: microwave and photograph restore explicit initial_gripper_pose from state columns [61:93]; matching observation spaces and proprio_keys include this field. The field is constant across frames. Expanded state arrays use float64, preserving the original 61 columns exactly. The microwave legacy-default exception is encoded in the dataset, not the restorer. Photograph restoration also preserves logo and target-region sizes when restoring table height.

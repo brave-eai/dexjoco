@@ -68,7 +68,7 @@ class HammerNailEnv(gym.Env):
     def __init__(
         self,
         render_mode: Literal["rgb_array", "human", "none"] = "rgb_array",
-        action_format: Literal["rotvec", "quaternion"] = "rotvec",
+        action_format: Literal["rotvec", "quaternion"] = "quaternion",
         randomize: bool = False,
         randomize_dynamics: bool = False,
         render_width: int = 640,
@@ -446,6 +446,8 @@ class HammerNailEnv(gym.Env):
             "Rendering is disabled because render_mode='none'."
         )
         if self.renderer is None:
+            self.model.vis.global_.offwidth = max(self.model.vis.global_.offwidth, self.render_width)
+            self.model.vis.global_.offheight = max(self.model.vis.global_.offheight, self.render_height)
             self.renderer = mujoco.Renderer(
                 self.model, height=self.render_height, width=self.render_width
             )

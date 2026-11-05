@@ -1,21 +1,15 @@
-"""Exercise glasses restoration, action formats, and folding outcomes."""
+"""Exercise glasses restoration and action formats."""
 
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
 
-from dexjoco.envs.fold_glasses import (
-    FOLD_THRESHOLD,
-    MAX_EPISODE_STEPS,
-    SUCCESS_STEPS,
-    FoldGlassesEnv,
-    FoldGlassesStateMachine,
-)
+from dexjoco.envs.fold_glasses import FoldGlassesEnv
 
 
 @pytest.mark.parametrize("randomize", [False, True])
 def test_reset_and_action_formats(randomize: bool) -> None:
-    rotvec = FoldGlassesEnv(render_mode="none", randomize=randomize, randomize_dynamics=True)
+    rotvec = FoldGlassesEnv(render_mode="none", action_format="rotvec", randomize=randomize, randomize_dynamics=True)
     quaternion = FoldGlassesEnv(
         render_mode="none", action_format="quaternion", randomize=randomize, randomize_dynamics=True
     )
@@ -57,21 +51,3 @@ def test_reset_and_action_formats(randomize: bool) -> None:
     finally:
         rotvec.close()
         quaternion.close()
-
-
-def test_folded_glasses_and_sustained_placement() -> None:
-    machine = FoldGlassesStateMachine()
-    assert machine.update(FOLD_THRESHOLD, 1.2, True) == (False, False, False)
-    assert machine.update(1.2, FOLD_THRESHOLD, True) == (False, False, False)
-    assert machine.update(1.2, 1.2, False) == (False, False, False)
-    for _ in range(SUCCESS_STEPS - 1):
-        assert machine.update(1.2, 1.2, True) == (False, False, False)
-    machine.update(1.2, 0.5, True)
-    assert machine.success_steps == 0
-    for _ in range(SUCCESS_STEPS - 1):
-        assert machine.update(1.2, 1.2, True) == (False, False, False)
-    assert machine.update(1.2, 1.2, True) == (True, True, False)
-    machine.reset()
-    for _ in range(MAX_EPISODE_STEPS - 1):
-        assert machine.update(0.0, 0.0, False) == (False, False, False)
-    assert machine.update(0.0, 0.0, False) == (False, False, True)

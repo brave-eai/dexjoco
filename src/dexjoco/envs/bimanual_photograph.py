@@ -84,7 +84,7 @@ class BimanualPhotographEnv(gym.Env):
     def __init__(
         self,
         render_mode: Literal["rgb_array", "human", "none"] = "rgb_array",
-        action_format: Literal["rotvec", "quaternion"] = "rotvec",
+        action_format: Literal["rotvec", "quaternion"] = "quaternion",
         randomize: bool = False,
         randomize_dynamics: bool = False,
         render_width: int = 640,
@@ -205,10 +205,11 @@ class BimanualPhotographEnv(gym.Env):
         rot_dim = 3 if action_format == "rotvec" else 4
         rot_limit = np.pi if action_format == "rotvec" else 1.0
         hand_limits = self.model.actuator_ctrlrange[self.finger_actuator_ids]
-        # Rotvec recordings group each arm with its hand; quaternion policy actions
-        # keep both poses before the two hand blocks, matching DualArmPolicyWrapper.
+        # Group each arm pose with its hand, matching the original recordings.
         action_order = (
-            np.r_[0:6, 12:28, 6:12, 28:44] if action_format == "rotvec" else np.arange(46)
+            np.r_[0:6, 12:28, 6:12, 28:44]
+            if action_format == "rotvec"
+            else np.r_[0:7, 14:30, 7:14, 30:46]
         )
         self.action_space = spaces.Box(
             low=np.concatenate(
@@ -276,10 +277,14 @@ class BimanualPhotographEnv(gym.Env):
             camera_pose = self.orig_camera_pose.copy()
             camera_pose[:2] = self.reset_rng.uniform([-0.30, 0.1], [-0.20, 0.2])
             camera_pose[2] += delta_h + 0.002
+            initial_gripper_pose = np.tile(FINGER_HOME, 2)
         else:
             delta_h = float(initial_state["table_delta_height"])
             logo_pose = np.asarray(initial_state["orig_logo_pose"], dtype=np.float64)
             camera_pose = np.asarray(initial_state["orig_camera_pose"], dtype=np.float64)
+            initial_gripper_pose = np.asarray(
+                initial_state["initial_gripper_pose"], dtype=np.float64
+            )
         self.model.geom_pos[self.logo_geom_id] = logo_pose[:3]
         self.model.geom_quat[self.logo_geom_id] = logo_pose[3:7]
         self.model.geom_pos[self.region_geom_id] = logo_pose[:3] + TARGET_OFFSET
@@ -291,7 +296,7 @@ class BimanualPhotographEnv(gym.Env):
         self.model.body("table").pos[2] = self.orig_table_z + delta_h
         self.model.geom_size[self.leg_ids, 1] = self.leg_half_lengths + delta_h
         self.data.qpos[self.model.jnt_qposadr[self.arm_joint_ids]] = ARM_HOME
-        self.data.qpos[self.finger_qpos_ids] = np.tile(FINGER_HOME, 2)
+        self.data.qpos[self.finger_qpos_ids] = initial_gripper_pose
         if self.randomize:
             self.randomize_lighting()
             self.randomize_camera()
@@ -312,6 +317,7 @@ class BimanualPhotographEnv(gym.Env):
                 "orig_camera_pose": camera_pose.copy(),
                 "orig_logo_pose": logo_pose.copy(),
                 "table_delta_height": float(delta_h),
+                "initial_gripper_pose": initial_gripper_pose.copy(),
             },
         }
 
@@ -319,12 +325,9 @@ class BimanualPhotographEnv(gym.Env):
         action = np.asarray(action, dtype=np.float64)
         assert action.shape == (self.action_dim,), f"Expected {self.action_dim} action values"
         pose_dim = 6 if self.action_format == "rotvec" else 7
-        if self.action_format == "rotvec":
-            pose_offsets = (0, 22)
-            finger_targets = np.concatenate((action[6:22], action[28:44]))
-        else:
-            pose_offsets = (0, 7)
-            finger_targets = action[14:46]
+        arm_dim = pose_dim + 16
+        pose_offsets = (0, arm_dim)
+        finger_targets = np.concatenate((action[pose_dim:arm_dim], action[arm_dim + pose_dim:]))
         for offset, mocap in zip(pose_offsets, self.mocap_ids, strict=True):
             pose = action[offset : offset + pose_dim]
             if np.allclose(pose, 0.0):
@@ -460,6 +463,8 @@ class BimanualPhotographEnv(gym.Env):
     def render_camera(self, camera):
         assert self.render_mode != "none", "Rendering is disabled because render_mode='none'."
         if self.renderer is None:
+            self.model.vis.global_.offwidth = max(self.model.vis.global_.offwidth, self.render_width)
+            self.model.vis.global_.offheight = max(self.model.vis.global_.offheight, self.render_height)
             self.renderer = mujoco.Renderer(
                 self.model, height=self.render_height, width=self.render_width
             )

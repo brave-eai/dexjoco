@@ -17,7 +17,7 @@ from dexjoco.envs.bimanual_unlock_ipad import (
 
 @pytest.mark.parametrize("randomize", [False, True])
 def test_reset_and_action_formats(randomize: bool) -> None:
-    rotvec = BimanualUnlockIpadEnv(render_mode="none", randomize=randomize, randomize_dynamics=True)
+    rotvec = BimanualUnlockIpadEnv(render_mode="none", action_format="rotvec", randomize=randomize, randomize_dynamics=True)
     quaternion = BimanualUnlockIpadEnv(render_mode="none", action_format="quaternion", randomize=randomize, randomize_dynamics=True)
     try:
         obs, info = quaternion.reset(seed=12)
@@ -47,6 +47,9 @@ def test_reset_and_action_formats(randomize: bool) -> None:
             action_quat[30:46],
         ))
         assert rotvec.action_space.contains(action_rotvec.astype(np.float32))
+        action_quat = np.concatenate((
+            action_quat[:7], action_quat[14:30], action_quat[7:14], action_quat[30:46],
+        ))
         assert quaternion.action_space.contains(action_quat.astype(np.float32))
         a = rotvec.step(action_rotvec)
         b = quaternion.step(action_quat)
@@ -112,7 +115,7 @@ def test_repeated_digits_and_status_queries(monkeypatch: pytest.MonkeyPatch) -> 
         env.reset(seed=7)
         pressed: set[int] = set()
         monkeypatch.setattr(env, "pressed_buttons", lambda: pressed.copy())
-        action = np.zeros(44)
+        action = np.zeros(env.action_dim)
         pressed.add(env.button_ids[1])
         env.step(action)
         env.step(action)
@@ -144,7 +147,7 @@ def test_screen_animation_without_renderer(monkeypatch: pytest.MonkeyPatch) -> N
     try:
         env.reset(seed=4)
         monkeypatch.setattr(env, "pressed_buttons", lambda: {env.button_ids[2]})
-        action = np.zeros(44)
+        action = np.zeros(env.action_dim)
         env.step(action)
         assert env.model.geom_matid[env.screen_id] == env.locked_material
         for _ in range(UNLOCK_DELAY_STEPS - 1):

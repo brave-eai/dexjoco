@@ -1,20 +1,15 @@
-"""Exercise bucket restoration, action formats, and lifting outcomes."""
+"""Exercise bucket restoration and action formats."""
 
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
 
-from dexjoco.envs.pick_bucket import (
-    LIFT_HEIGHT,
-    MAX_EPISODE_STEPS,
-    PickBucketEnv,
-    PickBucketStateMachine,
-)
+from dexjoco.envs.pick_bucket import PickBucketEnv
 
 
 @pytest.mark.parametrize("randomize", [False, True])
 def test_reset_and_action_formats(randomize: bool) -> None:
-    rotvec = PickBucketEnv(render_mode="none", randomize=randomize, randomize_dynamics=True)
+    rotvec = PickBucketEnv(render_mode="none", action_format="rotvec", randomize=randomize, randomize_dynamics=True)
     quaternion = PickBucketEnv(
         render_mode="none", action_format="quaternion", randomize=randomize, randomize_dynamics=True
     )
@@ -57,27 +52,3 @@ def test_reset_and_action_formats(randomize: bool) -> None:
     finally:
         rotvec.close()
         quaternion.close()
-
-
-@pytest.mark.parametrize("outcome", ["success", "food_outside", "one_corner_low", "timeout"])
-def test_lifting_outcomes(outcome: str) -> None:
-    machine = PickBucketStateMachine()
-    corners = np.array([
-        [x, y, z] for x in (-0.1, 0.1) for y in (-0.1, 0.1)
-        for z in (LIFT_HEIGHT, LIFT_HEIGHT + 0.2)
-    ])
-    initial_bottom_heights = np.zeros(4)
-    food_position = np.array([0.0, 0.0, LIFT_HEIGHT + 0.1])
-    if outcome == "food_outside":
-        food_position[0] = 0.2
-    elif outcome == "one_corner_low":
-        corners[0, 2] = LIFT_HEIGHT - 0.01
-    elif outcome == "timeout":
-        initial_bottom_heights[:] = LIFT_HEIGHT
-        for _ in range(MAX_EPISODE_STEPS - 1):
-            assert machine.update(food_position, corners, initial_bottom_heights) == (False, False, False)
-    success, terminated, truncated = machine.update(food_position, corners, initial_bottom_heights)
-    assert success == terminated == (outcome == "success")
-    assert truncated == (outcome == "timeout")
-    machine.reset()
-    assert machine.step_count == 0

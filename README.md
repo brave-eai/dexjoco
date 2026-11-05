@@ -4,6 +4,44 @@
 `dexjoco_data_converter`，原有转换、回放命令不变。LeRobot 0.6.1 的官方 CLI
 会自动导入 `lerobot_env_dexjoco`，注册 `--env.type=dexjoco`。
 
+v1.1 原始数据位于 `/data/dexjoco_raw_datasets_v1.1`，新转换的 LeRobot 数据位于
+`datasets/lerobot_v1.1/{rand_obj,rand_full}/<task>`。转换保留全部轨迹；每个数据集的
+`replay_validation.json` 保存筛选前逐条回放结果。
+
+例如，从 v1.1 转换 water_plant 并验证全部轨迹：
+
+```bash
+uv run dexjoco-convert \
+  --task water_plant \
+  --zarr-dataset-dir /data/dexjoco_raw_datasets_v1.1/dexjoco_raw_datasets/water_plant \
+  --output-dir datasets/lerobot_v1.1/rand_obj/water_plant \
+  --no-delete-failed-episodes \
+  --n-envs 4
+```
+
+转换和回放入口会在导入 NumPy 前配置 Haswell 数值内核。若调用方已导入 NumPy，
+应在启动 Python 前设置以下环境变量：
+
+```bash
+export OPENBLAS_CORETYPE=HASWELL
+export NPY_DISABLE_CPU_FEATURES="AVX512F,AVX512CD,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL"
+```
+
+微波炉和拍照任务的原始 `state` 在第 61–92 列保存固定的
+`initial_gripper_pose`（右手 16 维、左手 16 维）。该字段转换后保存在
+`replay_initial_values.jsonl`，不增加策略机器人观测的维数。
+
+转换和 `dexjoco-record-replay` 同时保存 float64 `action`（原始四元数动作，单臂 23 维、
+双臂 46 维）和 `action_rotvec`（由同一份四元数动作生成，单臂 22 维、双臂 44 维）。
+默认环境、数据集回放和重新录制使用四元数。环境配置可通过
+`--env.action_format=rotvec` 切换；数据集回放和重新录制使用 `--action-format rotvec`，
+此时读取 `action_rotvec`。LeRobot 常规训练默认使用 `action`；训练旋转向量策略时，
+需显式选择对应字段、配置动作维数，并使用旋转向量环境。
+
+新数据集全部通过回放校验后，可运行
+`uv run pytest tests --replay-dataset-root datasets/lerobot_v1.1` 测试此版本。
+普通 `uv run pytest` 默认跳过完整数据集回放，仅在显式传入 `--replay-dataset-root` 时运行。
+
 必须使用 `--env.task=water_plant`、`--env.task=fold_glasses`、`--env.task=click_mouse`、
 `--env.task=pinch_tongs`、`--env.task=pick_bucket`、`--env.task=hammer_nail` 或
 `--env.task=bimanual_hanoi`、`--env.task=bimanual_microwave_cook`、`--env.task=bimanual_assembly`、`--env.task=bimanual_unlock_ipad`、`--env.task=bimanual_photograph` 明确选择任务。
@@ -13,21 +51,21 @@ pinch_tongs 为 3，pick_bucket 为 4，hammer_nail 为 5，bimanual_microwave_c
 
 | 任务 | agent_pos | 动作 | pixels 相机 |
 | --- | --- | --- | --- |
-| water_plant | 23 维 | 22 维 | ego、wrist |
-| fold_glasses | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
-| click_mouse | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
-| pinch_tongs | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
-| pick_bucket | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
-| hammer_nail | 23 维 | 22 维 | ego、ego_left、ego_right、wrist |
-| bimanual_microwave_cook | 46 维 | 44 维 | ego、wrist_left、wrist_right |
-| bimanual_unlock_ipad | 46 维 | 44 维 | ego、wrist_left、wrist_right |
-| bimanual_hanoi | 46 维 | 44 维 | ego、wrist_left、wrist_right |
-| bimanual_assembly | 46 维 | 44 维 | ego、wrist_left、wrist_right |
-| bimanual_photograph | 46 维 | 44 维 | ego、wrist_left、wrist_right |
+| water_plant | 23 维 | 23 维（可选 22） | ego、ego_left、ego_right、wrist |
+| fold_glasses | 23 维 | 23 维（可选 22） | ego、ego_left、ego_right、wrist |
+| click_mouse | 23 维 | 23 维（可选 22） | ego、ego_left、ego_right、wrist |
+| pinch_tongs | 23 维 | 23 维（可选 22） | ego、ego_left、ego_right、wrist |
+| pick_bucket | 23 维 | 23 维（可选 22） | ego、ego_left、ego_right、wrist |
+| hammer_nail | 23 维 | 23 维（可选 22） | ego、ego_left、ego_right、wrist |
+| bimanual_microwave_cook | 46 维 | 46 维（可选 44） | ego、wrist_left、wrist_right |
+| bimanual_unlock_ipad | 46 维 | 46 维（可选 44） | ego、wrist_left、wrist_right |
+| bimanual_hanoi | 46 维 | 46 维（可选 44） | ego、wrist_left、wrist_right |
+| bimanual_assembly | 46 维 | 46 维（可选 44） | ego、wrist_left、wrist_right |
+| bimanual_photograph | 46 维 | 46 维（可选 44） | ego、wrist_left、wrist_right |
 
 图像为 HWC uint8。官方预处理将观测转换为 `observation.state` 和
-`observation.images.<camera>`。动作为位置、旋转向量和手指目标。
-Hanoi 动作排列为右臂位姿、右手关节、左臂位姿、左手关节；状态排列为右臂位姿、
+`observation.images.<camera>`。默认动作为位置、wxyz 四元数和手指目标。所有环境使用原 dm_robotics 姿态控制器。
+双臂两种动作格式均排列为右臂位姿、右手关节、左臂位姿、左手关节；状态排列为右臂位姿、
 左臂位姿、右手关节、左手关节，旋转为 wxyz 四元数。
 `render_mode=none` 时不返回或声明图像。
 

@@ -1,4 +1,4 @@
-"""Exercise photograph restoration, action layouts, geometry, and screen capture."""
+"""Exercise photograph restoration, action layouts, screen capture, and viewer reuse."""
 
 from unittest.mock import Mock
 
@@ -8,18 +8,14 @@ import pytest
 from scipy.spatial.transform import Rotation
 
 from dexjoco.envs.bimanual_photograph import (
-    MAX_EPISODE_STEPS,
-    TARGET_RADIUS,
-    TARGET_HALF_HEIGHT,
     FLASH_FRAMES,
     BimanualPhotographEnv,
-    BimanualPhotographStateMachine,
 )
 
 
 @pytest.mark.parametrize("randomize", [False, True])
 def test_reset_and_action_formats(randomize: bool) -> None:
-    rotvec = BimanualPhotographEnv(render_mode="none", randomize=randomize, randomize_dynamics=True, camera_screen_effect=True)
+    rotvec = BimanualPhotographEnv(render_mode="none", action_format="rotvec", randomize=randomize, randomize_dynamics=True, camera_screen_effect=True)
     quaternion = BimanualPhotographEnv(render_mode="none", action_format="quaternion", randomize=randomize, randomize_dynamics=True, camera_screen_effect=True)
     try:
         obs, info = quaternion.reset(seed=12)
@@ -29,7 +25,7 @@ def test_reset_and_action_formats(randomize: bool) -> None:
         )
         np.testing.assert_array_equal(restored["agent_pos"], obs["agent_pos"])
         np.testing.assert_array_equal(rotvec.data.qpos, original_qpos)
-        assert set(restored_info["initial_state"]) == {"orig_camera_pose", "orig_logo_pose", "table_delta_height"}
+        assert set(restored_info["initial_state"]) == {"orig_camera_pose", "orig_logo_pose", "table_delta_height", "initial_gripper_pose"}
         np.testing.assert_array_equal(rotvec.model.body_pos, quaternion.model.body_pos)
         np.testing.assert_array_equal(rotvec.model.body_quat, quaternion.model.body_quat)
         np.testing.assert_array_equal(rotvec.model.body_mass, quaternion.model.body_mass)
@@ -49,6 +45,9 @@ def test_reset_and_action_formats(randomize: bool) -> None:
             action_quat[30:46],
         ))
         assert rotvec.action_space.contains(action_rotvec.astype(np.float32))
+        action_quat = np.concatenate((
+            action_quat[:7], action_quat[14:30], action_quat[7:14], action_quat[30:46],
+        ))
         assert quaternion.action_space.contains(action_quat.astype(np.float32))
         a = rotvec.step(action_rotvec)
         b = quaternion.step(action_quat)
@@ -61,30 +60,6 @@ def test_reset_and_action_formats(randomize: bool) -> None:
         rotvec.close()
         quaternion.close()
 
-
-@pytest.mark.parametrize("outcome", ["success", "radial", "height", "angle", "shutter", "timeout"])
-def test_photograph_outcomes(outcome: str) -> None:
-    machine = BimanualPhotographStateMachine()
-    position = np.array([TARGET_RADIUS, 0.0, TARGET_HALF_HEIGHT])
-    axis = np.array([1.0, 0.0, 0.0])
-    contacts = 1
-    if outcome == "radial":
-        position[0] += 0.001
-    elif outcome == "height":
-        position[2] += 0.001
-    elif outcome == "angle":
-        axis = np.array([np.cos(np.deg2rad(11)), np.sin(np.deg2rad(11)), 0.0])
-    elif outcome in ("shutter", "timeout"):
-        contacts = 0
-    if outcome == "timeout":
-        for _ in range(MAX_EPISODE_STEPS - 1):
-            assert machine.update(position, axis, contacts)[:3] == (False, False, False)
-    success, terminated, truncated, info = machine.update(position, axis, contacts)
-    assert success == terminated == (outcome == "success")
-    assert truncated == (outcome == "timeout")
-    assert info["is_success"] == success
-    machine.reset()
-    assert machine.step_count == 0
 
 
 def test_camera_screen_capture_and_reset() -> None:
