@@ -51,6 +51,7 @@ def record_replay(
     save_failed: bool = False,
     action_format: Literal["quaternion", "rotvec"] = "quaternion",
     seed: int = 0,
+    offsamples: int | None = None,
 ) -> None:
     """Record task replays, optionally with fresh visual randomization.
 
@@ -65,6 +66,7 @@ def record_replay(
         save_failed: Save failed episodes too; otherwise raise on any failed batch.
         action_format: Source action representation used for replay; both are saved.
         seed: Visual randomization seed; episode i uses seed + i. Initial states are unchanged.
+        offsamples: Offscreen multisampling override; None uses the XML setting.
     """
     if output_dir.exists():
         raise FileExistsError(f"Output directory already exists: {output_dir}")
@@ -93,6 +95,7 @@ def record_replay(
                     randomize=randomize,
                     render_hw=render_hw,
                     seed=seed,
+                    offsamples=offsamples,
                 )
             ) as batches,
             tqdm(total=len(actions), desc="Recording replay", unit="episode") as progress,

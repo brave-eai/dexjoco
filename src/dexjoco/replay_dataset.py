@@ -148,11 +148,13 @@ def replay_batches(
     task: str,
     action_format: Literal["quaternion", "rotvec"] = "quaternion",
     seed: int = 0,
+    offsamples: int | None = None,
 ) -> Generator[ReplayResult, None, None]:
     """Yield each batch in episode order; exhaust or close to release environments.
 
     render_hw specifies (height, width); None uses the environment default.
     seed controls only visual randomization, using seed + episode index.
+    offsamples overrides offscreen multisampling; None preserves the XML value.
     """
     if n_envs < 1 or extend_steps < 0:
         raise ValueError("n_envs must be positive and extend_steps must be nonnegative")
@@ -170,6 +172,7 @@ def replay_batches(
         action_format=action_format,
         render_mode="rgb_array" if return_images else "none",
         randomize=randomize,
+        offsamples=offsamples,
         render_height=height,
         render_width=width,
     )
@@ -237,6 +240,7 @@ def check_replay_success(
     task: str,
     action_format: Literal["quaternion", "rotvec"] = "quaternion",
     seed: int = 0,
+    offsamples: int | None = None,
 ) -> NDArray[np.bool_]:
     """Replay once without rendering, returning success in episode index order."""
     actions, initial_states = load_replay_data(dataset_dir, action_format)
@@ -252,6 +256,7 @@ def check_replay_success(
             task=task,
             action_format=action_format,
             seed=seed,
+            offsamples=offsamples,
         )
     ) as batches:
         for result in batches:
@@ -272,6 +277,7 @@ def check_replay_consistency(
     task: str,
     action_format: Literal["quaternion", "rotvec"] = "quaternion",
     seed: int = 0,
+    offsamples: int | None = None,
 ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
     """Return exact consistency and first-pass success in episode index order.
 
@@ -294,6 +300,7 @@ def check_replay_consistency(
                 task=task,
                 action_format=action_format,
                 seed=seed,
+                offsamples=offsamples,
             )
         ) as first_batches,
         closing(
@@ -307,6 +314,7 @@ def check_replay_consistency(
                 task=task,
                 action_format=action_format,
                 seed=seed,
+                offsamples=offsamples,
             )
         ) as second_batches,
     ):
