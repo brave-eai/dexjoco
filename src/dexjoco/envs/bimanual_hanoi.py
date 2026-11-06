@@ -391,9 +391,6 @@ class BimanualHanoiEnv(gym.Env):
         finger_targets = np.concatenate((action[pose_dim:arm_dim], action[arm_dim + pose_dim:]))
         for offset, mocap in zip(pose_offsets, self.mocap_ids, strict=True):
             pose = action[offset : offset + pose_dim]
-            if np.allclose(pose, 0.0):
-                # Keep the legacy zero-pose hold behavior used by the recordings.
-                continue
             self.data.mocap_pos[mocap] = pose[:3]
             self.data.mocap_quat[mocap] = (
                 Rotation.from_rotvec(pose[3:]).as_quat(scalar_first=True)

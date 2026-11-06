@@ -145,7 +145,7 @@ def test_repeated_digits_and_status_queries(monkeypatch: pytest.MonkeyPatch) -> 
         env.reset(seed=7)
         pressed: set[int] = set()
         monkeypatch.setattr(env, "pressed_buttons", lambda: pressed.copy())
-        action = np.zeros(env.action_dim)
+        action = env.observation()["agent_pos"].astype(np.float64)
         pressed.add(env.button_ids[1])
         env.step(action)
         env.step(action)
@@ -177,7 +177,7 @@ def test_screen_animation_without_renderer(monkeypatch: pytest.MonkeyPatch) -> N
     try:
         env.reset(seed=4)
         monkeypatch.setattr(env, "pressed_buttons", lambda: {env.button_ids[2]})
-        action = np.zeros(env.action_dim)
+        action = env.observation()["agent_pos"].astype(np.float64)
         env.step(action)
         assert env.model.geom_matid[env.screen_id] == env.locked_material
         for _ in range(UNLOCK_DELAY_STEPS - 1):

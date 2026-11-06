@@ -16,6 +16,6 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--replay-n-envs",
         type=int,
-        default=4,
+        default=5,
         help="Number of parallel environments used by dataset replay tests.",
     )

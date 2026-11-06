@@ -22,6 +22,7 @@ from lerobot.processor import (
 from lerobot.scripts.lerobot_eval import rollout
 from lerobot.utils.io_utils import write_video
 
+from dexjoco.actions import quaternion_to_rotvec
 from dexjoco.configs import DexJoCoEnvConfig
 from dexjoco.envhub import TASK_IDS, TASKS
 from dexjoco.replay_dataset import batch_replay_episode
@@ -91,7 +92,7 @@ def test_render_resolution(
             assert frame.dtype == np.uint8
             np.testing.assert_array_equal(frame, obs["pixels"]["ego"][0])
             if step_index == 0:
-                obs, _, _, _, _ = env.step(np.zeros((1, *cfg.features["action"].shape)))
+                obs, _, _, _, _ = env.step(obs["agent_pos"].astype(np.float64))
     finally:
         env.close()
 
@@ -112,14 +113,18 @@ def test_batch_replay_initial_states(
     cfg = DexJoCoEnvConfig(task=task, bimanual=bimanual, render_mode="none", action_format=action_format)
     reference = TASKS[TASK_IDS[task]](render_mode="none")
     try:
-        initial_states = [reference.reset(seed=seed)[1]["initial_state"] for seed in (1, 2)]
+        resets = [reference.reset(seed=seed) for seed in (1, 2)]
+        initial_states = [info["initial_state"] for _, info in resets]
+        actions = np.stack([obs["agent_pos"] for obs, _ in resets]).astype(np.float64)
+        if action_format == "rotvec":
+            actions = quaternion_to_rotvec(actions, bimanual=bimanual)
     finally:
         reference.close()
     env = make_env(cfg, n_envs=2, use_async_envs=use_async_envs)["dexjoco"][TASK_IDS[task]]
     try:
         result = batch_replay_episode(
             env,
-            np.zeros((2, 1, *cfg.features["action"].shape), dtype=np.float64),
+            actions[:, None, :],
             initial_states,
             np.ones(2, dtype=np.int64),
             extend_steps=0,
@@ -162,7 +167,7 @@ def test_official_rollout_and_video(
             for key in expected_inputs:
                 assert observation[key].shape == (2, *features[key].shape)
                 assert observation[key].dtype == torch.float32
-            return torch.zeros((2, *features["action"].shape))
+            return observation["observation.state"].clone()
 
     env = make_env(cfg, n_envs=2, use_async_envs=use_async_envs)["dexjoco"][TASK_IDS[task]]
     try:

@@ -278,19 +278,14 @@ class HammerNailEnv(gym.Env):
         )
         pose_dim = 6 if self.action_format == "rotvec" else 7
         finger_targets = action[pose_dim:]
-        if np.allclose(action[:pose_dim], 0.0):
-            # TODO: Replace the legacy zero-pose hack with an explicit hold command.
-            # Keep the previous target (the initial pose immediately after reset).
-            pass
+        if self.action_format == "rotvec":
+            target_quat = Rotation.from_rotvec(action[3:6]).as_quat(
+                scalar_first=True
+            )
         else:
-            if self.action_format == "rotvec":
-                target_quat = Rotation.from_rotvec(action[3:6]).as_quat(
-                    scalar_first=True
-                )
-            else:
-                target_quat = action[3:7]
-            self.data.mocap_pos[self.robot_mocap_id] = action[:3]
-            self.data.mocap_quat[self.robot_mocap_id] = target_quat
+            target_quat = action[3:7]
+        self.data.mocap_pos[self.robot_mocap_id] = action[:3]
+        self.data.mocap_quat[self.robot_mocap_id] = target_quat
 
         for _ in range(int(CONTROL_TIMESTEP // PHYSICS_TIMESTEP)):
             self.apply_arm_control()
