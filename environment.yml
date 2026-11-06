@@ -1,4 +1,4 @@
-name: dexjoco-lerobot
+name: dexjoco
 channels:
   - conda-forge
   - nodefaults

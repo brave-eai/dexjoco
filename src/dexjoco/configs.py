@@ -15,7 +15,7 @@ class DexJoCoEnvConfig(HubEnvConfig):
 
     # This plugin requires a non-null task, while EnvConfig also allows None.
     task: str = field(kw_only=True)  # pyright: ignore[reportIncompatibleVariableOverride]
-    bimanual: bool = False
+    bimanual: bool | None = None
     action_format: Literal["quaternion", "rotvec"] = "quaternion"
     render_mode: Literal["rgb_array", "human", "none"] = "rgb_array"
     randomize: bool = False
@@ -27,6 +27,13 @@ class DexJoCoEnvConfig(HubEnvConfig):
     render_height: int = 640
 
     def __post_init__(self) -> None:
+        from dexjoco.envhub import TASK_IDS, TASKS
+
+        constructor = TASKS[TASK_IDS[self.task]]
+        task_bimanual = self.task.startswith("bimanual_")
+        if self.bimanual is not None and self.bimanual != task_bimanual:
+            raise ValueError(f"bimanual={self.bimanual} conflicts with task {self.task!r}")
+        self.bimanual = task_bimanual
         arm_action_dim = 23 if self.action_format == "quaternion" else 22
         self.features = {
             "action": PolicyFeature(
@@ -39,9 +46,6 @@ class DexJoCoEnvConfig(HubEnvConfig):
             "agent_pos": "observation.state",
         }
         if self.render_mode != "none":
-            from dexjoco.envhub import TASK_IDS, TASKS
-
-            constructor = TASKS[TASK_IDS[self.task]]
             cameras = (
                 "ego",
                 *getattr(constructor, "side_cameras", ()),

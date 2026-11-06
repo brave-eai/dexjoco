@@ -1,6 +1,6 @@
 [project]
 name = "lerobot_env_dexjoco"
-version = "0.2.0"
+version = "1.1.0"
 description = "DexJoCo simulation environments for LeRobot EnvHub"
 readme = "README.md"
 license = "MIT"
@@ -22,6 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
+dexjoco-replay = "dexjoco.replay_dataset:cli"
 dexjoco-convert = "dexjoco_data_converter.convert_zarr_to_lerobot:cli"
 dexjoco-record-replay = "dexjoco.record_replay:cli"
 

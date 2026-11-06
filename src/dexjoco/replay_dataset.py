@@ -168,7 +168,6 @@ def replay_batches(
     height, width = render_hw if render_hw is not None else (640, 640)
     env_cfg = DexJoCoEnvConfig(
         task=task,
-        bimanual=actions_by_episode[0].shape[1] == (46 if action_format == "quaternion" else 44),
         action_format=action_format,
         render_mode="rgb_array" if return_images else "none",
         randomize=randomize,
@@ -348,5 +347,13 @@ def check_replay_consistency(
     return consistent, success
 
 
+def cli() -> None:
+    success = tyro.cli(check_replay_success)
+    print(f"Replay success: {int(success.sum())}/{len(success)}")
+    if not success.all():
+        print(f"Failed episode indices: {np.flatnonzero(~success).tolist()}")
+        raise SystemExit(1)
+
+
 if __name__ == "__main__":
-    tyro.cli(check_replay_success)
+    cli()
