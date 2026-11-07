@@ -76,7 +76,7 @@ class WaterPlantEnv(gym.Env):
     }
     task = "water_plant"
     side_cameras = ("ego_left", "ego_right")
-    task_description = "Pick up the spray bottle and water the plant."
+    task_description = "Grasp the watering can and apply water to the plant."
     _max_episode_steps = MAX_EPISODE_STEPS
 
     def __init__(

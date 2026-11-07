@@ -1,50 +1,138 @@
+<p align="center">
+  <img src="docs/pics/dexjoco_logo.jpg" alt="dexjoco logo" height="110">
+</p>
+
+<p align="center">
+  <a href="https://arxiv.org/abs/2605.16257"><img src="https://img.shields.io/badge/arXiv-2605.16257-b31b1b?style=flat-square" alt="arXiv"></a>
+  <a href="https://dexjoco.github.io/"><img src="https://img.shields.io/badge/GitHub-Page-FF6B00?style=flat-square&logo=github&logoColor=white" alt="Project Homepage"></a>
+  <a href="#datasets"><img src="https://img.shields.io/badge/🤗%20HF-Dataset-FFD21E?style=flat-square" alt="HF Dataset"></a>
+  <a href="https://huggingface.co/papers/2605.16257"><img src="https://img.shields.io/badge/🤗%20HF-Paper-FFD21E?style=flat-square" alt="HF Paper"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License"></a>
+</p>
+
+<p align="center">
+  A MuJoCo benchmark for task-oriented dexterous manipulation.
+</p>
+
 # DexJoCo v1.1
 
-DexJoCo is a MuJoCo benchmark for task-oriented dexterous manipulation.
-DexJoCo v1.1 integrates with LeRobot for straightforward installation, policy evaluation, and demonstration replay.
+**What’s new in v1.1**
 
-## Installation
+- 🚀 **Easy installation** — Get started with `uv sync`.
+- 🤖 **Easy policy evaluation** — Run policies with LeRobot’s `lerobot-eval`.
+- ✅ **[100% replay success](#replay-success-rate)** — 2,200/2,200 episodes across all 11 tasks with corrected datasets.
 
-### uv
+**11 tasks across single-arm and bimanual manipulation**, including tool use, assembly, and device operation.
 
-Install FFmpeg using the [installation guide](docs/install_ffmpeg.md), then run the following commands from the repository root:
+<table width="100%">
+  <tr>
+    <td align="center" width="20%">
+      <img src="docs/pics/photograph_4.png" alt="Bimanual photograph" width="100%">
+      <br><sub>Bimanual photograph</sub>
+    </td>
+    <td align="center" width="20%">
+      <img src="docs/pics/ipad_2.png" alt="Bimanual unlock iPad" width="100%">
+      <br><sub>Bimanual unlock iPad</sub>
+    </td>
+    <td align="center" width="20%">
+      <img src="docs/pics/assembly_3.png" alt="Bimanual assembly" width="100%">
+      <br><sub>Bimanual assembly</sub>
+    </td>
+    <td align="center" width="20%">
+      <img src="docs/pics/hanoi_3.png" alt="Bimanual hanoi" width="100%">
+      <br><sub>Bimanual hanoi</sub>
+    </td>
+    <td align="center" width="20%">
+      <img src="docs/pics/microwave_2.png" alt="Bimanual microwave" width="100%">
+      <br><sub>Bimanual microwave</sub>
+    </td>
+  </tr>
+</table>
+
+<table width="100%">
+  <tr>
+    <td align="center" width="16.66%">
+      <img src="docs/pics/water_plant_4.png" alt="Water plant" width="100%">
+      <br><sub>Water plant</sub>
+    </td>
+    <td align="center" width="16.66%">
+      <img src="docs/pics/hammer_3.png" alt="Hammer nail" width="100%">
+      <br><sub>Hammer nail</sub>
+    </td>
+    <td align="center" width="16.66%">
+      <img src="docs/pics/glass_1.png" alt="Fold glasses" width="100%">
+      <br><sub>Fold glasses</sub>
+    </td>
+    <td align="center" width="16.66%">
+      <img src="docs/pics/tongs_3.png" alt="Pinch tongs" width="100%">
+      <br><sub>Pinch tongs</sub>
+    </td>
+    <td align="center" width="16.66%">
+      <img src="docs/pics/bucket_4.png" alt="Pick bucket" width="100%">
+      <br><sub>Pick bucket</sub>
+    </td>
+    <td align="center" width="16.66%">
+      <img src="docs/pics/mouse_3.png" alt="Click mouse" width="100%">
+      <br><sub>Click mouse</sub>
+    </td>
+  </tr>
+</table>
+
+## 📑 Table of contents
+
+- [Installation](#installation)
+- [Policy Evaluation](#evaluate-a-policy)
+- [Datasets](#datasets)
+- [Replay Validation](#replay-validation)
+- [Replay Recording](#record-a-replay)
+- [Replay Results](#replay-success-rate)
+- [Data Format](#dataset-format)
+- [Acknowledgments](#acknowledgments)
+- [License and Support](#license-and-support)
+- [Citation](#citation)
+
+<a id="installation"></a>
+
+## 🚀 Installation
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and **FFmpeg** using the [installation guide](docs/install_ffmpeg.md).
+
+Get the LeRobot integration branch:
 
 ```bash
+git clone --branch feat/lerobot https://github.com/brave-eai/dexjoco.git
+cd dexjoco
 uv sync
 ```
 
-### Conda
+The examples below use `uv run`, which selects the project environment automatically.
+
+<details>
+<summary>Install with Conda</summary>
+
+From the repository root:
 
 ```bash
 conda env create -f environment.yml
 conda activate dexjoco
 ```
 
-The examples below use `uv run`, which selects the project environment automatically. If you installed with Conda, activate `dexjoco` and run the same commands with the `uv run` prefix removed.
+With this environment active, run the examples with the `uv run` prefix removed.
 
-## Dataset format
+</details>
 
-Each task is stored as a LeRobot dataset, with an additional `replay_initial_values.jsonl` file containing the saved initial scene for every episode. Keep this file alongside the dataset’s `meta/`, `data/`, and `videos/` directories when copying a dataset.
+<a id="evaluate-a-policy"></a>
 
-The v1.1 datasets are organized as `<dataset_root>/{rand_obj,rand_full}/<task>`. Robot observations and both action representations are described in [Observations and actions](#observations-and-actions).
+## 🤖 Policy Evaluation
 
-## Replay validation
+Select a task and a checkpoint trained with **matching action format, state features, camera names, and image resolution**.
 
-Use a DexJoCo v1.1 LeRobot dataset for one task. Its directory must contain the LeRobot metadata and data together with `replay_initial_values.jsonl`, which holds the initial scene for each episode. Set the path to your local copy:
+| Model resource | Status |
+| --- | --- |
+| v1.1-compatible checkpoints | Coming soon |
+| Model download and loading instructions | Coming soon |
 
-```bash
-DATASET=datasets/lerobot_v1.1/rand_obj/water_plant
-
-uv run dexjoco-replay --task water_plant --dataset-dir "$DATASET"
-```
-
-This replays all episodes without rendering, using the recorded quaternion actions, and prints the number of successful episodes. The command exits with status 1 and lists failed episode indices if any episode fails.
-
-Quaternion actions are the default for replay validation. Converting orientations to rotation vectors and back can introduce small numerical differences that affect contact-sensitive trajectories. Consequently, replay with `--action-format rotvec` can fail on an episode that succeeds with quaternion actions. The default `--extend-steps 60` allows up to 60 extra control steps holding the final action. Some demonstrations reach the success condition shortly after the recorded actions end, as reported in [issue #28](https://github.com/brave-eai/dexjoco/issues/28).
-
-## Evaluate a policy
-
-LeRobot discovers DexJoCo through the installed environment plugin. Select a task and a checkpoint trained with matching action and observation features. For a bimanual policy:
+The following is a **command template** for a compatible local bimanual checkpoint. Replace the checkpoint path before running:
 
 ```bash
 MUJOCO_GL=egl uv run lerobot-eval \
@@ -52,28 +140,71 @@ MUJOCO_GL=egl uv run lerobot-eval \
   --policy.path=/path/to/pretrained_model
 ```
 
-The task determines the arm configuration, action dimensions, and wrist cameras automatically. For a rotation-vector policy, also set `--env.action_format=rotvec`.
+For a rotation-vector policy, also set `--env.action_format=rotvec`.
 
-## Record a replay
+<a id="datasets"></a>
 
-Save a new LeRobot dataset with rendered camera frames at a custom resolution using `--render-hw HEIGHT WIDTH`. Omit this option to use the environment default. Choose a fresh output directory. The following example records at 640 × 640 on a headless Linux machine with an EGL driver:
+## 📦 Datasets
+
+**Download links and commands for the v1.1 datasets are coming soon.**
+
+| Dataset | Contents | Use | Download |
+| --- | --- | --- | --- |
+| v1.1 | Re-rendered demonstrations at 640 × 640 with MSAA disabled and saved initial scenes | Policy training, replay validation, and re-recording | Coming soon |
+
+The v1.1 dataset contains the following groups:
+
+| Group | Episodes per task | Replay recording settings |
+| --- | ---: | --- |
+| `rand_obj` | 100 | Recorded object placement; fixed cameras |
+| `rand_full` | 100 | Recorded object placement; randomized cameras, lighting, and table textures |
+
+Each dataset is organized as `<dataset_root>/{rand_obj,rand_full}/<task>`. **Keep `replay_initial_values.jsonl` alongside `meta/`, `data/`, and `videos/`** when copying a task dataset; replay uses it to restore the saved initial scene.
+
+<a id="replay-validation"></a>
+
+## ✅ Replay validation
+
+To validate another local task dataset, select its task name and directory. The directory must include **`replay_initial_values.jsonl`**:
 
 ```bash
+DATASET=datasets/lerobot_v1.1/rand_obj/water_plant
+
+uv run dexjoco-replay --task water_plant --dataset-dir "$DATASET"
+```
+
+This replays all episodes without rendering, using the recorded quaternion actions, and prints the number of successful episodes.
+
+**Replay commands automatically configure the CPU environment for reproducibility.** Both `dexjoco-replay` and `dexjoco-record-replay` set `OPENBLAS_CORETYPE=HASWELL` and `NPY_DISABLE_CPU_FEATURES` to disable selected AVX-512 features before importing NumPy. **No manual exports are needed when using these commands.** For integration into a Python process that imports NumPy first, see [CPU configuration](docs/reproducibility.md#cpu-configuration).
+
+**Quaternion actions are the default for replay validation.** Converting orientations to rotation vectors and back can introduce small numerical differences that affect contact-sensitive trajectories. Consequently, replay with `--action-format rotvec` can fail on an episode that succeeds with quaternion actions. The default **`--extend-steps 60`** allows up to 60 extra control steps holding the final action.
+
+<a id="record-a-replay"></a>
+
+## 🎬 Record a replay
+
+Save a new LeRobot dataset with rendered camera frames at a custom resolution using **`--render-hw HEIGHT WIDTH`**. Omit this option to use the environment default. **Choose a fresh output directory.** The following example records at 640 × 640 on a headless Linux machine with an EGL driver:
+
+```bash
+DATASET=datasets/lerobot_v1.1/rand_obj/water_plant
+
 uv run dexjoco-record-replay \
   --task water_plant --dataset-dir "$DATASET" \
   --output-dir datasets/replays/rand_obj/water_plant \
   --render-hw 640 640
 ```
 
-The recording command defaults to EGL for offscreen rendering. On a desktop with a working OpenGL display, optionally prefix the command with `MUJOCO_GL=glfw` to use GLFW instead. Camera images are rendered offscreen and saved to the output dataset.
+The recording command **defaults to EGL** for offscreen rendering. On a desktop with a working OpenGL display, optionally prefix the command with `MUJOCO_GL=glfw` to use GLFW instead. Camera images are rendered offscreen and saved to the output dataset.
 
-For `rand_obj`, the recorded object placement is restored and the camera setup is fixed. For `rand_full`, point the command at the corresponding source and output directories and add `--randomize` (the default seed is 0) to vary cameras, lighting, and table textures. Episode *i* uses the base seed plus *i*, so changing the batch size preserves each episode’s visual seed. Both modes restore the saved initial scene.
+For `rand_obj`, the recorded object placement is restored and the camera setup is fixed. For `rand_full`, point the command at the corresponding source and output directories and add `--randomize` (the default seed is 0) to vary cameras, lighting, and table textures. Episode *i* uses the base seed plus *i*. Both modes restore the saved initial scene.
 
-Recording stops on a failed episode by default.
+**Recording stops on a failed episode by default.**
 
-## Replay success rate
+<a id="replay-success-rate"></a>
 
-The corrected v1.1 datasets passed replay validation across all 11 tasks with the default quaternion actions, restored initial states, and the 60-step extension.
+## 📊 Replay success rate
+
+**All 2,200 episodes in the v1.1 release dataset replayed successfully across 11 tasks.** Validation used **quaternion actions**, **restored initial states**, and **up to 60 extra control steps holding the final action**.
 
 | Dataset group | Episodes per task | Successful replays |
 | --- | ---: | ---: |
@@ -81,35 +212,50 @@ The corrected v1.1 datasets passed replay validation across all 11 tasks with th
 | `rand_full` | 100 | 1,100 / 1,100 (100%) |
 | **Total** | **200** | **2,200 / 2,200 (100%)** |
 
-These results apply to the corrected v1.1 data and the validated runtime configuration. Replay restores saved scene values. The success figures above were measured using `action` in quaternion format.
+Rendering settings, CPU configuration, and image-storage considerations are documented in [Reproducibility](docs/reproducibility.md).
 
-Replay entry points configure the following CPU settings before importing NumPy. Set them before starting Python when integrating replay into a process that imports NumPy first.
+<a id="dataset-format"></a>
 
-```bash
-export OPENBLAS_CORETYPE=HASWELL
-export NPY_DISABLE_CPU_FEATURES="AVX512F,AVX512CD,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL"
-```
-
-## Anti-aliasing and reproducibility
-
-All task XMLs default to `offsamples=0`, disabling offscreen multisample anti-aliasing (MSAA). Replay and recording accept `--offsamples`; omitting it preserves the XML setting. Add `--offsamples 4` to record with four samples per pixel.
-
-EGL rendering with MSAA enabled can produce small pixel differences between fresh rendering contexts. A visual policy can amplify these differences into different actions and success rates. Use matching anti-aliasing settings for dataset recording and policy evaluation. The v1.1 640 × 640 replay datasets were recorded with MSAA disabled. See [issue #24](https://github.com/brave-eai/dexjoco/issues/24).
-
-Dataset videos use lossy compression to keep storage requirements manageable. Training therefore receives decoded video frames, while online inference receives freshly rendered frames. Even with identical rendering settings, these images can differ at the pixel level. Lossless storage would substantially increase dataset size.
-
-## Observations and actions
+## 🗂️ Data Format
 
 | LeRobot field | Single-arm dimensions | Bimanual dimensions | Contents |
 | --- | ---: | ---: | --- |
 | `observation.state` | 23 | 46 | Measured end-effector pose and 16 finger joints per arm |
 | `action` | 23 | 46 | Target position, quaternion in `wxyz` order, and finger targets |
-| `action_rotvec` | 22 | 44 | The same targets with orientation expressed as a three-component rotation vector |
+| `action_rotvec` | 22 | 44 | The same targets with orientation expressed as a rotation vector |
+| `task` | | | Natural-language instruction, restored from task metadata when reading with `LeRobotDataset` |
 | `observation.images.<camera>` | | | RGB frames. The main camera is `ego`; wrist and side views depend on the dataset. |
 
-Both action fields and the robot state are stored as float64. State orientations also use `wxyz` quaternions. Bimanual state and actions share one order: **right arm pose, right hand joints, left arm pose, left hand joints**. Replay defaults to `action`. Pass `--action-format rotvec` to replay or re-record from `action_rotvec`.
+Both action fields and the robot state are stored as **float64**. State orientations also use **`wxyz` quaternions**. Bimanual state and actions share one order: **right arm pose, right hand joints, left arm pose, left hand joints**. Replay defaults to **`action`**. Pass `--action-format rotvec` to replay or re-record from `action_rotvec`.
 
-## Citation
+<a id="acknowledgments"></a>
+
+## 🙏 Acknowledgments
+
+We thank the community members who identified and investigated issues:
+
+- **[@BabyChemZ](https://github.com/BabyChemZ)** for finding that 157 of 1,101 raw demonstrations reached success only after holding the final recorded action for 1–39 additional steps ([issue #28](https://github.com/brave-eai/dexjoco/issues/28)).
+- **[@chrockey](https://github.com/chrockey)** for identifying 42 `bimanual_unlock_ipad` demonstrations from the March 21, 2026 collection session that failed during replay, helping uncover a data-processing error in that batch ([issue #27](https://github.com/brave-eai/dexjoco/issues/27)).
+- **[@Alioth7](https://github.com/Alioth7)** for investigating evaluation reproducibility and small pixel differences from EGL rendering with MSAA ([issue #24](https://github.com/brave-eai/dexjoco/issues/24)).
+
+<a id="license-and-support"></a>
+
+## 📄 License and Support
+
+DexJoCo-owned code is released under the **[MIT License](LICENSE)**. Bundled third-party robot models retain their own licenses:
+
+| Asset | License |
+| --- | --- |
+| [Franka Emika Panda](src/dexjoco/assets/robots/franka_emika_panda/README.md) | Apache-2.0 |
+| [Wonik Allegro](src/dexjoco/assets/robots/wonik_allegro/README.md) | BSD-2-Clause |
+
+For bugs and feature requests, [open an issue](https://github.com/brave-eai/dexjoco/issues).
+
+For development setup and testing, see the [development guide](docs/development.md).
+
+<a id="citation"></a>
+
+## 📚 Citation
 
 ```bibtex
 @misc{wang2026dexjocobenchmarktoolkittaskoriented,
