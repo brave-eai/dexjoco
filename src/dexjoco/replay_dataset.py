@@ -68,14 +68,11 @@ def batch_replay_episode(
         f"Number of episodes {NUM_EPISODES} exceeds number of vector envs {env.num_envs}"
     )
     if NUM_EPISODES < env.num_envs:
-        # Fill the remaining envs with dummy actions and initial states.
-        dummy_actions = np.zeros(
-            (env.num_envs - NUM_EPISODES, *actions.shape[1:]), dtype=np.float64
+        # Reuse a recorded action so unused slots receive valid rotations.
+        dummy_actions = np.broadcast_to(
+            actions[0, 0], (env.num_envs - NUM_EPISODES, *actions.shape[1:])
         )
         actions = np.concatenate([actions, dummy_actions], axis=0)
-        dummy_initials = [None] * (env.num_envs - NUM_EPISODES)
-        initial_states = initial_states + dummy_initials
-        # Fill the remaining envs with dummy episode lengths
         episodes_lengths = np.concatenate(
             [episodes_lengths, np.ones(env.num_envs - NUM_EPISODES, dtype=np.int64)], axis=0
         )

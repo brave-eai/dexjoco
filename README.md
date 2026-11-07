@@ -141,6 +141,7 @@ MUJOCO_GL=egl uv run lerobot-eval \
 ```
 
 For a rotation-vector policy, also set `--env.action_format=rotvec`.
+For `rand_full` evaluation, set `--env.randomize=true` to enable visual randomization.
 
 <a id="datasets"></a>
 
@@ -160,6 +161,18 @@ The v1.1 dataset contains the following groups:
 | `rand_full` | 100 | Recorded object placement; randomized cameras, lighting, and table textures |
 
 Each dataset is organized as `<dataset_root>/{rand_obj,rand_full}/<task>`. **Keep `replay_initial_values.jsonl` alongside `meta/`, `data/`, and `videos/`** when copying a task dataset; replay uses it to restore the saved initial scene.
+
+### Rotation-vector training
+
+Prepare a training copy with `action_rotvec` stored as `action` so `lerobot-train` uses it as the target.
+
+```bash
+uv run dexjoco-prepare-rotvec \
+  --dataset-dir datasets/lerobot_v1.1/rand_full/water_plant \
+  --output-dir datasets/training_rotvec/rand_full/water_plant
+```
+
+Use the new directory as `--dataset.root` when training. Evaluate the resulting checkpoint with `--env.action_format=rotvec`. Use the original dataset for demonstration replay.
 
 <a id="replay-validation"></a>
 
@@ -227,6 +240,8 @@ Rendering settings, CPU configuration, and image-storage considerations are docu
 | `observation.images.<camera>` | | | RGB frames. The main camera is `ego`; wrist and side views depend on the dataset. |
 
 Both action fields and the robot state are stored as **float64**. State orientations also use **`wxyz` quaternions**. Bimanual state and actions share one order: **right arm pose, right hand joints, left arm pose, left hand joints**. Replay defaults to **`action`**. Pass `--action-format rotvec` to replay or re-record from `action_rotvec`.
+
+**`replay_initial_values.jsonl`** sits alongside `meta/`, `data/`, and `videos/` in each task dataset. Each line contains an `episode_index` and a `replay_initial_values` object with task-specific values such as object poses and table height. Replay uses these values to restore the initial scene before applying the recorded actions.
 
 <a id="acknowledgments"></a>
 

@@ -101,7 +101,7 @@
     </body>
   </worldbody>
   <actuator>
-    <!--把手-->
+    <!-- Handle -->
     <motor name="joint_0" joint="joint_0" ctrllimited="true" ctrlrange="-1 1" gear="16" />
   </actuator>
 </mujoco>

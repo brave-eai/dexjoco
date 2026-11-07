@@ -31,11 +31,3 @@ def load_zarr_episode(episode_dir: Path, action_dim: int, state_dim: int):
     assert action.ndim == 2 and action.shape[1] == action_dim
     assert state.ndim == 2 and state.shape[1] == state_dim
     return state, action, action_rotvec, replay_initial_positions
-
-
-if __name__ == "__main__":
-    load_zarr_episode(
-        Path("/data/dexjoco_raw_datasets/dexjoco_raw_datasets/water_plant/water_plant_demo_5_2026-02-05_21-22-26_576352"),
-        action_dim=23,
-        state_dim=23
-    )
