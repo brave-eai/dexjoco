@@ -2,6 +2,7 @@
 
 import subprocess
 import sys
+from contextlib import closing
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Literal, cast
@@ -12,6 +13,7 @@ import numpy as np
 import pytest
 import torch
 from lerobot.envs import make_env
+from lerobot.envs.configs import HubEnvConfig
 from lerobot.envs.utils import env_to_policy_features, preprocess_observation
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.processor import (
@@ -20,11 +22,12 @@ from lerobot.processor import (
     transition_to_policy_action,
 )
 from lerobot.scripts.lerobot_eval import rollout
+from lerobot.sim import LocalVectorEnv
 from lerobot.utils.io_utils import write_video
 
 from dexjoco.actions import quaternion_to_rotvec
 from dexjoco.configs import DexJoCoEnvConfig
-from dexjoco.envhub import TASK_IDS, TASKS
+from dexjoco.env_factory import TASK_IDS, TASKS
 from dexjoco.replay_dataset import batch_replay_episode
 
 
@@ -38,6 +41,52 @@ def test_official_cli_discovers_plugin() -> None:
         timeout=60,
     )
     assert "DexJoCoEnvConfig" in result.stdout
+
+
+def test_envhub_string_api_default() -> None:
+    repo = Path(__file__).resolve().parents[1]
+    envs = make_env(str(repo), trust_remote_code=True)
+    assert set(envs["dexjoco"]) == {TASK_IDS["water_plant"]}
+    with closing(envs["dexjoco"][TASK_IDS["water_plant"]]) as env:
+        assert isinstance(env, gym.vector.SyncVectorEnv)
+        assert env.call("randomize") == (False,)
+
+
+@pytest.mark.parametrize("task,action_format,use_async_envs", [
+    ("fold_glasses", "quaternion", False),
+    ("bimanual_hanoi", "rotvec", True),
+])
+def test_envhub_local_checkout(
+    task: str, action_format: Literal["quaternion", "rotvec"], use_async_envs: bool,
+) -> None:
+    repo = Path(__file__).resolve().parents[1]
+    cfg = DexJoCoEnvConfig(task=task, action_format=action_format, render_mode="none", randomize=True)
+    hub_cfg = HubEnvConfig(
+        hub_path=str(repo), trust_remote_code=True, make_env_kwargs=cfg.to_make_env_kwargs(),
+    )
+    task_id = TASK_IDS[task]
+    with (
+        closing(cfg.create_envs(n_envs=2, use_async_envs=use_async_envs)["dexjoco"][task_id]) as local,
+        closing(hub_cfg.create_envs(n_envs=2, use_async_envs=use_async_envs)["dexjoco"][task_id]) as hub,
+    ):
+        assert isinstance(local, (gym.vector.SyncVectorEnv, gym.vector.AsyncVectorEnv))
+        assert isinstance(hub, LocalVectorEnv)
+        raw, _ = local.reset(seed=[1, 2])
+        canonical, _ = hub.reset(seed=[1, 2])
+        assert local.call("task_description") == hub.call("task_description")
+        np.testing.assert_allclose(raw["agent_pos"], canonical["observation.state"])
+        action = raw["agent_pos"]
+        if action_format == "rotvec":
+            action = quaternion_to_rotvec(action, bimanual=bool(cfg.bimanual))
+        assert hub.action_space.shape == local.action_space.shape == action.shape
+        action = action.astype(np.float32)
+        local_obs, local_reward, local_terminated, local_truncated, local_info = local.step(action)
+        hub_obs, hub_reward, hub_terminated, hub_truncated, hub_info = hub.step(action)
+        np.testing.assert_allclose(local_obs["agent_pos"], hub_obs["observation.state"])
+        np.testing.assert_array_equal(local_reward, hub_reward)
+        np.testing.assert_array_equal(local_terminated, hub_terminated)
+        np.testing.assert_array_equal(local_truncated, hub_truncated)
+        np.testing.assert_array_equal(local_info["is_success"], hub_info["is_success"])
 
 
 @pytest.mark.parametrize(
@@ -164,6 +213,7 @@ def test_official_rollout_and_video(
 
         def select_action(self, observation):
             assert expected_inputs | {"task"} <= set(observation)
+            assert observation["task"] == expected_tasks
             for key in expected_inputs:
                 assert observation[key].shape == (2, *features[key].shape)
                 assert observation[key].dtype == torch.float32
@@ -174,6 +224,8 @@ def test_official_rollout_and_video(
         assert isinstance(env, (gym.vector.SyncVectorEnv, gym.vector.AsyncVectorEnv))
         obs: dict
         obs, _ = env.reset(seed=[1, 2])
+        expected_tasks = list(env.call("task_description"))
+        assert all(expected_tasks)
         single_obs = {"agent_pos": obs["agent_pos"][0]}
         if with_images:
             single_obs["pixels"] = {

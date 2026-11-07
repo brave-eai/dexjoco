@@ -1,9 +1,11 @@
-"""Check that task selection determines robot and camera features."""
+"""Check task features and the EnvHub configuration contract."""
+
+import json
 
 import pytest
 
 from dexjoco.configs import DexJoCoEnvConfig
-from dexjoco.envhub import TASK_IDS
+from dexjoco.env_factory import TASK_IDS
 
 
 @pytest.mark.parametrize("task", list(TASK_IDS))
@@ -24,3 +26,17 @@ def test_infer_arm_configuration(task, action_format):
 def test_reject_conflicting_arm_configuration(task, bimanual):
     with pytest.raises(ValueError, match="conflicts with task"):
         DexJoCoEnvConfig(task=task, bimanual=bimanual)
+
+
+def test_envhub_options_round_trip() -> None:
+    cfg = DexJoCoEnvConfig(
+        task="bimanual_hanoi",
+        action_format="rotvec",
+        randomize=True,
+        randomize_dynamics=True,
+        offsamples=0,
+        render_width=320,
+        render_height=240,
+    )
+    options = json.loads(json.dumps(cfg.to_make_env_kwargs()))
+    assert DexJoCoEnvConfig(**options) == cfg

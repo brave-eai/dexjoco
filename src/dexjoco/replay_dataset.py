@@ -14,7 +14,7 @@ from numpy.typing import NDArray
 from tqdm import tqdm
 
 from dexjoco.configs import DexJoCoEnvConfig
-from dexjoco.envhub import TASK_IDS
+from dexjoco.env_factory import TASK_IDS
 
 
 @dataclass

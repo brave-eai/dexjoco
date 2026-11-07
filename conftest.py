@@ -8,6 +8,11 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
+        "--training-dataset-root",
+        type=Path,
+        help="Enable ACT training tests using this local click_mouse LeRobot dataset.",
+    )
+    parser.addoption(
         "--replay-dataset-root",
         type=Path,
         default=None,

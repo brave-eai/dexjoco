@@ -14,7 +14,7 @@ from lerobot.datasets.dataset_tools import delete_episodes
 from numpy.typing import NDArray
 from tqdm import tqdm
 
-from dexjoco.envhub import TASK_IDS
+from dexjoco.env_factory import TASK_IDS
 from dexjoco.replay_dataset import check_replay_success
 
 from .task_presets import TASK_PRESETS, TaskName

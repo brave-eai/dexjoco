@@ -5,13 +5,13 @@ from typing import Literal
 
 import gymnasium as gym
 from lerobot.configs import FeatureType, PolicyFeature
-from lerobot.envs.configs import EnvConfig, HubEnvConfig
+from lerobot.envs.configs import EnvConfig
 
 
 @EnvConfig.register_subclass("dexjoco")
 @dataclass
-class DexJoCoEnvConfig(HubEnvConfig):
-    """Use local code when hub_path is None, otherwise load the Hub entry point."""
+class DexJoCoEnvConfig(EnvConfig):
+    """Configure a DexJoCo task for local creation or export to EnvHub."""
 
     # This plugin requires a non-null task, while EnvConfig also allows None.
     task: str = field(kw_only=True)  # pyright: ignore[reportIncompatibleVariableOverride]
@@ -27,8 +27,12 @@ class DexJoCoEnvConfig(HubEnvConfig):
     render_height: int = 640
 
     def __post_init__(self) -> None:
-        from dexjoco.envhub import TASK_IDS, TASKS
+        from dexjoco.env_factory import TASK_IDS, TASKS
 
+        if self.task not in TASK_IDS:
+            raise ValueError(f"Unknown DexJoCo task {self.task!r}. Choose from {', '.join(TASK_IDS)}")
+        if self.action_format not in ("quaternion", "rotvec"):
+            raise ValueError(f"Unsupported action format {self.action_format!r}")
         constructor = TASKS[TASK_IDS[self.task]]
         task_bimanual = self.task.startswith("bimanual_")
         if self.bimanual is not None and self.bimanual != task_bimanual:
@@ -71,11 +75,15 @@ class DexJoCoEnvConfig(HubEnvConfig):
             "render_height": self.render_height,
         }
 
+    def to_make_env_kwargs(self) -> dict:
+        """Export the task options accepted by the EnvHub entry point."""
+        return {"task": self.task, "bimanual": self.bimanual, **self.gym_kwargs}
+
     def create_envs(
         self,
         n_envs: int,
         use_async_envs: bool = False,
     ) -> dict[str, dict[int, gym.vector.VectorEnv]]:
-        from dexjoco.envhub import make_env
+        from dexjoco.env_factory import make_env
 
         return make_env(n_envs=n_envs, use_async_envs=use_async_envs, cfg=self)

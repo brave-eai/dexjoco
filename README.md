@@ -87,6 +87,7 @@
 - [Replay Recording](#record-a-replay)
 - [Replay Results](#replay-success-rate)
 - [Data Format](#dataset-format)
+- [TODO](#todo)
 - [Acknowledgments](#acknowledgments)
 - [License and Support](#license-and-support)
 - [Citation](#citation)
@@ -132,16 +133,73 @@ Select a task and a checkpoint trained with **matching action format, state feat
 | v1.1-compatible checkpoints | Coming soon |
 | Model download and loading instructions | Coming soon |
 
-The following is a **command template** for a compatible local bimanual checkpoint. Replace the checkpoint path before running:
+### Local plugin
 
 ```bash
 MUJOCO_GL=egl uv run lerobot-eval \
+  --env.type=dexjoco --env.task=fold_glasses \
+  --policy.path="$SINGLE_ARM_CHECKPOINT" --eval.batch_size=1
+
+MUJOCO_GL=egl uv run lerobot-eval \
   --env.type=dexjoco --env.task=bimanual_hanoi \
-  --policy.path=/path/to/pretrained_model
+  --env.action_format=rotvec --policy.path="$BIMANUAL_CHECKPOINT" --eval.batch_size=1
 ```
 
-For a rotation-vector policy, also set `--env.action_format=rotvec`.
-For `rand_full` evaluation, set `--env.randomize=true` to enable visual randomization.
+### EnvHub
+
+From the repository root, point `--env.hub_path` at the local checkout. DexJoCo's EnvHub publication is pending. The CLI accepts a JSON string for the environment options.
+
+```bash
+MUJOCO_GL=egl uv run lerobot-eval \
+  --env.type=envhub --env.hub_path=. --env.trust_remote_code=true \
+  --env.make_env_kwargs='{"task":"fold_glasses"}' \
+  --policy.path="$SINGLE_ARM_CHECKPOINT" --eval.batch_size=1
+
+MUJOCO_GL=egl uv run lerobot-eval \
+  --env.type=envhub --env.hub_path=. --env.trust_remote_code=true \
+  --env.make_env_kwargs='{"task":"bimanual_hanoi","action_format":"rotvec"}' \
+  --policy.path="$BIMANUAL_CHECKPOINT" --eval.batch_size=1
+```
+
+For `rand_full`, pass `--env.randomize=true` with the local plugin or add `"randomize":true` to the EnvHub JSON.
+
+### Python
+
+**Create a local environment directly.**
+
+```python
+from dexjoco.configs import DexJoCoEnvConfig
+
+dex_cfg = DexJoCoEnvConfig(task="fold_glasses")
+envs = dex_cfg.create_envs(n_envs=1)
+```
+
+**Load a configured environment through EnvHub.** Run this from the repository root so `hub_path="."` points to the local checkout.
+
+```python
+from dexjoco.configs import DexJoCoEnvConfig
+from lerobot.envs.configs import HubEnvConfig
+
+dex_cfg = DexJoCoEnvConfig(task="bimanual_hanoi", action_format="rotvec")
+hub_cfg = HubEnvConfig(
+    hub_path=".",
+    trust_remote_code=True,
+    make_env_kwargs=dex_cfg.to_make_env_kwargs(),
+)
+envs = hub_cfg.create_envs(n_envs=1)
+```
+
+**Load the default environment through the EnvHub shortcut.** From the repository root, this creates `water_plant` with `rand_obj` settings.
+
+```python
+from lerobot.envs import make_env
+
+envs = make_env(".", n_envs=1, trust_remote_code=True)
+```
+
+Each example returns `envs["dexjoco"]`, a mapping from task IDs to vector environments. Call `close()` on each vector environment when finished. The [development guide](docs/development.md#test-envhub-locally) shows how to reset and step an EnvHub environment locally.
+
+**Training and evaluation images can differ at the pixel level even with matching rendering settings.** Training decodes frames from the dataset's lossy AV1-encoded MP4 videos, while online evaluation uses RGB frames directly from MuJoCo. See [Reproducibility](docs/reproducibility.md#anti-aliasing-and-rendering).
 
 <a id="datasets"></a>
 
@@ -242,6 +300,16 @@ Rendering settings, CPU configuration, and image-storage considerations are docu
 Both action fields and the robot state are stored as **float64**. State orientations also use **`wxyz` quaternions**. Bimanual state and actions share one order: **right arm pose, right hand joints, left arm pose, left hand joints**. Replay defaults to **`action`**. Pass `--action-format rotvec` to replay or re-record from `action_rotvec`.
 
 **`replay_initial_values.jsonl`** sits alongside `meta/`, `data/`, and `videos/` in each task dataset. Each line contains an `episode_index` and a `replay_initial_values` object with task-specific values such as object poses and table height. Replay uses these values to restore the initial scene before applying the recorded actions.
+
+<a id="todo"></a>
+
+## TODO
+
+- [ ] Run policies in simulation with `lerobot-rollout`.
+- [ ] Record simulation episodes with `lerobot-record`.
+- [ ] Teleoperate simulated robots with `lerobot-teleoperate`.
+- [ ] Replay datasets in simulation with `lerobot-replay`.
+- [ ] Serve DexJoCo environments with `lerobot-env-server`.
 
 <a id="acknowledgments"></a>
 

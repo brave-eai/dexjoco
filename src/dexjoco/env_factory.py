@@ -1,4 +1,4 @@
-"""Create the DexJoCo task suite using the LeRobot EnvHub interface."""
+"""Register DexJoCo tasks and build their vector environments."""
 
 from collections.abc import Callable
 from functools import partial
@@ -75,16 +75,7 @@ def make_env(
         task_id = TASK_IDS[cfg.task]
         constructor = TASKS[task_id]
         tasks[task_id] = vector_cls(
-            [partial(
-                constructor,
-                action_format=cfg.action_format,
-                randomize=cfg.randomize,
-                randomize_dynamics=cfg.randomize_dynamics,
-                render_mode=cfg.render_mode,
-                offsamples=cfg.offsamples,
-                render_width=cfg.render_width,
-                render_height=cfg.render_height,
-            ) for _ in range(n_envs)],
+            [partial(constructor, **cfg.gym_kwargs) for _ in range(n_envs)],
             **vector_kwargs,
         )
     except Exception:

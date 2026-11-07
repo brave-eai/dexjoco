@@ -6,7 +6,7 @@ import gymnasium as gym
 import numpy as np
 import pytest
 
-from dexjoco.envhub import TASK_IDS, TASKS
+from dexjoco.env_factory import TASK_IDS, TASKS
 from dexjoco.envs.water_plant import WaterPlantEnv
 from dexjoco.replay_dataset import batch_env_reset
 
