@@ -91,7 +91,7 @@ class BimanualPhotographEnv(gym.Env):
         render_height: int = 640,
         seed: int | None = None,
         offsamples: int | None = None,
-        camera_screen_effect: bool = False,
+        camera_screen_effect: bool = True,
     ):
         assert render_mode in ("rgb_array", "human", "none"), (
             f"Unsupported render mode: {render_mode}"

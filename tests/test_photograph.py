@@ -101,7 +101,7 @@ def test_reset_and_action_formats(randomize: bool) -> None:
 
 
 def test_camera_screen_capture_and_reset() -> None:
-    env = BimanualPhotographEnv(render_width=64, render_height=48, camera_screen_effect=True)
+    env = BimanualPhotographEnv(render_width=64, render_height=48)
     try:
         env.reset(seed=12)
         assert env.captured_image is None
@@ -132,7 +132,7 @@ def test_human_viewer_creation_and_reuse(monkeypatch: pytest.MonkeyPatch) -> Non
     handle.cam.type = mujoco.mjtCamera.mjCAMERA_FREE  # pyright: ignore[reportAttributeAccessIssue]
     launch = Mock(return_value=handle)
     monkeypatch.setattr(viewer, "launch_passive", launch)
-    env = BimanualPhotographEnv(render_mode="human")
+    env = BimanualPhotographEnv(render_mode="human", camera_screen_effect=False)
     try:
         env.sync_human_viewer()
         assert handle.opt.geomgroup[5] == 1

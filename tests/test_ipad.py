@@ -140,7 +140,7 @@ def test_failure_and_timeout() -> None:
 
 
 def test_repeated_digits_and_status_queries(monkeypatch: pytest.MonkeyPatch) -> None:
-    env = BimanualUnlockIpadEnv(render_mode="none", password=[1, 1, 0])
+    env = BimanualUnlockIpadEnv(render_mode="none", password=[1, 1, 0], ipad_screen_effect=False)
     try:
         env.reset(seed=7)
         pressed: set[int] = set()
@@ -173,7 +173,7 @@ def test_repeated_digits_and_status_queries(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_screen_animation_without_renderer(monkeypatch: pytest.MonkeyPatch) -> None:
-    env = BimanualUnlockIpadEnv(render_mode="none", password=[2], ipad_screen_effect=True)
+    env = BimanualUnlockIpadEnv(render_mode="none", password=[2])
     try:
         env.reset(seed=4)
         monkeypatch.setattr(env, "pressed_buttons", lambda: {env.button_ids[2]})

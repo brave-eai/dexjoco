@@ -139,7 +139,7 @@ class BimanualUnlockIpadEnv(gym.Env):
         seed: int | None = None,
         offsamples: int | None = None,
         password: list[int] | None = None,
-        ipad_screen_effect: bool = False,
+        ipad_screen_effect: bool = True,
     ):
         assert render_mode in ("rgb_array", "human", "none"), (
             f"Unsupported render mode: {render_mode}"
