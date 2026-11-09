@@ -303,10 +303,6 @@ Both action fields and the robot state are stored as **float64**. State orientat
 
 ## TODO
 
-- [ ] Run policies in simulation with `lerobot-rollout`.
-- [ ] Record simulation episodes with `lerobot-record`.
-- [ ] Teleoperate simulated robots with `lerobot-teleoperate`.
-- [ ] Replay datasets in simulation with `lerobot-replay`.
 - [ ] Serve DexJoCo environments with `lerobot-env-server`.
 
 <a id="acknowledgments"></a>
